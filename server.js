@@ -7,8 +7,8 @@ this.serve = function(req, res){
   req,
   function(responder){
    if("function" != typeof responder)
-    responder = function(req, res){
-     return res.end("Router failed to return a function.");
+    responder = function(q, s){
+     return s.end("Router failed to return a function.");
     };
    return responder(req, res);
   }
@@ -24,7 +24,7 @@ this.route = function(req, callback){
      if("function" == typeof r)
       return r;
     }
-   return this.defaultRoute;
+   return fallback;
   }
  )(
   this.routes,
@@ -35,6 +35,9 @@ this.route = function(req, callback){
    }
  );
  return callback(serveBack);
+}
+this.defaultRoute = function defaultRoute(req, res){
+ return res.end("default route");
 }
 this.routes = [];
 
@@ -59,7 +62,7 @@ this.init = function(serverMaker, callback){
   callback = function(){};
  var p = this.getPort();
  this.server = serverMaker(
-  function(res, req){
+  function(req, res){
    return that.serve(req, res);
   }
  );
