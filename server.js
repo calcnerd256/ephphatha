@@ -1,8 +1,21 @@
-var http = require("http");
-var that = this;
-
-
-this.serve = function(req, res){
+this.Server = function Server(){
+ this.routes = [];
+ var port = {port: 15213, locked: false};
+ this.getPort = function getPort(){
+  return port.port;
+ }
+ this.setPort = function setPort(newPort){
+  if(port.locked)
+   throw "attempt to open locked cell for storage";
+  var result = port.port;
+  port.port = newPort;
+  return result;
+ }
+ this.lockPort = function lockPort(){
+  port.locked = true;
+ }
+}
+this.Server.prototype.serve = function serve(req, res){
  return this.route(
   req,
   function(responder){
@@ -14,8 +27,7 @@ this.serve = function(req, res){
   }
  );
 }
-
-this.route = function(req, callback){
+this.Server.prototype.route = function route(req, callback){
  var serveBack = (
   function getFirstRoute(rs, fallback){
    for(var i = 0; i< rs.length; i++)
@@ -36,31 +48,16 @@ this.route = function(req, callback){
  );
  return callback(serveBack);
 }
-this.defaultRoute = function defaultRoute(req, res){
+this.Server.prototype.defaultRoute = function defaultRoute(req, res){
  return res.end("default route");
 }
-this.routes = [];
-
-var port = {port: 15213, locked: false};
-this.getPort = function getPort(){
- return port.port;
-}
-this.setPort = function setPort(newPort){
- if(port.locked) throw "attempt to open locked cell for storage";
- var result = port.port;
- port.port = newPort;
- return result;
-}
-this.lockPort = function lockPort(){
- port.locked = true;
-}
-
-this.init = function(serverMaker, callback){
+this.Server.prototype.init = function(serverMaker, callback){
  if("function" != typeof serverMaker)
   serverMaker = require("http").createServer;
  if("function" != typeof callback)
   callback = function(){};
  var p = this.getPort();
+ var that = this;
  this.server = serverMaker(
   function(req, res){
    return that.serve(req, res);
