@@ -1,19 +1,30 @@
+
+//this belongs in another file
+function LockCell(val){
+ var locked = false;
+ this.read = function read(){return val;};
+ this.write = function write(value){
+  if(locked) throw new Error("attempt to open a locked cell");
+  var result = val;
+  val = value;
+  return result;
+ };
+ this.lock = function(){locked = true;};
+ this.lockedp = function(){return locked;};
+}
+
 this.Server = function Server(){
  this.routes = [];
- var port = {port: 15213, locked: false};
- this.getPort = function getPort(){
-  return port.port;
- }
- this.setPort = function setPort(newPort){
-  if(port.locked)
-   throw "attempt to open locked cell for storage";
-  var result = port.port;
-  port.port = newPort;
-  return result;
- }
- this.lockPort = function lockPort(){
-  port.locked = true;
- }
+ this.port = new LockCell(15213);
+}
+this.Server.prototype.getPort = function getPort(){
+ return this.port.read();
+}
+this.server.prototype.setPort = function setPort(port){
+ return this.port.write(port);
+}
+this.server.prototype.lockPort = function lockPort(){
+ return this.port.lock();
 }
 this.Server.prototype.serve = function serve(req, res){
  return this.route(
