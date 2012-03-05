@@ -1,4 +1,3 @@
-
 //this belongs in another file
 function LockCell(val){
  var locked = false;
@@ -9,8 +8,8 @@ function LockCell(val){
   val = value;
   return result;
  };
- this.lock = function(){locked = true;};
- this.lockedp = function(){return locked;};
+ this.lock = function lock(){locked = true;};
+ this.lockedp = function lockedp(){return locked;};
 }
 
 this.Server = function Server(){
@@ -20,10 +19,10 @@ this.Server = function Server(){
 this.Server.prototype.getPort = function getPort(){
  return this.port.read();
 }
-this.server.prototype.setPort = function setPort(port){
+this.Server.prototype.setPort = function setPort(port){
  return this.port.write(port);
 }
-this.server.prototype.lockPort = function lockPort(){
+this.Server.prototype.lockPort = function lockPort(){
  return this.port.lock();
 }
 this.Server.prototype.serve = function serve(req, res){
