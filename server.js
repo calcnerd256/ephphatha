@@ -1,4 +1,5 @@
 //this belongs in another file
+
 function LockCell(val){
  var locked = false;
  this.read = function read(){return val;};
@@ -12,19 +13,99 @@ function LockCell(val){
  this.lockedp = function lockedp(){return locked;};
 }
 
+function createVeil(api, initialScope, grantAccess){
+ var API = api;
+ var scope = initialScope;
+ function access(verb){
+  var args = [].slice.call(arguments, 1);
+  return API[verb].apply(scope, args);
+ }
+ grantAccess(API, scope, access);
+ return access;
+}
+
+function createLockCell(value){
+ var API = {
+  read: function(){return this.value;},
+  write: function(value){
+   if(this.access("lockedp"))
+    throw new Error("attempted to modify a locked cell");
+   var result = this.access("read");
+   this.value = value;
+   return result;
+  },
+  lock: function(){this.locked = true;},
+  lockedp: function(){return this.locked;}
+ }
+ var scope = {
+  value: value,
+  locked: false
+ };
+ return createVeil(API, scope, function(api, s, g){s.access = g;});
+}
+
+function bindFrom(ob, key){
+ var result = function boundCall(){
+  return ob[key].apply(ob, arguments);
+ };
+ result.ob = ob;
+ result.key = key;
+ return result;
+}
+function bindFromVeil(channel, veil){
+ function result(){
+  var args = [].slice.call(arguments, 0);
+  args.unshift(channel);
+  veil.apply(this, args);
+ }
+ result.veil = veil;
+ result.channel = channel;
+ return result;
+}
+function objectifyVeilProjection(chans, veil){
+ var result = {};
+ for(var i = 0; i < chans.length; i++)
+  result[chans[i]] = bindFromVeil(chans[i], veil);
+ return result;
+}
+
 this.Server = function Server(){
  this.routes = [];
- this.port = new LockCell(15213);
+ var portCellFunction = createLockCell(15213);
+ var portCell = objectifyVeilProjection(
+  ["read", "write", "lock", "lockedp"],
+  portCellFunction
+ );
+ this.getPort = function(){return portCellFunction("read");};
+ this.setPort = function(port){return portCellFunction("write", port);};
+ this.lockPort = function(){portCellFunction("lock");};
+ this.getPortCell = function(){
+  return portCell;
+ };
+ this.init = function(serverMaker, callback){
+  if("function" != typeof serverMaker)
+   serverMaker = require("http").createServer;
+  if("function" != typeof callback)
+   callback = function(){};
+  var p = portCellFunction("read");
+  var that = this;
+  this.server = serverMaker(
+   function(req, res){
+    return that.serve(req, res);
+   }
+  );
+  this.server.listen(
+   p,
+   function(){
+    console.log("Server listening on port " + p);
+    portCellFunction("lock");
+    callback();
+   }
+  );
+  return this;
+ }
 }
-this.Server.prototype.getPort = function getPort(){
- return this.port.read();
-}
-this.Server.prototype.setPort = function setPort(port){
- return this.port.write(port);
-}
-this.Server.prototype.lockPort = function lockPort(){
- return this.port.lock();
-}
+
 this.Server.prototype.serve = function serve(req, res){
  return this.route(
   req,
@@ -60,26 +141,4 @@ this.Server.prototype.route = function route(req, callback){
 }
 this.Server.prototype.defaultRoute = function defaultRoute(req, res){
  return res.end("default route");
-}
-this.Server.prototype.init = function(serverMaker, callback){
- if("function" != typeof serverMaker)
-  serverMaker = require("http").createServer;
- if("function" != typeof callback)
-  callback = function(){};
- var p = this.getPort();
- var that = this;
- this.server = serverMaker(
-  function(req, res){
-   return that.serve(req, res);
-  }
- );
- this.server.listen(
-  p,
-  function(){
-   console.log("Server listening on port " + p);
-   that.lockPort();
-   callback();
-  }
- );
- return this;
 }
