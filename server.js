@@ -1,18 +1,5 @@
 //this belongs in another file
 
-function LockCell(val){
- var locked = false;
- this.read = function read(){return val;};
- this.write = function write(value){
-  if(locked) throw new Error("attempt to open a locked cell");
-  var result = val;
-  val = value;
-  return result;
- };
- this.lock = function lock(){locked = true;};
- this.lockedp = function lockedp(){return locked;};
-}
-
 function createVeil(api, initialScope, grantAccess){
  var API = api;
  var scope = initialScope;
@@ -69,7 +56,27 @@ function objectifyVeilProjection(chans, veil){
  return result;
 }
 
+function functionOrElse(candidate, fallback, noisy){
+ if("function" == typeof candidate)
+  return candidate;
+ if("function" == typeof fallback)
+  return fallback;
+ if(!noisy)
+  return function(){};
+ //throw new Error("non-function fallback");
+ return function(){
+  var result = new Error("non-function used as fallback for an attempt at ensuring callability and default suppressed");
+  result.candidate = candidate;
+  result.fallback = fallback;
+  throw result;
+ };
+}
+
 this.Server = function Server(){
+ //dependencies
+ // createLockCell
+ // objectifyVeilProjection
+
  this.routes = [];
  var portCellFunction = createLockCell(15213);
  var portCell = objectifyVeilProjection(
@@ -83,13 +90,14 @@ this.Server = function Server(){
   return portCell;
  };
  this.init = function(serverMaker, callback){
-  if("function" != typeof serverMaker)
-   serverMaker = require("http").createServer;
-  if("function" != typeof callback)
-   callback = function(){};
+  //TODO: errback
   var p = portCellFunction("read");
   var that = this;
-  this.server = serverMaker(
+  //TODO: let them get "that"
+  this.server = functionOrElse(
+   serverMaker, 
+   require("http").createServer
+  )(
    function(req, res){
     return that.serve(req, res);
    }
@@ -99,7 +107,7 @@ this.Server = function Server(){
    function(){
     console.log("Server listening on port " + p);
     portCellFunction("lock");
-    callback();
+    functionOrElse(callback)();
    }
   );
   return this;
@@ -110,35 +118,49 @@ this.Server.prototype.serve = function serve(req, res){
  return this.route(
   req,
   function(responder){
-   if("function" != typeof responder)
-    responder = function(q, s){
+   return functionOrElse(
+    responder,
+    function(q, s){
+     //TODO: set the status code
      return s.end("Router failed to return a function.");
-    };
-   return responder(req, res);
+    }
+   )(req, res);
   }
  );
 }
-this.Server.prototype.route = function route(req, callback){
- var serveBack = (
-  function getFirstRoute(rs, fallback){
-   for(var i = 0; i< rs.length; i++)
-    if("function" == typeof rs[i]){
-     var r = rs[i](req);
-     if("function" == typeof r)
-      return r;
-    }
-   return fallback;
-  }
- )(
-  this.routes,
-  "function" == typeof this.defaultRoute ?
-   this.defaultRoute :
-   function defaultRoute(req, res){
-    return res.end("default route");
+this.Server.prototype.route = function route(req, callback, errback, noisy){
+ return functionOrElse(
+  callback,
+  functionOrElse(
+   errback,
+   noisy && function(responder){
+    throw new Error("dangling HTTP response");
    }
+  )
+ )(
+  (
+   function getFirstRoute(rs, fallback){
+    for(var i = 0; i < rs.length; i++)
+     if("function" == typeof rs[i]){
+      var r = rs[i](req);
+      if("function" == typeof r)
+       return r;
+     }
+    return functionOrElse(
+     fallback,
+     function defaultRoute(req, res){
+      //TODO: set status code to 404
+      return res.end("default default route");
+     }
+    )
+   }
+  )(
+   this.routes,
+   this.defaultRoute
+  )
  );
- return callback(serveBack);
 }
 this.Server.prototype.defaultRoute = function defaultRoute(req, res){
+ //TODO: set status code to 404
  return res.end("default route");
 }
