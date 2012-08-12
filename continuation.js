@@ -42,8 +42,10 @@ Environment.prototype.forgetHistory = function(source, path){
  )(this.map.read(source));
 }
 Environment.prototype.getKeys = function(){
+ return this.map.getKeys();
 }
 Environment.prototype.getKeyKeys = function(source){
+ return this.map.read(source).getKeys();
 }
 
 function Continuation(){
