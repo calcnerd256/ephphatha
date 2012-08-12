@@ -4,6 +4,8 @@ Oh, hey, I should probably put something here.
 Be ye opened.
 
 * unsorted
+Ugh, this github orgmode reader doesn't believe in linebreaks.
 ** Environment
-I'm tempted to add a "get" method which equals "read"
-I'm tempted to add a "curry" method or something
+I'm tempted to add a "get" method which equals "read".
+I'm tempted to add a "curry" method or something.
+
