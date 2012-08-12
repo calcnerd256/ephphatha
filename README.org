@@ -2,3 +2,8 @@ Oh, hey, I should probably put something here.
 
 * εφφαθα
 Be ye opened.
+
+* unsorted
+** Environment
+I'm tempted to add a "get" method which equals "read"
+I'm tempted to add a "curry" method or something
