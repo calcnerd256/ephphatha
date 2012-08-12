@@ -29,7 +29,7 @@ Environment.prototype.read = function(source, path){
       if(hist.length)
        return hist[hist.length - 1];
      }
-    )(scurr.read("path"))
+    )(scurr.read(path))
   }
  )(this.map.read(source));
 }
