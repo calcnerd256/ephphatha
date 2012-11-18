@@ -35,11 +35,22 @@ function AdminStringServer(){
 	    }
 	    return [
 		fluentKeyCall(this.getServerPerProtocol("HTTP"), "setPort", port).init(http.createServer, callOnce(eachBack)),
-		httpsOptions ? fluentKeyCall(this.getServerPerProtocol("HTTPS"), "setPort", securePort).init(function(responder){return https.createServer(httpsOptions, responder);}, callOnce(eachBack)) : null
+		httpsOptions ?
+		    fluentKeyCall(
+			this.getServerPerProtocol("HTTPS"),
+			"setPort",
+			securePort
+		    ).init(
+			function(responder){
+			    return https.createServer(httpsOptions, responder);
+			},
+			callOnce(eachBack)
+		    ) :
+		callOnce(eachBack)()
 	    ];
 	},
 	"getServerPerProtocol": function(prot){
-	    var server = new Server();
+	    var server = new Server.Server();
 	    server.routes = this["getHttp" + (("HTTPS" == prot) ? "s" : "") + "RouterList"]();
 	    return server;
 	},
