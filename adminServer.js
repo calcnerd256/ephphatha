@@ -54,11 +54,37 @@ function AdminStringServer(){
 	    server.routes = this["getHttp" + (("HTTPS" == prot) ? "s" : "") + "RouterList"]();
 	    return server;
 	},
+	"makeRouter": function(matcher, responder){
+	    var result = function router(request){
+		if(matcher(request)) return responder;
+	    }
+	    result.matcher = matcher;
+	    result.responder = responder;
+	    return result;
+	},
+	"makeExactMatcher": function(path){
+	    var result = function matcher(request){
+		console.log(request.url);
+		if(request.url == path) return true;
+	    };
+	    result.path = path;
+	    return result;
+	},
 	"getHttpRouterList": function(){
-	    return [function(req){return function(req, res){res.end("not yet");};}]
+	    return [
+		this.makeRouter(this.makeExactMatcher("/"), function(req, res){res.end("index")}),
+		this.makeRouter(this.makeExactMatcher("/favicon.ico"), function(req, res){res.writeHead(404, "no favicon yet"); res.end("go away")}),
+		function(req){
+		    return function(req, res){res.end("not yet");};
+		}
+	    ]
 	},
 	"getHttpsRouterList": function(){
-	    return [function(req){return function(req, res){res.end("not yet");};}];
+	    return [
+		function(req){
+		    return function(req, res){res.end("not yet (secure)");};
+		}
+	    ];
 	}
     }
 );
