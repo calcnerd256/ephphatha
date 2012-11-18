@@ -23,7 +23,7 @@ Now is a good time to add some routes.
 Then, pass the port to server.setPort(port);
 Now is an okay time to add some routes.
 Next, server.init(http, continuation)
- where http is something that acts like Node's http library
+ where http is something that acts like Node's http library's createServer function
  and continuation gets called with no parameters.
 That creates a boring server. We need to add routes.
 
