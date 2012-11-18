@@ -6,6 +6,9 @@ Be ye opened.
 * unsorted
 Ugh, this github orgmode reader doesn't believe in linebreaks.
  That's because orgmode's HTML output doesn't.
+
+Apologies to anyone trying to read this. I use org-mode wrong, and I'm not going to change soon.
+
 ** Environment
 I'm tempted to add a "get" method which equals "read".
 I'm tempted to add a "curry" method or something.
@@ -39,3 +42,18 @@ DELETE
 POST
  exec
  persist
+**** URLs
+/ index
+/index index
+/index.html index
+/append GET form
+/append POST append
+/admin/ GET listing
+/admin/$num GET read $num-th element
+/admin/$num DELETE remove $num-nth element, moving others down?
+/admin/$num/exec POST run it, returning the string representation of the immediate return
+ unless it returns a promise? make that a next-time feature
+/admin/$num/persist POST save it to a directory somewhere to load when the server starts
+ make that a next-time feature
+/admin/login GET login form
+/admin/login POST generate session and set HTTPS-only cookie
