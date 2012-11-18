@@ -13,6 +13,10 @@ Apologies to anyone trying to read this. I use org-mode wrong, and I'm not going
 I'm tempted to add a "get" method which equals "read".
 I'm tempted to add a "curry" method or something.
 
+** Server
+It's been too long since I've used this, so I need some documentation.
+That's convenient, since you need some documentation too!
+
 ** Starting over
 let's do the simplest thing we can: let the admin eval strings
 first, we'll need to store the strings (for convenience)
