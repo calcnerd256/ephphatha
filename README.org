@@ -11,3 +11,31 @@ I'm tempted to add a "get" method which equals "read".
 I'm tempted to add a "curry" method or something.
 
 ** Starting over
+let's do the simplest thing we can: let the admin eval strings
+first, we'll need to store the strings (for convenience)
+ we don't have to, but it'll be nicer this way
+
+*** string list
+anonymous can append a string to the list
+**** admin can
+read
+write
+execute
+delete
+**** anonymous can
+GET the form to submit a new string
+POST to add the string to the end of the list
+**** HTTPS
+access the append form
+
+admin secure-only cookie
+ session token (not password)
+  how should I generate that?
+ do not allow insecure admin access
+  enable that later
+***** actions
+GET read
+DELETE
+POST
+ exec
+ persist
