@@ -86,4 +86,10 @@ FiniteMapping.prototype.getKeys = function getKeys(){
  return result;
 }
 
+//TODO: idea: redo mapping with natural numbers for internal representation
+//that is, compose anything->natural with natural->anything
+//natural->anything is already taken care of with arrays
+//anything->natural can be done with patches like before, but with extra indirection
+//I would just indirect through strings, but what's the best string representation? (typeof ob) + ":" + someNatural ?
+
 this.FiniteMapping = FiniteMapping;

@@ -48,9 +48,27 @@ Environment.prototype.getKeyKeys = function(source){
  return this.map.read(source).getKeys();
 }
 
-function Continuation(){
+function Continuation(fn, that, args){
+ this.fn = fn;
+ this.that = that;
+ this.args = args;
 }
 Continuation.prototype.thunk = function(environment){
+ var that = this.that;
+ var args = (
+  function map(f, xs){
+   var r = [];
+   for(var i = 0; i < xs.length; i++)
+    r[i] = f(xs[i]);
+   return r;
+  }
+ )(
+  function get(k){
+   return environment.read(that, k)
+  },
+  this.args
+ );
+ return this.fn.apply(that, args);
 }
 this.Continuation = Continuation;
 this.Environment = Environment;
