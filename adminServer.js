@@ -247,7 +247,12 @@ function AdminStringServer(){
 			    append: this.methodRoutingResponder(
 				{
 				    "GET": this.constantResponder(
-					"form GET (1x ea)"
+					[
+					    "<FORM METHOD=\"POST\">",
+					    " <TEXTAREA NAME=\"string\"></TEXTAREA>",
+					    " <INPUT TYPE=\"SUBMIT\"></INPUT>",
+					    "</FORM>"
+					].join("\n")
 				    ),
 				    POST: function(req, res){
 					res.end("did not post");
