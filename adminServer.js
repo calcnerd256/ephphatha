@@ -239,22 +239,22 @@ function AdminStringServer(){
 		this.dictToExactRouterList(
 		    this.dictIndirect(
 			paths,
-		    {
-			favicon: function(req, res){
-			    res.writeHead(404, "no favicon yet");
-			    res.end("go away");
-			},
-			append: this.methodRoutingResponder(
-			    {
-				"GET": this.constantResponder(
-				    "form GET (1x ea)"
-				),
-				POST: function(req, res){
-				    res.end("did not post");
+			{
+			    favicon: function(req, res){
+				res.writeHead(404, "no favicon yet");
+				res.end("go away");
+			    },
+			    append: this.methodRoutingResponder(
+				{
+				    "GET": this.constantResponder(
+					"form GET (1x ea)"
+				    ),
+				    POST: function(req, res){
+					res.end("did not post");
+				    }
 				}
-			    }
-			)
-		    }
+			    )
+			}
 		    )
 		),
 		[
