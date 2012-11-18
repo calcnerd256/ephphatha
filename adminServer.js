@@ -62,10 +62,17 @@ function AdminStringServer(){
 	    result.responder = responder;
 	    return result;
 	},
+	"makeUrlMatcher": function(predicate){
+	    var result = function urlMatcher(request){
+		return predicate(request.url);
+	    }
+	    result.predicate = predicate;
+	    return result;
+	},
 	"makeExactMatcher": function(path){
-	    var result = function matcher(request){
-		if(request.url == path) return true;
-	    };
+	    var result = this.makeUrlMatcher(
+		function(url){return url == path;}
+	    );
 	    result.path = path;
 	    return result;
 	},
@@ -75,41 +82,56 @@ function AdminStringServer(){
 		result.push([k, dictionary[k]]);
 	    return result;
 	},
-	"getHttpRouterList": function(){
+	"dictToExactRouterList": function(dictionary){
 	    var that = this;
-	    return [].concat(
-		this.dictToAlist(
+	    return this.dictToAlist(dictionary).map(
+		function(args){
+		    return that.makeRouter(
+			that.makeExactMatcher(args[0]),
+			args[1]
+		    );
+		}
+	    );
+	},
+	"getHttpRouterList": function(){
+	    function index(req, res){
+		res.end("index");
+	    }
+	    return [].concat(// early binding is bad :(
+		this.dictToExactRouterList(
 		    {
-			"/": function(req, res){
-			    res.end("index")
-			},
+			"/": index,
+			"/index": index,
+			"/index.html": index,
 			"/favicon.ico": function(req, res){
 			    res.writeHead(404, "no favicon yet");
 			    res.end("go away");
+			},
+			"/append": function(req, res){
+			    //TODO: do different things on GET and POST
+			    res.end("form");
 			}
-		    }
-		).map(
-		    function(args){
-			return that.makeRouter(
-			    that.makeExactMatcher(args[0]),
-			    args[1]
-			);
 		    }
 		),
 		[
-		    function(req){
-			return function(req, res){res.end("not yet");};
-		    }
 		],
 		[]
 	    );
 	},
 	"getHttpsRouterList": function(){
-	    return [
-		function(req){
-		    return function(req, res){res.end("not yet (secure)");};
-		}
-	    ];
+	    return [].concat(
+		this.dictToExactRouterList(
+		    {
+			"/admin": function(req, res){
+			    res.end("admin");
+			},
+			"/admin/login": function(req, res){
+			    res.end("login");
+			}
+		    }
+		),
+		this.getHttpRouterList()
+	    );
 	}
     }
 );
