@@ -186,6 +186,25 @@ function AdminStringServer(){
 		}
 	    );
 	},
+	"urlDecodeFormDataToAlist": function(str){
+	    return str.split(";").map(
+		function(s){
+		    return s.split("=");
+		}
+	    ).map(
+		function(xs){
+		    k = xs.shift();
+		    return [
+			k,
+			xs.join("=")
+		    ].map(
+			function(s){
+			    return s.split("+").join(" ");
+			}
+		    ).map(decodeURIComponent);
+		}
+	    );
+	},
 	"getHttpRouterList": function(){
 	    var index = "index";
 	    var that = this;
@@ -273,7 +292,25 @@ function AdminStringServer(){
 					].join("\n")
 				    ),
 				    POST: function(req, res){
-					res.end("did not post");
+					var data = [];
+					req.on("data", function(chunk){data.push(chunk)});
+					req.on(
+					    "end",
+					    function(){
+						//TODO: don't buffer the whole thing like that
+						var input = data.join("");
+						var alist = that.urlDecodeFormDataToAlist(input);
+						var dict = that.alistToDict(alist);
+						if(!("string" in dict)){
+						    res.end("bad POST attempt");
+						    return;
+						}
+						var string = dict.string;
+						that.appendString(string);
+						res.writeHead(200, {"Content-type": "text/plain"});
+						res.end("POST successful: \n" + string);
+					    }
+					);
 				    }
 				}
 			    )
