@@ -148,29 +148,114 @@ function AdminStringServer(){
 		}
 	    );
 	},
+	"methodRoutingResponder": function(responders){
+	    var result = function(req, res){
+		if(req.method in responders)
+		    return responders[req.method](req, res);
+		//TODO: check if method is allowed at all for 501
+		res.writeHead(405, "This object doesn't support that method.");
+		res.end("no, you can't do that to this");
+	    }
+	    result.responders = responders;
+	    return result;
+	},
+	"dictIndirect": function(keys, vals){
+	    return this.dictionaryMap(
+		vals,
+		function(kv){
+		    var k = kv[0];
+		    return [keys[k], vals[k]];
+		}
+	    );
+	},
 	"getHttpRouterList": function(){
 	    var index = "index";
+	    var that = this;
+	    var paths = (
+		function(stepper, terminator, terminate, d){
+		    while(!terminator(d))
+			d = stepper(d);
+		    return terminate(d);
+		}
+	    )(
+		function(d){
+		    return that.dictionaryMap(
+			d,
+			function(kv){
+			    var k = kv[0];
+			    var v = kv[1];
+			    var parent = v[0];
+			    if(parent == k)
+				return [k, ["error", "cycle"]];
+			    if(!(parent in d)) return kv;
+			    par = d[parent];
+			    return [
+				k,
+				[par[0], par[1] + "/" + v[1]]
+			    ];
+			}
+		    );
+		},
+		function(d){
+		    for(var k in d)
+			if(d[k][0] in d)
+			    if(
+				"error" != k ||
+				    "error" != d[k][0]
+			    )
+				return false;
+		    return true;
+		},
+		function(d){
+		    return that.dictionaryMap(
+			d,
+			function(kv){
+			    return [kv[0], kv[1][1]];
+			}
+		    );
+		},
+		{
+		    "empty": [null, ""],
+		    "root": ["empty", ""],
+		    "index": ["empty", "index"],
+		    "indexhtml": ["empty", "index.html"],
+		    "favicon": ["empty", "favicon.ico"],
+		    "append": ["empty", "append"]
+		}
+	    );
 	    return [].concat(// early binding is bad :(
 		this.dictToExactRouterList(
 		    this.constantStaticRouterDict(
-			{
-			    "/": index,
-			    "/index": index,
-			    "/index.html": index
-			}
+			this.dictIndirect(
+			    paths,
+			    {
+				root: index,
+				index: index,
+				indexhtml: index
+			    }
+			)
 		    )
 		),
 		this.dictToExactRouterList(
+		    this.dictIndirect(
+			paths,
 		    {
-			"/favicon.ico": function(req, res){
+			favicon: function(req, res){
 			    res.writeHead(404, "no favicon yet");
 			    res.end("go away");
 			},
-			"/append": function(req, res){
-			    //TODO: do different things on GET and POST
-			    res.end("form");
-			}
+			append: this.methodRoutingResponder(
+			    {
+				"GET": this.constantResponder(
+				    "form GET (1x ea)"
+				),
+				POST: function(req, res){
+				    res.end("did not post");
+				}
+			    }
+			)
 		    }
+		    )
 		),
 		[
 		],
