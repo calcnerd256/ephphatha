@@ -64,20 +64,45 @@ function AdminStringServer(){
 	},
 	"makeExactMatcher": function(path){
 	    var result = function matcher(request){
-		console.log(request.url);
 		if(request.url == path) return true;
 	    };
 	    result.path = path;
 	    return result;
 	},
+	"dictToAlist": function(dictionary){
+	    var result = [];
+	    for(var k in dictionary)
+		result.push([k, dictionary[k]]);
+	    return result;
+	},
 	"getHttpRouterList": function(){
-	    return [
-		this.makeRouter(this.makeExactMatcher("/"), function(req, res){res.end("index")}),
-		this.makeRouter(this.makeExactMatcher("/favicon.ico"), function(req, res){res.writeHead(404, "no favicon yet"); res.end("go away")}),
-		function(req){
-		    return function(req, res){res.end("not yet");};
-		}
-	    ]
+	    var that = this;
+	    return [].concat(
+		this.dictToAlist(
+		    {
+			"/": function(req, res){
+			    res.end("index")
+			},
+			"/favicon.ico": function(req, res){
+			    res.writeHead(404, "no favicon yet");
+			    res.end("go away");
+			}
+		    }
+		).map(
+		    function(args){
+			return that.makeRouter(
+			    that.makeExactMatcher(args[0]),
+			    args[1]
+			);
+		    }
+		),
+		[
+		    function(req){
+			return function(req, res){res.end("not yet");};
+		    }
+		],
+		[]
+	    );
 	},
 	"getHttpsRouterList": function(){
 	    return [
