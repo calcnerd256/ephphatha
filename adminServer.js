@@ -3,10 +3,28 @@ var http = require("http");
 var https = require("https");
 
 function AdminStringServer(){
+    this.strings = [];
+    this.adminTokens = {};
 }
 (function(s, d){for(var k in d)s[k] = d[k];})(
     AdminStringServer.prototype,
     {
+	"appendString": function(str){
+	    this.strings.push(str);
+	},
+	"isAdminSession": function(req){
+	    return false;
+	},
+	"createAdminToken": function(){
+	    return "no";
+	    var token = "no";
+	    //TODO: generate a cryptographically secure random string
+	    this.adminTokens[token] = "active";
+	    return token;
+	},
+	"expireAdminTokens": function(){
+	    this.adminTokens = {};
+	},
 	"init": function(port, securePort, httpsOptions, callback){
 	    var outstanding = 2;
 	    function eachBack(){
