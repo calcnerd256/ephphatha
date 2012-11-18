@@ -11,8 +11,19 @@ this.server.init(
 */
 
 var repl = require("repl");
+var fs = require("fs");
 var adminServer = require("./adminServer");
 this.server = new adminServer.AdminStringServer();
-this.server.init(15213, 15214, null, function(){console.log(arguments); repl.start(undefined, undefined, undefined, true);});
+this.server.init(
+    15213, 15214,
+    {
+	key: fs.readFileSync("./certs/ephphatha.key"),
+	cert: fs.readFileSync("./certs/ephphatha.cert")
+    },
+    function(){
+	console.log(arguments);
+	repl.start(undefined, undefined, undefined, true);
+    }
+);
 
 global.server = this.server;
