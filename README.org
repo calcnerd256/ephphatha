@@ -17,6 +17,39 @@ I'm tempted to add a "curry" method or something.
 It's been too long since I've used this, so I need some documentation.
 That's convenient, since you need some documentation too!
 
+serve.js provides the first hint at how to use a Server from server.js .
+first, create a var server = new Server();
+Now is a good time to add some routes.
+Then, pass the port to server.setPort(port);
+Now is an okay time to add some routes.
+Next, server.init(http, continuation)
+ where http is something that acts like Node's http library
+ and continuation gets called with no parameters.
+That creates a boring server. We need to add routes.
+
+*** Routes
+The Server maintains a list of route functions as mutable state.
+A var server = new Server() has server.serve(q,s)
+ which calls this.route(q, fn)
+  where fn(r) tries to call r(q, s) or yells at you.
+It has a server.route(q, success, failure, throwp)
+ which tries to pass the first route to the success callback.
+The first route is the result of the first function in server.routes
+ that returns a function when passed the request q,
+  or else (if none do) the default route server.defaultRoute if it is a function,
+  or a permanent default route.
+
+All this means that
+ if you want to append subordinate functionality to a server,
+  you should push a function r onto server.routes
+   such that r(q) returns a responding function s
+    iff q belongs to the domain of s
+    and s(q, response) responds
+     like a typical Node HTTP server would.
+And if you want to patch dominant functionality to a server,
+ (that is, override existing functionality, casting a shadow)
+ then you should server.routes.unshift such a routing function instead.
+
 ** Starting over
 let's do the simplest thing we can: let the admin eval strings
 first, we'll need to store the strings (for convenience)
