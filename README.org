@@ -5,7 +5,9 @@ Be ye opened.
 
 * unsorted
 Ugh, this github orgmode reader doesn't believe in linebreaks.
+ That's because orgmode's HTML output doesn't.
 ** Environment
 I'm tempted to add a "get" method which equals "read".
 I'm tempted to add a "curry" method or something.
 
+** Starting over
