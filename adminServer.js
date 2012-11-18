@@ -33,8 +33,10 @@ function AdminStringServer(){
 		args.unshift(ob);
 		return fluentCall.apply(ob[key], args);
 	    }
-	    return [
+	    return this.servers = {
+		http:
 		fluentKeyCall(this.getServerPerProtocol("HTTP"), "setPort", port).init(http.createServer, callOnce(eachBack)),
+		https:
 		httpsOptions ?
 		    fluentKeyCall(
 			this.getServerPerProtocol("HTTPS"),
@@ -47,7 +49,7 @@ function AdminStringServer(){
 			callOnce(eachBack)
 		    ) :
 		callOnce(eachBack)()
-	    ];
+	    };
 	},
 	"getServerPerProtocol": function(prot){
 	    var server = new Server.Server();
@@ -93,10 +95,18 @@ function AdminStringServer(){
 		}
 	    );
 	},
+	"constantResponder": function(str, mimetype){
+	    if(!mimetype) mimetype = "text/plain";
+	    var result = function(req, res){
+		//TODO: send the header for the mimetype
+		res.end(str);
+	    };
+	    result.str = str;
+	    result.mimetype = mimetype;
+	    return result;
+	},
 	"getHttpRouterList": function(){
-	    function index(req, res){
-		res.end("index");
-	    }
+	    var index = this.constantResponder("index");
 	    return [].concat(// early binding is bad :(
 		this.dictToExactRouterList(
 		    {
