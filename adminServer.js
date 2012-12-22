@@ -213,10 +213,10 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
 		k,
 		xs.join("=")
 	    ].map(
-			function(s){
-			    return s.split("+").join(" ");
-			}
-		    ).map(decodeURIComponent);
+		function(s){
+		    return s.split("+").join(" ");
+		}
+	    ).map(decodeURIComponent);
 	}
     );
 }
@@ -239,13 +239,13 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		    var v = kv[1];
 		    var parent = v[0];
 		    if(parent == k)
-				return [k, ["error", "cycle"]];
+			return [k, ["error", "cycle"]];
 		    if(!(parent in d)) return kv;
 		    par = d[parent];
 		    return [
-				k,
-				[par[0], par[1] + "/" + v[1]]
-			    ];
+			k,
+			[par[0], par[1] + "/" + v[1]]
+		    ];
 		}
 	    );
 	},
@@ -253,10 +253,10 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	    for(var k in d)
 		if(d[k][0] in d)
 		    if(
-				"error" != k ||
-				    "error" != d[k][0]
-			    )
-				return false;
+			"error" != k ||
+			    "error" != d[k][0]
+		    )
+			return false;
 	    return true;
 	},
 	function(d){
@@ -282,10 +282,10 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		this.dictIndirect(
 		    paths,
 		    {
-				root: index,
-				index: index,
-				indexhtml: index
-			    }
+			root: index,
+			index: index,
+			indexhtml: index
+		    }
 		)
 	    )
 	),
@@ -294,42 +294,42 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		paths,
 		{
 		    favicon: function(req, res){
-				res.writeHead(404, "no favicon yet");
-				res.end("go away");
-			    },
+			res.writeHead(404, "no favicon yet");
+			res.end("go away");
+		    },
 		    append: this.methodRoutingResponder(
-				{
-				    "GET": this.constantResponder(
-					[
-					    "<FORM METHOD=\"POST\">",
-					    " <TEXTAREA NAME=\"string\"></TEXTAREA>",
-					    " <INPUT TYPE=\"SUBMIT\"></INPUT>",
-					    "</FORM>"
-					].join("\n")
-				    ),
-				    POST: function(req, res){
-					var data = [];
-					req.on("data", function(chunk){data.push(chunk)});
-					req.on(
-					    "end",
-					    function(){
-						//TODO: don't buffer the whole thing like that
-						var input = data.join("");
-						var alist = that.urlDecodeFormDataToAlist(input);
-						var dict = that.alistToDict(alist);
-						if(!("string" in dict)){
-						    res.end("bad POST attempt");
-						    return;
-						}
-						var string = dict.string;
-						that.appendString(string);
-						res.writeHead(200, {"Content-type": "text/plain"});
-						res.end("POST successful: \n" + string);
-					    }
-					);
+			{
+			    "GET": this.constantResponder(
+				[
+				    "<FORM METHOD=\"POST\">",
+				    " <TEXTAREA NAME=\"string\"></TEXTAREA>",
+				    " <INPUT TYPE=\"SUBMIT\"></INPUT>",
+				    "</FORM>"
+				].join("\n")
+			    ),
+			    POST: function(req, res){
+				var data = [];
+				req.on("data", function(chunk){data.push(chunk)});
+				req.on(
+				    "end",
+				    function(){
+					//TODO: don't buffer the whole thing like that
+					var input = data.join("");
+					var alist = that.urlDecodeFormDataToAlist(input);
+					var dict = that.alistToDict(alist);
+					if(!("string" in dict)){
+					    res.end("bad POST attempt");
+					    return;
+					}
+					var string = dict.string;
+					that.appendString(string);
+					res.writeHead(200, {"Content-type": "text/plain"});
+					res.end("POST successful: \n" + string);
 				    }
-				}
-			    )
+				);
+			    }
+			}
+		    )
 		}
 	    )
 	),
