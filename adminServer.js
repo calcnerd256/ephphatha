@@ -232,7 +232,14 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
 
 AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     var index = [
-	"index"
+	"<HTML>",
+	" <HEAD>",
+	" </HEAD>",
+	" <BODY>",
+	"  index",
+	" </BODY>",
+	"</HTML>",
+	""
     ].join("\n");
     var that = this;
 
