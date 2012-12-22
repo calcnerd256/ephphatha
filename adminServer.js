@@ -1,6 +1,7 @@
 var Server = require("./server");
 var http = require("http");
 var https = require("https");
+var crypto = require("crypto");
 
 function AdminStringServer(){
     this.strings = [];
@@ -8,19 +9,30 @@ function AdminStringServer(){
 }
 
 AdminStringServer.prototype.appendString = function appendString(str){
+    var result = this.strings.length;
     this.strings.push(str);
+    if(this.strings[result] != str) return -1; //that should never happen
+    return result;
 }
 
 AdminStringServer.prototype.isAdminSession = function isAdminSession(req){
     return false;
 }
 
-AdminStringServer.prototype.createAdminToken = function createAdminToken(){
+AdminStringServer.prototype.createAdminToken = function createAdminToken(callback, errorBack){
+    errorBack("not yet");
     return "no";
+    crypto.randomBytes(
+	64,
+	function(e, b){
+	    if(e) return errorBack(e);
     var token = "no";
-    //TODO: generate a cryptographically secure random string
+	    token = b;
     this.adminTokens[token] = "active";
+	    return callback(token);
     return token;
+	}
+    );
 }
 
 AdminStringServer.prototype.expireAdminTokens = function expireAdminTokens(){
@@ -339,9 +351,14 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		    return;
 		}
 		var string = dict.string;
-		that.appendString(string);
+		index = that.appendString(string);
 		res.writeHead(200, {"Content-type": "text/plain"});
-		res.end("POST successful: \n" + string);
+		res.end(
+		    "POST successful: " +
+			index +
+			"\n" +
+			string
+		);
 	    }
 	);
     }

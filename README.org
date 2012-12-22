@@ -111,5 +111,6 @@ POST
 run server
  node serve.js
 visit https://localhost:15214/
- observe "index"
-  for now
+ see links
+ follow links
+
