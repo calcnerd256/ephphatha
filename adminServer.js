@@ -122,13 +122,7 @@ function dictToAlist(dictionary){
     return result;
 }
 
-var AdminStringServerPrototypePatch = {
-    "getServerPerProtocol": getServerPerProtocol,
-    "makeRouter": makeRouter,
-    "makeUrlMatcher": makeUrlMatcher,
-    "makeExactMatcher": makeExactMatcher,
-    "dictToAlist": dictToAlist,
-    "alistToDict": function alistToDict(alist, stacks){
+function alistToDict(alist, stacks){
 	    var result = {};
 	    alist.map(
 		stacks ?
@@ -146,8 +140,9 @@ var AdminStringServerPrototypePatch = {
 		}
 	    );
 	    return result;
-    },
-    "dictToExactRouterList": function dictToExactRouterList(dictionary){
+}
+
+function dictToExactRouterList(dictionary){
 	    var that = this;
 	    return this.dictToAlist(dictionary).map(
 		function(args){
@@ -157,8 +152,9 @@ var AdminStringServerPrototypePatch = {
 		    );
 		}
 	    );
-	},
-    "constantResponder": function constantResponder(str, mimetype){
+}
+
+function constantResponder(str, mimetype){
 	    if(!mimetype) mimetype = "text/html";
 	    var result = function(req, res){
 		if("text/plain" != mimetype)
@@ -168,10 +164,22 @@ var AdminStringServerPrototypePatch = {
 	    result.str = str;
 	    result.mimetype = mimetype;
 	    return result;
-    },
-    "dictionaryMap": function dictionaryMap(ob, fn){
+}
+
+function dictionaryMap(ob, fn){
 	    return this.alistToDict(this.dictToAlist(ob).map(fn));
-    },
+}
+
+var AdminStringServerPrototypePatch = {
+    "getServerPerProtocol": getServerPerProtocol,
+    "makeRouter": makeRouter,
+    "makeUrlMatcher": makeUrlMatcher,
+    "makeExactMatcher": makeExactMatcher,
+    "dictToAlist": dictToAlist,
+    "alistToDict": alistToDict,
+    "dictToExactRouterList": dictToExactRouterList,
+    "constantResponder": constantResponder,
+    "dictionaryMap": dictionaryMap,
     "constantStaticRouterDict": function constantStaticRouterDict(d){
 	    var that = this;
 	    return this.dictionaryMap(
