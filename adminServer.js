@@ -11,24 +11,28 @@ function patch(destination, source){
 	destination[key] = source[key];
 }
 
+function appendString(str){
+    this.strings.push(str);
+}
+function isAdminSession(req){
+    return false;
+}
+function createAdminToken(){
+    return "no";
+    var token = "no";
+    //TODO: generate a cryptographically secure random string
+    this.adminTokens[token] = "active";
+    return token;
+}
+function expireAdminTokens(){
+    this.adminTokens = {};
+}
 
 var AdminStringServerPrototypePatch = {
-	"appendString": function appendString(str){
-	    this.strings.push(str);
-	},
-	"isAdminSession": function isAdminSession(req){
-	    return false;
-	},
-	"createAdminToken": function createAdminToken(){
-	    return "no";
-	    var token = "no";
-	    //TODO: generate a cryptographically secure random string
-	    this.adminTokens[token] = "active";
-	    return token;
-	},
-	"expireAdminTokens": function expireAdminTokens(){
-	    this.adminTokens = {};
-	},
+    "appendString": appendString,
+    "isAdminSession": isAdminSession,
+    "createAdminToken":createAdminToken,
+    "expireAdminTokens": expireAdminTokens,
 	"init": function init(port, securePort, httpsOptions, callback){
 	    var outstanding = 2;
 	    function eachBack(){

@@ -1,13 +1,9 @@
-Oh, hey, I should probably put something here.
-
 * εφφαθα
 Be ye opened.
 
 * unsorted
-Ugh, this github orgmode reader doesn't believe in linebreaks.
- That's because orgmode's HTML output doesn't.
-
-Apologies to anyone trying to read this. I use org-mode wrong, and I'm not going to change soon.
+Apologies to anyone trying to read this.
+I use org-mode wrong, and I'm not going to change soon.
 
 ** Environment
 I'm tempted to add a "get" method which equals "read".
@@ -94,3 +90,10 @@ POST
  make that a next-time feature
 /admin/login GET login form
 /admin/login POST generate session and set HTTPS-only cookie
+
+** tests
+run server
+ node serve.js
+visit https://localhost:15214/
+ observe "index"
+  for now
