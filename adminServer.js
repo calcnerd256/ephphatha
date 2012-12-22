@@ -231,6 +231,8 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
 }
 
 AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
+    var appendUrl = "/append";
+    var adminUrl = "/admin";
     var index = [
 	"<HTML>",
 	" <HEAD>",
@@ -238,9 +240,9 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	" <BODY>",
 	"  index",
 	"  <BR />",
-	"  <A HREF=\"/append\">append</A>",
+	"  <A HREF=\"" + appendUrl + "\">append</A>",
 	"  <BR />",
-	"  <A HREF=\"/admin\">admin</A>",
+	"  <A HREF=\"" + adminUrl + "\">admin</A>",
 	" </BODY>",
 	"</HTML>",
 	""
@@ -315,6 +317,8 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	[
 	    "<FORM METHOD=\"POST\">",
 	    " <TEXTAREA NAME=\"string\"></TEXTAREA>",
+	    //TODO make the name of that field a variable
+	    // such that elsewhere the form-processing code uses that same variable
 	    " <INPUT TYPE=\"SUBMIT\"></INPUT>",
 	    "</FORM>"
 	].join("\n")
