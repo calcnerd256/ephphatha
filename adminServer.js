@@ -170,17 +170,7 @@ function dictionaryMap(ob, fn){
 	    return this.alistToDict(this.dictToAlist(ob).map(fn));
 }
 
-var AdminStringServerPrototypePatch = {
-    "getServerPerProtocol": getServerPerProtocol,
-    "makeRouter": makeRouter,
-    "makeUrlMatcher": makeUrlMatcher,
-    "makeExactMatcher": makeExactMatcher,
-    "dictToAlist": dictToAlist,
-    "alistToDict": alistToDict,
-    "dictToExactRouterList": dictToExactRouterList,
-    "constantResponder": constantResponder,
-    "dictionaryMap": dictionaryMap,
-    "constantStaticRouterDict": function constantStaticRouterDict(d){
+function constantStaticRouterDict(d){
 	    var that = this;
 	    return this.dictionaryMap(
 		d,
@@ -191,8 +181,9 @@ var AdminStringServerPrototypePatch = {
 		    ];
 		}
 	    );
-    },
-    "methodRoutingResponder": function methodRoutingResponder(responders){
+}
+
+function methodRoutingResponder(responders){
 	    var result = function(req, res){
 		if(req.method in responders)
 		    return responders[req.method](req, res);
@@ -202,8 +193,9 @@ var AdminStringServerPrototypePatch = {
 	    }
 	    result.responders = responders;
 	    return result;
-    },
-    "dictIndirect": function dictIndirect(keys, vals){
+}
+
+function dictIndirect(keys, vals){
 	    return this.dictionaryMap(
 		vals,
 		function(kv){
@@ -211,8 +203,9 @@ var AdminStringServerPrototypePatch = {
 		    return [keys[k], vals[k]];
 		}
 	    );
-    },
-    "urlDecodeFormDataToAlist": function urlDecodeFormDataToAlist(str){
+}
+
+function urlDecodeFormDataToAlist(str){
 	    return str.split(";").map(
 		function(s){
 		    return s.split("=");
@@ -230,7 +223,22 @@ var AdminStringServerPrototypePatch = {
 		    ).map(decodeURIComponent);
 		}
 	    );
-    },
+}
+
+var AdminStringServerPrototypePatch = {
+    "getServerPerProtocol": getServerPerProtocol,
+    "makeRouter": makeRouter,
+    "makeUrlMatcher": makeUrlMatcher,
+    "makeExactMatcher": makeExactMatcher,
+    "dictToAlist": dictToAlist,
+    "alistToDict": alistToDict,
+    "dictToExactRouterList": dictToExactRouterList,
+    "constantResponder": constantResponder,
+    "dictionaryMap": dictionaryMap,
+    "constantStaticRouterDict": constantStaticRouterDict,
+    "methodRoutingResponder": methodRoutingResponder,
+    "dictIndirect": dictIndirect,
+    "urlDecodeFormDataToAlist": urlDecodeFormDataToAlist,
     "getHttpRouterList": function getHttpRouterList(){
 	    var index = "index";
 	    var that = this;
