@@ -233,44 +233,35 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
 AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     var index = "index";
     var that = this;
-    function stepper(d){
+    function stepper(dictionary){
 	return that.dictionaryMap(
-	    d,
+	    dictionary,
 	    function(kv){
-		    var k = kv[0];
+		    var key = kv[0];
 		    var v = kv[1];
 		    var parent = v[0];
-		    if(parent == k)
-			return [k, ["error", "cycle"]];
-		    if(!(parent in d)) return kv;
-		    par = d[parent];
+		    if(parent == key)
+			return [key, ["error", "cycle"]];
+		    if(!(parent in dictionary)) return kv;
+		    par = dictionary[parent];
 		    return [
-			k,
+			key,
 			[par[0], par[1] + "/" + v[1]]
 		    ];
 	    }
 	);
     }
-    function terminator(d){
-	for(var k in d)
-	    if(d[k][0] in d)
+    function terminator(dictionary){
+	for(var k in dictionary)
+	    if(dictionary[k][0] in dictionary)
 		if(
 		    "error" != k ||
-			"error" != d[k][0]
+			"error" != dictionary[k][0]
 		)
 		    return false;
 	return true;
     }
-    function terminate(d){
-	return that.dictionaryMap(
-	    d,
-	    function(kv){
-		var k = kv[0];
-		var v = kv[1];
-		return [k, v[1]];
-	    }
-	);
-    }
+
     var pathDictionary = {
 	"empty": [null, ""],
 	"root": ["empty", ""],
@@ -282,7 +273,14 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
     while(!terminator(pathDictionary))
 	pathDictionary = stepper(pathDictionary);
-    var paths = terminate(pathDictionary);
+    var paths = this.dictionaryMap(
+	pathDictionary,
+	function(kv){
+		var k = kv[0];
+		var v = kv[1];
+		return [k, v[1]];
+	}
+    );
 
     var constantStaticRouters = this.dictToExactRouterList(
 	this.constantStaticRouterDict(
@@ -320,18 +318,18 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 			    req.on(
 				"end",
 				function(){
-					//TODO: don't buffer the whole thing like that
-					var input = data.join("");
-					var alist = that.urlDecodeFormDataToAlist(input);
-					var dict = that.alistToDict(alist);
-					if(!("string" in dict)){
-					    res.end("bad POST attempt");
-					    return;
-					}
-					var string = dict.string;
-					that.appendString(string);
-					res.writeHead(200, {"Content-type": "text/plain"});
-					res.end("POST successful: \n" + string);
+				    //TODO: don't buffer the whole thing like that
+				    var input = data.join("");
+				    var alist = that.urlDecodeFormDataToAlist(input);
+				    var dict = that.alistToDict(alist);
+				    if(!("string" in dict)){
+					res.end("bad POST attempt");
+					return;
+				    }
+				    var string = dict.string;
+				    that.appendString(string);
+				    res.writeHead(200, {"Content-type": "text/plain"});
+				    res.end("POST successful: \n" + string);
 				}
 			    );
 			}
