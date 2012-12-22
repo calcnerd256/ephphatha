@@ -311,7 +311,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	req.on("data", function(chunk){data.push(chunk)});
 	req.on(
 	    "end",
-	    function(){
+	    function endBack(){
 		//TODO: don't buffer the whole thing like that
 		var input = data.join("");
 		var alist = that.urlDecodeFormDataToAlist(input);
@@ -328,10 +328,10 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	);
     }
     var handleAppendRequest = this.methodRoutingResponder(
-		    {
-			"GET": handleAppendGet,
-			POST: handleAppendPost
-		    }
+	{
+	    "GET": handleAppendGet,
+	    POST: handleAppendPost
+	}
     );
     var moreRouters = this.dictToExactRouterList(
 	this.dictIndirect(
