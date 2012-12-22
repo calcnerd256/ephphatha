@@ -235,8 +235,8 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     var that = this;
     function stepper(d){
 	return that.dictionaryMap(
-		d,
-		function(kv){
+	    d,
+	    function(kv){
 		    var k = kv[0];
 		    var v = kv[1];
 		    var parent = v[0];
@@ -248,25 +248,27 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 			k,
 			[par[0], par[1] + "/" + v[1]]
 		    ];
-		}
+	    }
 	);
     }
     function terminator(d){
 	for(var k in d)
 	    if(d[k][0] in d)
 		if(
-			"error" != k ||
-			    "error" != d[k][0]
+		    "error" != k ||
+			"error" != d[k][0]
 		)
 		    return false;
 	return true;
     }
     function terminate(d){
 	return that.dictionaryMap(
-		d,
-		function(kv){
-		    return [kv[0], kv[1][1]];
-		}
+	    d,
+	    function(kv){
+		var k = kv[0];
+		var v = kv[1];
+		return [k, v[1]];
+	    }
 	);
     }
     var pathDictionary = {
@@ -277,25 +279,21 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	"favicon": ["empty", "favicon.ico"],
 	"append": ["empty", "append"]
     };
-    var paths = (
-	function reduceLoop(d){
-	    while(!terminator(d))
-		d = stepper(d);
-	    return terminate(d);
-	}
-    )(
-	pathDictionary
-    );
+
+    while(!terminator(pathDictionary))
+	pathDictionary = stepper(pathDictionary);
+    var paths = terminate(pathDictionary);
+
     var constantStaticRouters = this.dictToExactRouterList(
 	this.constantStaticRouterDict(
-		this.dictIndirect(
-		    paths,
-		    {
-			root: index,
-			index: index,
-			indexhtml: index
-		    }
-		)
+	    this.dictIndirect(
+		paths,
+		{
+		    root: index,
+		    index: index,
+		    indexhtml: index
+		}
+	    )
 	)
     );
     var moreRouters = this.dictToExactRouterList(
@@ -303,25 +301,25 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	    paths,
 	    {
 		favicon: function(req, res){
-			res.writeHead(404, "no favicon yet");
-			res.end("go away");
+		    res.writeHead(404, "no favicon yet");
+		    res.end("go away");
 		},
 		append: this.methodRoutingResponder(
 		    {
 			"GET": this.constantResponder(
-				[
-				    "<FORM METHOD=\"POST\">",
-				    " <TEXTAREA NAME=\"string\"></TEXTAREA>",
-				    " <INPUT TYPE=\"SUBMIT\"></INPUT>",
-				    "</FORM>"
-				].join("\n")
+			    [
+				"<FORM METHOD=\"POST\">",
+				" <TEXTAREA NAME=\"string\"></TEXTAREA>",
+				" <INPUT TYPE=\"SUBMIT\"></INPUT>",
+				"</FORM>"
+			    ].join("\n")
 			),
 			POST: function(req, res){
-				var data = [];
-				req.on("data", function(chunk){data.push(chunk)});
-				req.on(
-				    "end",
-				    function(){
+			    var data = [];
+			    req.on("data", function(chunk){data.push(chunk)});
+			    req.on(
+				"end",
+				function(){
 					//TODO: don't buffer the whole thing like that
 					var input = data.join("");
 					var alist = that.urlDecodeFormDataToAlist(input);
@@ -334,8 +332,8 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 					that.appendString(string);
 					res.writeHead(200, {"Content-type": "text/plain"});
 					res.end("POST successful: \n" + string);
-				    }
-				);
+				}
+			    );
 			}
 		    }
 		)
