@@ -396,7 +396,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     var that = this;
-    var adminLoginUrl = "/admin/login";
+    var adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
     var adminIndexSource = [
 	"<HTML>",
 	" <HEAD>",
@@ -415,13 +415,13 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     var handleAdminLoginGetRequest = handleAdminLoginRequest;
     var handleAdminLoginPostRequest = handleAdminLoginRequest;
     var routingDictionary = {
-		"/admin": handleAdminIndexRequest,
+	"/admin": handleAdminIndexRequest,
     };
     routingDictionary[adminLoginUrl] = this.methodRoutingResponder(
-		    {
-			"GET": handleAdminLoginGetRequest,
-			"POST": handleAdminLoginPostRequest
-		    }
+	{
+	    "GET": handleAdminLoginGetRequest,
+	    "POST": handleAdminLoginPostRequest
+	}
     );
     return [].concat(
 	this.dictToExactRouterList(routingDictionary),
