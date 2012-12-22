@@ -226,15 +226,15 @@ function urlDecodeFormDataToAlist(str){
 }
 
 function getHttpRouterList(){
-	    var index = "index";
-	    var that = this;
-	    var paths = (
+    var index = "index";
+    var that = this;
+    var paths = (
 		function(stepper, terminator, terminate, d){
 		    while(!terminator(d))
 			d = stepper(d);
 		    return terminate(d);
 		}
-	    )(
+    )(
 		function(d){
 		    return that.dictionaryMap(
 			d,
@@ -279,8 +279,8 @@ function getHttpRouterList(){
 		    "favicon": ["empty", "favicon.ico"],
 		    "append": ["empty", "append"]
 		}
-	    );
-	    return [].concat(// early binding is bad :(
+    );
+    return [].concat(// early binding is bad :(
 		this.dictToExactRouterList(
 		    this.constantStaticRouterDict(
 			this.dictIndirect(
@@ -340,6 +340,22 @@ function getHttpRouterList(){
 		[
 		],
 		[]
+    );
+}
+
+function getHttpsRouterList(){
+	    return [].concat(
+		this.dictToExactRouterList(
+		    {
+			"/admin": function(req, res){
+			    res.end("admin");
+			},
+			"/admin/login": function(req, res){
+			    res.end("login");
+			}
+		    }
+		),
+		this.getHttpRouterList()
 	    );
 }
 
@@ -358,21 +374,7 @@ var AdminStringServerPrototypePatch = {
     "dictIndirect": dictIndirect,
     "urlDecodeFormDataToAlist": urlDecodeFormDataToAlist,
     "getHttpRouterList": getHttpRouterList,
-    "getHttpsRouterList": function getHttpsRouterList(){
-	    return [].concat(
-		this.dictToExactRouterList(
-		    {
-			"/admin": function(req, res){
-			    res.end("admin");
-			},
-			"/admin/login": function(req, res){
-			    res.end("login");
-			}
-		    }
-		),
-		this.getHttpRouterList()
-	    );
-    }
+    "getHttpsRouterList": getHttpsRouterList
 }
 
 patch(
