@@ -27,13 +27,7 @@ AdminStringServer.prototype.expireAdminTokens = function expireAdminTokens(){
     this.adminTokens = {};
 }
 
-AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
-    var outstanding = 2;
-    function eachBack(){
-	if(!--outstanding)
-	    return callback.apply(this, arguments);
-    }
-    function callOnce(fn, noisy){
+function callOnce(fn, noisy){
 	return function vapor(){
 	    var result = fn.apply(this, arguments);
 	    fn = function(){
@@ -42,27 +36,35 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
 	    };
 	    return result;
 	};
-    }
-    function fluentCall(ob){
+}
+function fluentCall(ob){
 	var args = [].slice.call(arguments, 1);
 	this.apply(ob, args);
 	return ob;
-    }
-    function fluentKeyCall(ob, key){
+}
+function fluentKeyCall(ob, key){
 	var args = [].slice.call(arguments, 2);
 	args.unshift(ob);
 	return fluentCall.apply(ob[key], args);
+}
+
+
+
+AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
+    var outstanding = 2;
+    function eachBack(){
+	if(!--outstanding)
+	    return callback.apply(this, arguments);
     }
-    return this.servers = {
-	http: fluentKeyCall(
+    var httpServer = fluentKeyCall(
 	    this.getServerPerProtocol("HTTP"),
 	    "setPort",
 	    port
 	).init(
 	    http.createServer,
 	    callOnce(eachBack)
-	),
-	https: httpsOptions ?
+	);
+    var httpsServer = httpsOptions ?
 	    fluentKeyCall(
 		this.getServerPerProtocol("HTTPS"),
 		"setPort",
@@ -77,7 +79,11 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
 		callOnce(eachBack)
 	    ) :
 	callOnce(eachBack)()
+    this.servers = {
+	http: httpServer,
+	https: httpsServer
     };
+    return this.servers;
 }
 
 AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol(prot){
