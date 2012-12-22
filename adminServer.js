@@ -237,6 +237,10 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	" </HEAD>",
 	" <BODY>",
 	"  index",
+	"  <BR />",
+	"  <A HREF=\"/append\">append</A>",
+	"  <BR />",
+	"  <A HREF=\"/admin\">admin</A>",
 	" </BODY>",
 	"</HTML>",
 	""
