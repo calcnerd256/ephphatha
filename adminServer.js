@@ -47,7 +47,9 @@ function fluentKeyCall(ob, key){
     args.unshift(ob);
     return fluentCall.apply(ob[key], args);
 }
-
+this.callOnce = callOnce;
+this.fluentCall = fluentCall;
+this.fluentKeyCall = fluentKeyCall;
 
 
 AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
@@ -60,27 +62,22 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
 	this.getServerPerProtocol("HTTP"),
 	"setPort",
 	port
-    ).init(
-	http.createServer,
-	callOnce(eachBack)
-    );
+    ).init(http.createServer, callOnce(eachBack));
     var httpsBack = callOnce(eachBack);
     var httpsServer;
+    function createHttpsServerClosure(responder){
+		return https.createServer(
+		    httpsOptions,
+		    responder
+		);
+    }
     if(!httpsOptions) httpsServer = httpsBack();
     else
 	httpsServer = fluentKeyCall(
 	    this.getServerPerProtocol("HTTPS"),
 	    "setPort",
 	    securePort
-	).init(
-	    function createHttpsServerClosure(responder){
-		return https.createServer(
-		    httpsOptions,
-		    responder
-		);
-	    },
-	    httpsBack
-	);
+	).init(createHttpsServerClosure, httpsBack);
 
     this.servers = {
 	http: httpServer,
@@ -91,7 +88,11 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
 
 AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol(prot){
     var server = new Server.Server();
-    server.routes = this["getHttp" + (("HTTPS" == prot) ? "s" : "") + "RouterList"]();
+    server.routes = this[
+	"getHttp" +
+	    (("HTTPS" == prot) ? "s" : "") +
+	    "RouterList"
+    ]();
     return server;
 }
 
@@ -372,10 +373,13 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 }
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
+    var that = this;
     function handleAdminIndexRequest(req, res){
+	//TODO provide links to admin pages
 	res.end("admin");
     }
     function handleAdminLoginRequest(req, res){
+	//TODO handle GET and POST
 	res.end("login");
     }
     return [].concat(
