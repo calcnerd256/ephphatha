@@ -19,18 +19,21 @@ AdminStringServer.prototype.isAdminSession = function isAdminSession(req){
     return false;
 }
 
-AdminStringServer.prototype.createAdminToken = function createAdminToken(callback, errorBack){
-    errorBack("not yet");
-    return "no";
-    crypto.randomBytes(
-	64,
-	function(e, b){
+AdminStringServer.prototype.createAdminToken = function createAdminToken(callback, errorBack, noisy){
+    var that = this;
+    if(!callback) callback = noisy ? function(){throw arguments;} : console.log.bind(console);
+    if("function" != typeof errorBack)
+	errorBack = noisy ? function(e){throw e;} : function(){return callback();};
+    var tokenLength = 64;
+    return crypto.randomBytes(
+	tokenLength / 2,
+	function(e, buf){
 	    if(e) return errorBack(e);
-    var token = "no";
-	    token = b;
-    this.adminTokens[token] = "active";
+	    function toHex(b){return b.toString(16);}
+	    function pad(str){while(str.length < 2) str = "0" + str; return str;}
+	    var token = [].map.call(buf, toHex).map(pad).join("");
+	    that.adminTokens[token] = "active";
 	    return callback(token);
-    return token;
 	}
     );
 }
