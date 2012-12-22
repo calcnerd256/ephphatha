@@ -32,6 +32,8 @@ AdminStringServer.prototype.createAdminToken = function createAdminToken(callbac
 	    function toHex(b){return b.toString(16);}
 	    function pad(str){while(str.length < 2) str = "0" + str; return str;}
 	    var token = [].map.call(buf, toHex).map(pad).join("");
+	    if(token in that.adminTokens && "active" == that.adminTokens[token])
+		return errorBack("collision");
 	    that.adminTokens[token] = "active";
 	    return callback(token);
 	}
