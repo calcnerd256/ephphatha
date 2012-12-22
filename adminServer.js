@@ -250,7 +250,7 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
 
 AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     var appendUrl = "/append";
-    var adminUrl = "/admin";
+    var adminUrl = "/admin";//TODO: make this point to HTTPS only
     var index = [
 	"<HTML>",
 	" <HEAD>",
@@ -396,19 +396,26 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     var that = this;
-    function handleAdminIndexRequest(req, res){
-	//TODO provide links to admin pages
-	res.end("admin");
-    }
     function handleAdminLoginRequest(req, res){
 	//TODO handle GET and POST
 	res.end("login");
     }
+    var adminIndexSource = [
+	"admin"
+    ].join("\n");
+    var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
+    var handleAdminLoginGetRequest = handleAdminLoginRequest;
+    var handleAdminLoginPostRequest = handleAdminLoginRequest;
     return [].concat(
 	this.dictToExactRouterList(
 	    {
 		"/admin": handleAdminIndexRequest,
-		"/admin/login": handleAdminLoginRequest
+		"/admin/login": this.methodRoutingResponder(
+		    {
+			"GET": handleAdminLoginGetRequest,
+			"POST": handleAdminLoginPostRequest
+		    }
+		)
 	    }
 	),
 	this.getHttpRouterList()
