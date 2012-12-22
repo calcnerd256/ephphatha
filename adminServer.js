@@ -233,34 +233,6 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
 AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     var index = "index";
     var that = this;
-    function stepper(dictionary){
-	return that.dictionaryMap(
-	    dictionary,
-	    function(kv){
-		    var key = kv[0];
-		    var v = kv[1];
-		    var parent = v[0];
-		    if(parent == key)
-			return [key, ["error", "cycle"]];
-		    if(!(parent in dictionary)) return kv;
-		    par = dictionary[parent];
-		    return [
-			key,
-			[par[0], par[1] + "/" + v[1]]
-		    ];
-	    }
-	);
-    }
-    function terminator(dictionary){
-	for(var k in dictionary)
-	    if(dictionary[k][0] in dictionary)
-		if(
-		    "error" != k ||
-			"error" != dictionary[k][0]
-		)
-		    return false;
-	return true;
-    }
 
     var pathDictionary = {
 	"empty": [null, ""],
@@ -271,14 +243,43 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	"append": ["empty", "append"]
     };
 
+    function stepper(dictionary){
+	return that.dictionaryMap(
+	    dictionary,
+	    function(kv){
+		var key = kv[0];
+		var v = kv[1];
+		var parent = v[0];
+		if(parent == key)
+		    return [key, ["error", "cycle"]];
+		if(!(parent in dictionary)) return kv;
+		par = dictionary[parent];
+		return [
+		    key,
+		    [par[0], par[1] + "/" + v[1]]
+		];
+	    }
+	);
+    }
+    function terminator(dictionary){
+	for(var key in dictionary)
+	    if(dictionary[key][0] in dictionary)
+		if(
+		    "error" != key ||
+			"error" != dictionary[key][0]
+		)
+		    return false;
+	return true;
+    }
+
     while(!terminator(pathDictionary))
 	pathDictionary = stepper(pathDictionary);
     var paths = this.dictionaryMap(
 	pathDictionary,
 	function(kv){
-		var k = kv[0];
-		var v = kv[1];
-		return [k, v[1]];
+	    var k = kv[0];
+	    var v = kv[1];
+	    return [k, v[1]];
 	}
     );
 
