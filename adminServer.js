@@ -409,11 +409,24 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	"</HTML>",
 	""
     ].join("\n");
-    var adminLoginSource = "login";
+    var adminLoginSource = [
+	"<HTML>",
+	" <HEAD>",
+	" </HEAD>",
+	" <BODY>",
+	"  log in",
+	"  <FORM METHOD=\"POST\">",
+	"   <INPUT TYPE=\"submit\"></INPUT>",
+	"  </FORM>",
+	" </BODY>",
+	"</HTML>",
+	""
+    ].join("\n");
     var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
-    var handleAdminLoginRequest = this.constantResponder(adminLoginSource);
-    var handleAdminLoginGetRequest = handleAdminLoginRequest;
-    var handleAdminLoginPostRequest = handleAdminLoginRequest;
+    var handleAdminLoginGetRequest = this.constantResponder(adminLoginSource);
+    function handleAdminLoginPostRequest(req, res){
+	res.end("login POST attempt");
+    }
     var routingDictionary = {
 	"/admin": handleAdminIndexRequest,
     };
