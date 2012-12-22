@@ -84,13 +84,13 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
     };
 }
 
-function getServerPerProtocol(prot){
+AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol(prot){
     var server = new Server.Server();
     server.routes = this["getHttp" + (("HTTPS" == prot) ? "s" : "") + "RouterList"]();
     return server;
 }
 
-function makeRouter(matcher, responder){
+AdminStringServer.prototype.makeRouter = function makeRouter(matcher, responder){
     var result = function router(request){
 	if(matcher(request)) return responder;
     }
@@ -99,7 +99,7 @@ function makeRouter(matcher, responder){
     return result;
 }
 
-function makeUrlMatcher(predicate){
+AdminStringServer.prototype.makeUrlMatcher = function makeUrlMatcher(predicate){
     var result = function urlMatcher(request){
 	return predicate(request.url);
     }
@@ -107,7 +107,7 @@ function makeUrlMatcher(predicate){
     return result;
 }
 
-function makeExactMatcher(path){
+AdminStringServer.prototype.makeExactMatcher = function makeExactMatcher(path){
     var result = this.makeUrlMatcher(
 	function(url){return url == path;}
     );
@@ -115,16 +115,16 @@ function makeExactMatcher(path){
     return result;
 }
 
-function dictToAlist(dictionary){
+AdminStringServer.prototype.dictToAlist = function dictToAlist(dictionary){
     var result = [];
     for(var k in dictionary)
 	result.push([k, dictionary[k]]);
     return result;
 }
 
-function alistToDict(alist, stacks){
-	    var result = {};
-	    alist.map(
+AdminStringServer.prototype.alistToDict = function alistToDict(alist, stacks){
+    var result = {};
+    alist.map(
 		stacks ?
 		    function(kv){
 			var k = kv[0];
@@ -138,41 +138,41 @@ function alistToDict(alist, stacks){
 		    if(k in result) return;
 		    result[k] = v;
 		}
-	    );
-	    return result;
+    );
+    return result;
 }
 
-function dictToExactRouterList(dictionary){
-	    var that = this;
-	    return this.dictToAlist(dictionary).map(
+AdminStringServer.prototype.dictToExactRouterList = function dictToExactRouterList(dictionary){
+    var that = this;
+    return this.dictToAlist(dictionary).map(
 		function(args){
 		    return that.makeRouter(
 			that.makeExactMatcher(args[0]),
 			args[1]
 		    );
 		}
-	    );
+    );
 }
 
-function constantResponder(str, mimetype){
-	    if(!mimetype) mimetype = "text/html";
-	    var result = function(req, res){
+AdminStringServer.prototype.constantResponder = function constantResponder(str, mimetype){
+    if(!mimetype) mimetype = "text/html";
+    var result = function(req, res){
 		if("text/plain" != mimetype)
 		    res.writeHead(200, {"Content-type": mimetype});
 		res.end(str);
-	    };
-	    result.str = str;
-	    result.mimetype = mimetype;
-	    return result;
+    };
+    result.str = str;
+    result.mimetype = mimetype;
+    return result;
 }
 
-function dictionaryMap(ob, fn){
-	    return this.alistToDict(this.dictToAlist(ob).map(fn));
+AdminStringServer.prototype.dictionaryMap = function dictionaryMap(ob, fn){
+    return this.alistToDict(this.dictToAlist(ob).map(fn));
 }
 
 function constantStaticRouterDict(d){
-	    var that = this;
-	    return this.dictionaryMap(
+    var that = this;
+    return this.dictionaryMap(
 		d,
 		function(kv){
 		    return [
@@ -180,37 +180,37 @@ function constantStaticRouterDict(d){
 			that.constantResponder(kv[1])
 		    ];
 		}
-	    );
+    );
 }
 
 function methodRoutingResponder(responders){
-	    var result = function(req, res){
+    var result = function(req, res){
 		if(req.method in responders)
 		    return responders[req.method](req, res);
 		//TODO: check if method is allowed at all for 501
 		res.writeHead(405, "This object doesn't support that method.");
 		res.end("no, you can't do that to this");
-	    }
-	    result.responders = responders;
-	    return result;
+    }
+    result.responders = responders;
+    return result;
 }
 
 function dictIndirect(keys, vals){
-	    return this.dictionaryMap(
+    return this.dictionaryMap(
 		vals,
 		function(kv){
 		    var k = kv[0];
 		    return [keys[k], vals[k]];
 		}
-	    );
+    );
 }
 
 function urlDecodeFormDataToAlist(str){
-	    return str.split(";").map(
+    return str.split(";").map(
 		function(s){
 		    return s.split("=");
 		}
-	    ).map(
+    ).map(
 		function(xs){
 		    k = xs.shift();
 		    return [
@@ -222,20 +222,20 @@ function urlDecodeFormDataToAlist(str){
 			}
 		    ).map(decodeURIComponent);
 		}
-	    );
+    );
 }
 
 function getHttpRouterList(){
     var index = "index";
     var that = this;
     var paths = (
-		function(stepper, terminator, terminate, d){
-		    while(!terminator(d))
-			d = stepper(d);
-		    return terminate(d);
-		}
+	function(stepper, terminator, terminate, d){
+	    while(!terminator(d))
+		d = stepper(d);
+	    return terminate(d);
+	}
     )(
-		function(d){
+	function(d){
 		    return that.dictionaryMap(
 			d,
 			function(kv){
@@ -252,8 +252,8 @@ function getHttpRouterList(){
 			    ];
 			}
 		    );
-		},
-		function(d){
+	},
+	function(d){
 		    for(var k in d)
 			if(d[k][0] in d)
 			    if(
@@ -262,26 +262,26 @@ function getHttpRouterList(){
 			    )
 				return false;
 		    return true;
-		},
-		function(d){
+	},
+	function(d){
 		    return that.dictionaryMap(
 			d,
 			function(kv){
 			    return [kv[0], kv[1][1]];
 			}
 		    );
-		},
-		{
+	},
+	{
 		    "empty": [null, ""],
 		    "root": ["empty", ""],
 		    "index": ["empty", "index"],
 		    "indexhtml": ["empty", "index.html"],
 		    "favicon": ["empty", "favicon.ico"],
 		    "append": ["empty", "append"]
-		}
+	}
     );
     return [].concat(// early binding is bad :(
-		this.dictToExactRouterList(
+	this.dictToExactRouterList(
 		    this.constantStaticRouterDict(
 			this.dictIndirect(
 			    paths,
@@ -292,8 +292,8 @@ function getHttpRouterList(){
 			    }
 			)
 		    )
-		),
-		this.dictToExactRouterList(
+	),
+	this.dictToExactRouterList(
 		    this.dictIndirect(
 			paths,
 			{
@@ -336,39 +336,30 @@ function getHttpRouterList(){
 			    )
 			}
 		    )
-		),
-		[
-		],
-		[]
+	),
+	[
+	],
+	[]
     );
 }
 
 function getHttpsRouterList(){
-	    return [].concat(
-		this.dictToExactRouterList(
-		    {
-			"/admin": function(req, res){
-			    res.end("admin");
-			},
-			"/admin/login": function(req, res){
-			    res.end("login");
-			}
-		    }
-		),
-		this.getHttpRouterList()
-	    );
+    return [].concat(
+	this.dictToExactRouterList(
+	    {
+		"/admin": function(req, res){
+		    res.end("admin");
+		},
+		"/admin/login": function(req, res){
+		    res.end("login");
+		}
+	    }
+	),
+	this.getHttpRouterList()
+    );
 }
 
 var AdminStringServerPrototypePatch = {
-    "getServerPerProtocol": getServerPerProtocol,
-    "makeRouter": makeRouter,
-    "makeUrlMatcher": makeUrlMatcher,
-    "makeExactMatcher": makeExactMatcher,
-    "dictToAlist": dictToAlist,
-    "alistToDict": alistToDict,
-    "dictToExactRouterList": dictToExactRouterList,
-    "constantResponder": constantResponder,
-    "dictionaryMap": dictionaryMap,
     "constantStaticRouterDict": constantStaticRouterDict,
     "methodRoutingResponder": methodRoutingResponder,
     "dictIndirect": dictIndirect,
