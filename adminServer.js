@@ -396,12 +396,15 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     var that = this;
+    var adminLoginUrl = "/admin/login";
     var adminIndexSource = [
 	"<HTML>",
 	" <HEAD>",
 	" </HEAD>",
 	" <BODY>",
 	"  admin",
+	"  <BR />",
+	"  <A HREF=\"" + adminLoginUrl + "\">log in</A>",
 	" </BODY>",
 	"</HTML>",
 	""
@@ -413,13 +416,13 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     var handleAdminLoginPostRequest = handleAdminLoginRequest;
     var routingDictionary = {
 		"/admin": handleAdminIndexRequest,
-		"/admin/login": this.methodRoutingResponder(
+    };
+    routingDictionary[adminLoginUrl] = this.methodRoutingResponder(
 		    {
 			"GET": handleAdminLoginGetRequest,
 			"POST": handleAdminLoginPostRequest
 		    }
-		)
-    }
+    );
     return [].concat(
 	this.dictToExactRouterList(routingDictionary),
 	this.getHttpRouterList(),
