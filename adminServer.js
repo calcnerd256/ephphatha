@@ -396,19 +396,22 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     var that = this;
-    function handleAdminLoginRequest(req, res){
-	//TODO handle GET and POST
-	res.end("login");
-    }
     var adminIndexSource = [
-	"admin"
+	"<HTML>",
+	" <HEAD>",
+	" </HEAD>",
+	" <BODY>",
+	"  admin",
+	" </BODY>",
+	"</HTML>",
+	""
     ].join("\n");
+    var adminLoginSource = "login";
     var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
+    var handleAdminLoginRequest = this.constantResponder(adminLoginSource);
     var handleAdminLoginGetRequest = handleAdminLoginRequest;
     var handleAdminLoginPostRequest = handleAdminLoginRequest;
-    return [].concat(
-	this.dictToExactRouterList(
-	    {
+    var routingDictionary = {
 		"/admin": handleAdminIndexRequest,
 		"/admin/login": this.methodRoutingResponder(
 		    {
@@ -416,9 +419,11 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 			"POST": handleAdminLoginPostRequest
 		    }
 		)
-	    }
-	),
-	this.getHttpRouterList()
+    }
+    return [].concat(
+	this.dictToExactRouterList(routingDictionary),
+	this.getHttpRouterList(),
+	[]
     );
 }
 
