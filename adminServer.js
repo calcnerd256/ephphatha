@@ -225,21 +225,7 @@ function urlDecodeFormDataToAlist(str){
 	    );
 }
 
-var AdminStringServerPrototypePatch = {
-    "getServerPerProtocol": getServerPerProtocol,
-    "makeRouter": makeRouter,
-    "makeUrlMatcher": makeUrlMatcher,
-    "makeExactMatcher": makeExactMatcher,
-    "dictToAlist": dictToAlist,
-    "alistToDict": alistToDict,
-    "dictToExactRouterList": dictToExactRouterList,
-    "constantResponder": constantResponder,
-    "dictionaryMap": dictionaryMap,
-    "constantStaticRouterDict": constantStaticRouterDict,
-    "methodRoutingResponder": methodRoutingResponder,
-    "dictIndirect": dictIndirect,
-    "urlDecodeFormDataToAlist": urlDecodeFormDataToAlist,
-    "getHttpRouterList": function getHttpRouterList(){
+function getHttpRouterList(){
 	    var index = "index";
 	    var that = this;
 	    var paths = (
@@ -355,7 +341,23 @@ var AdminStringServerPrototypePatch = {
 		],
 		[]
 	    );
-    },
+}
+
+var AdminStringServerPrototypePatch = {
+    "getServerPerProtocol": getServerPerProtocol,
+    "makeRouter": makeRouter,
+    "makeUrlMatcher": makeUrlMatcher,
+    "makeExactMatcher": makeExactMatcher,
+    "dictToAlist": dictToAlist,
+    "alistToDict": alistToDict,
+    "dictToExactRouterList": dictToExactRouterList,
+    "constantResponder": constantResponder,
+    "dictionaryMap": dictionaryMap,
+    "constantStaticRouterDict": constantStaticRouterDict,
+    "methodRoutingResponder": methodRoutingResponder,
+    "dictIndirect": dictIndirect,
+    "urlDecodeFormDataToAlist": urlDecodeFormDataToAlist,
+    "getHttpRouterList": getHttpRouterList,
     "getHttpsRouterList": function getHttpsRouterList(){
 	    return [].concat(
 		this.dictToExactRouterList(
