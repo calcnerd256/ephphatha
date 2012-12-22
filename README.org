@@ -1,6 +1,21 @@
 * εφφαθα
 Be ye opened.
 
+** Setup
+Install NodeJS first, then check out this repository.
+Within this repo, either install OpenSSL and run
+: ./certs.sh
+or create your SSL certificates manually.
+You'll need a directory called
+: ./certs
+and a key PEM in
+: ./certs/ephphatha.key
+and a certificate PEM in
+: .certs/ephphatha.cert
+Then, all you need to do is run
+: node serve.js
+and point your browser at https://localhost:15214/
+From there, everything should be discoverable by following hyperlinks.
 * unsorted
 Apologies to anyone trying to read this.
 I use org-mode wrong, and I'm not going to change soon.
