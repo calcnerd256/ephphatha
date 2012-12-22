@@ -231,7 +231,9 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
 }
 
 AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
-    var index = "index";
+    var index = [
+	"index"
+    ].join("\n");
     var that = this;
 
     var pathDictionary = {
