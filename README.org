@@ -14,7 +14,8 @@ and a certificate PEM in
 : .certs/ephphatha.cert
 Then, all you need to do is run
 : node serve.js
-and point your browser at https://localhost:15214/
+and point your browser at [[https://localhost:15214/]]
+and calm your browser's complaints about the self-signed certificate.
 From there, everything should be discoverable by following hyperlinks.
 * unsorted
 Apologies to anyone trying to read this.
