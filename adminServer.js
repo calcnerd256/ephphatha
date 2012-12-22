@@ -234,7 +234,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     var index = "index";
     var that = this;
     function stepper(d){
-	    return that.dictionaryMap(
+	return that.dictionaryMap(
 		d,
 		function(kv){
 		    var k = kv[0];
@@ -249,48 +249,45 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 			[par[0], par[1] + "/" + v[1]]
 		    ];
 		}
-	    );
+	);
     }
     function terminator(d){
-	    for(var k in d)
-		if(d[k][0] in d)
-		    if(
+	for(var k in d)
+	    if(d[k][0] in d)
+		if(
 			"error" != k ||
 			    "error" != d[k][0]
-		    )
-			return false;
-	    return true;
+		)
+		    return false;
+	return true;
     }
     function terminate(d){
-	    return that.dictionaryMap(
+	return that.dictionaryMap(
 		d,
 		function(kv){
 		    return [kv[0], kv[1][1]];
 		}
-	    );
+	);
     }
     var pathDictionary = {
-	    "empty": [null, ""],
-	    "root": ["empty", ""],
-	    "index": ["empty", "index"],
-	    "indexhtml": ["empty", "index.html"],
-	    "favicon": ["empty", "favicon.ico"],
-	    "append": ["empty", "append"]
+	"empty": [null, ""],
+	"root": ["empty", ""],
+	"index": ["empty", "index"],
+	"indexhtml": ["empty", "index.html"],
+	"favicon": ["empty", "favicon.ico"],
+	"append": ["empty", "append"]
     };
     var paths = (
-	function reduceLoop(stepper, terminator, terminate, d){
+	function reduceLoop(d){
 	    while(!terminator(d))
 		d = stepper(d);
 	    return terminate(d);
 	}
     )(
-	stepper,
-	terminator,
-	terminate,
 	pathDictionary
     );
     var constantStaticRouters = this.dictToExactRouterList(
-	    this.constantStaticRouterDict(
+	this.constantStaticRouterDict(
 		this.dictIndirect(
 		    paths,
 		    {
@@ -299,27 +296,27 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 			indexhtml: index
 		    }
 		)
-	    )
+	)
     );
     var moreRouters = this.dictToExactRouterList(
-	    this.dictIndirect(
-		paths,
-		{
-		    favicon: function(req, res){
+	this.dictIndirect(
+	    paths,
+	    {
+		favicon: function(req, res){
 			res.writeHead(404, "no favicon yet");
 			res.end("go away");
-		    },
-		    append: this.methodRoutingResponder(
-			{
-			    "GET": this.constantResponder(
+		},
+		append: this.methodRoutingResponder(
+		    {
+			"GET": this.constantResponder(
 				[
 				    "<FORM METHOD=\"POST\">",
 				    " <TEXTAREA NAME=\"string\"></TEXTAREA>",
 				    " <INPUT TYPE=\"SUBMIT\"></INPUT>",
 				    "</FORM>"
 				].join("\n")
-			    ),
-			    POST: function(req, res){
+			),
+			POST: function(req, res){
 				var data = [];
 				req.on("data", function(chunk){data.push(chunk)});
 				req.on(
@@ -339,11 +336,11 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 					res.end("POST successful: \n" + string);
 				    }
 				);
-			    }
 			}
-		    )
-		}
-	    )
+		    }
+		)
+	    }
+	)
     );
     return [].concat(// early binding is bad :(
 	constantStaticRouters,
@@ -356,10 +353,10 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     function handleAdminIndexRequest(req, res){
-		    res.end("admin");
+	res.end("admin");
     }
     function handleAdminLoginRequest(req, res){
-		    res.end("login");
+	res.end("login");
     }
     return [].concat(
 	this.dictToExactRouterList(
