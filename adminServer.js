@@ -73,7 +73,7 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
 	    "setPort",
 	    securePort
 	).init(
-	    function(responder){
+	    function createHttpsServerClosure(responder){
 		return https.createServer(
 		    httpsOptions,
 		    responder
@@ -137,12 +137,12 @@ AdminStringServer.prototype.alistToDict = function alistToDict(alist, stacks){
 		if(!(k in result)) result[k] = [];
 		result[k].push(v);
 	    } :
-	function(kv){
-	    var k = kv[0];
-	    var v = kv[1];
-	    if(k in result) return;
-	    result[k] = v;
-	}
+	    function(kv){
+		var k = kv[0];
+		var v = kv[1];
+		if(k in result) return;
+		result[k] = v;
+	    }
     );
     return result;
 }
@@ -234,13 +234,13 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     var index = "index";
     var that = this;
     var paths = (
-	function(stepper, terminator, terminate, d){
+	function reduceLoop(stepper, terminator, terminate, d){
 	    while(!terminator(d))
 		d = stepper(d);
 	    return terminate(d);
 	}
     )(
-	function(d){
+	function stepper(d){
 	    return that.dictionaryMap(
 		d,
 		function(kv){
@@ -258,7 +258,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		}
 	    );
 	},
-	function(d){
+	function terminator(d){
 	    for(var k in d)
 		if(d[k][0] in d)
 		    if(
@@ -268,7 +268,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 			return false;
 	    return true;
 	},
-	function(d){
+	function terminate(d){
 	    return that.dictionaryMap(
 		d,
 		function(kv){
@@ -352,10 +352,10 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     return [].concat(
 	this.dictToExactRouterList(
 	    {
-		"/admin": function(req, res){
+		"/admin": function handleAdminIndexRequest(req, res){
 		    res.end("admin");
 		},
-		"/admin/login": function(req, res){
+		"/admin/login": function handleAdminLoginRequest(req, res){
 		    res.end("login");
 		}
 	    }
