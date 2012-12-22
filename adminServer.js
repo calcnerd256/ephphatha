@@ -256,7 +256,10 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		par = dictionary[parent];
 		return [
 		    key,
-		    [par[0], par[1] + "/" + value[1]]
+		    [
+			par[0],
+			par[1] + "/" + value[1]
+		    ]
 		];
 	    }
 	);
@@ -296,48 +299,49 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	)
     );
     var handleAppendGet = this.constantResponder(
-			    [
-				"<FORM METHOD=\"POST\">",
-				" <TEXTAREA NAME=\"string\"></TEXTAREA>",
-				" <INPUT TYPE=\"SUBMIT\"></INPUT>",
-				"</FORM>"
-			    ].join("\n")
+	[
+	    "<FORM METHOD=\"POST\">",
+	    " <TEXTAREA NAME=\"string\"></TEXTAREA>",
+	    " <INPUT TYPE=\"SUBMIT\"></INPUT>",
+	    "</FORM>"
+	].join("\n")
     );
     var handleAppendPost = function handleAppendPost(req, res){
-			    var data = [];
-			    req.on("data", function(chunk){data.push(chunk)});
-			    req.on(
-				"end",
-				function(){
-				    //TODO: don't buffer the whole thing like that
-				    var input = data.join("");
-				    var alist = that.urlDecodeFormDataToAlist(input);
-				    var dict = that.alistToDict(alist);
-				    if(!("string" in dict)){
-					res.end("bad POST attempt");
-					return;
-				    }
-				    var string = dict.string;
-				    that.appendString(string);
-				    res.writeHead(200, {"Content-type": "text/plain"});
-				    res.end("POST successful: \n" + string);
-				}
-			    );
+	var data = [];
+	req.on("data", function(chunk){data.push(chunk)});
+	req.on(
+	    "end",
+	    function(){
+		//TODO: don't buffer the whole thing like that
+		var input = data.join("");
+		var alist = that.urlDecodeFormDataToAlist(input);
+		var dict = that.alistToDict(alist);
+		if(!("string" in dict)){
+		    res.end("bad POST attempt");
+		    return;
+		}
+		var string = dict.string;
+		that.appendString(string);
+		res.writeHead(200, {"Content-type": "text/plain"});
+		res.end("POST successful: \n" + string);
+	    }
+	);
     }
-    var moreRouters = this.dictToExactRouterList(
-	this.dictIndirect(
-	    paths,
-	    {
-		favicon: function(req, res){
-		    res.writeHead(404, "no favicon yet");
-		    res.end("go away");
-		},
-		append: this.methodRoutingResponder(
+    var handleAppendRequest = this.methodRoutingResponder(
 		    {
 			"GET": handleAppendGet,
 			POST: handleAppendPost
 		    }
-		)
+    );
+    var moreRouters = this.dictToExactRouterList(
+	this.dictIndirect(
+	    paths,
+	    {
+		favicon: function handleFaviconRequest(req, res){
+		    res.writeHead(404, "no favicon yet");
+		    res.end("go away");
+		},
+		append: handleAppendRequest
 	    }
 	)
     );
