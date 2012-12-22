@@ -6,26 +6,30 @@ function AdminStringServer(){
     this.strings = [];
     this.adminTokens = {};
 }
-(function(s, d){for(var k in d)s[k] = d[k];})(
-    AdminStringServer.prototype,
-    {
-	"appendString": function(str){
+function patch(destination, source){
+    for(var key in source)
+	destination[key] = source[key];
+}
+
+
+var AdminStringServerPrototypePatch = {
+	"appendString": function appendString(str){
 	    this.strings.push(str);
 	},
-	"isAdminSession": function(req){
+	"isAdminSession": function isAdminSession(req){
 	    return false;
 	},
-	"createAdminToken": function(){
+	"createAdminToken": function createAdminToken(){
 	    return "no";
 	    var token = "no";
 	    //TODO: generate a cryptographically secure random string
 	    this.adminTokens[token] = "active";
 	    return token;
 	},
-	"expireAdminTokens": function(){
+	"expireAdminTokens": function expireAdminTokens(){
 	    this.adminTokens = {};
 	},
-	"init": function(port, securePort, httpsOptions, callback){
+	"init": function init(port, securePort, httpsOptions, callback){
 	    var outstanding = 2;
 	    function eachBack(){
 		if(!--outstanding)
@@ -77,12 +81,12 @@ function AdminStringServer(){
 		callOnce(eachBack)()
 	    };
 	},
-	"getServerPerProtocol": function(prot){
+	"getServerPerProtocol": function getServerPerProtocol(prot){
 	    var server = new Server.Server();
 	    server.routes = this["getHttp" + (("HTTPS" == prot) ? "s" : "") + "RouterList"]();
 	    return server;
 	},
-	"makeRouter": function(matcher, responder){
+	"makeRouter": function makeRouter(matcher, responder){
 	    var result = function router(request){
 		if(matcher(request)) return responder;
 	    }
@@ -90,27 +94,27 @@ function AdminStringServer(){
 	    result.responder = responder;
 	    return result;
 	},
-	"makeUrlMatcher": function(predicate){
+	"makeUrlMatcher": function makeUrlMatcher(predicate){
 	    var result = function urlMatcher(request){
 		return predicate(request.url);
 	    }
 	    result.predicate = predicate;
 	    return result;
 	},
-	"makeExactMatcher": function(path){
+	"makeExactMatcher": function makeExactMatcher(path){
 	    var result = this.makeUrlMatcher(
 		function(url){return url == path;}
 	    );
 	    result.path = path;
 	    return result;
 	},
-	"dictToAlist": function(dictionary){
+	"dictToAlist": function dictToAlist(dictionary){
 	    var result = [];
 	    for(var k in dictionary)
 		result.push([k, dictionary[k]]);
 	    return result;
 	},
-	"alistToDict": function(alist, stacks){
+	"alistToDict": function alistToDict(alist, stacks){
 	    var result = {};
 	    alist.map(
 		stacks ?
@@ -129,7 +133,7 @@ function AdminStringServer(){
 	    );
 	    return result;
 	},
-	"dictToExactRouterList": function(dictionary){
+	"dictToExactRouterList": function dictToExactRouterList(dictionary){
 	    var that = this;
 	    return this.dictToAlist(dictionary).map(
 		function(args){
@@ -140,7 +144,7 @@ function AdminStringServer(){
 		}
 	    );
 	},
-	"constantResponder": function(str, mimetype){
+	"constantResponder": function constantResponder(str, mimetype){
 	    if(!mimetype) mimetype = "text/html";
 	    var result = function(req, res){
 		if("text/plain" != mimetype)
@@ -151,10 +155,10 @@ function AdminStringServer(){
 	    result.mimetype = mimetype;
 	    return result;
 	},
-	"dictionaryMap": function(ob, fn){
+	"dictionaryMap": function dictionaryMap(ob, fn){
 	    return this.alistToDict(this.dictToAlist(ob).map(fn));
 	},
-	"constantStaticRouterDict": function(d){
+	"constantStaticRouterDict": function constantStaticRouterDict(d){
 	    var that = this;
 	    return this.dictionaryMap(
 		d,
@@ -166,7 +170,7 @@ function AdminStringServer(){
 		}
 	    );
 	},
-	"methodRoutingResponder": function(responders){
+	"methodRoutingResponder": function methodRoutingResponder(responders){
 	    var result = function(req, res){
 		if(req.method in responders)
 		    return responders[req.method](req, res);
@@ -177,7 +181,7 @@ function AdminStringServer(){
 	    result.responders = responders;
 	    return result;
 	},
-	"dictIndirect": function(keys, vals){
+	"dictIndirect": function dictIndirect(keys, vals){
 	    return this.dictionaryMap(
 		vals,
 		function(kv){
@@ -186,7 +190,7 @@ function AdminStringServer(){
 		}
 	    );
 	},
-	"urlDecodeFormDataToAlist": function(str){
+	"urlDecodeFormDataToAlist": function urlDecodeFormDataToAlist(str){
 	    return str.split(";").map(
 		function(s){
 		    return s.split("=");
@@ -205,7 +209,7 @@ function AdminStringServer(){
 		}
 	    );
 	},
-	"getHttpRouterList": function(){
+	"getHttpRouterList": function getHttpRouterList(){
 	    var index = "index";
 	    var that = this;
 	    var paths = (
@@ -322,7 +326,7 @@ function AdminStringServer(){
 		[]
 	    );
 	},
-	"getHttpsRouterList": function(){
+	"getHttpsRouterList": function getHttpsRouterList(){
 	    return [].concat(
 		this.dictToExactRouterList(
 		    {
@@ -337,6 +341,10 @@ function AdminStringServer(){
 		this.getHttpRouterList()
 	    );
 	}
-    }
+}
+
+patch(
+    AdminStringServer.prototype,
+    AdminStringServerPrototypePatch
 );
 this.AdminStringServer = AdminStringServer;
