@@ -11,7 +11,7 @@ function patch(destination, source){
 	destination[key] = source[key];
 }
 
-function appendString(str){
+AdminStringServer.prototype.appendString = function appendString(str){
     this.strings.push(str);
 }
 function isAdminSession(req){
@@ -28,18 +28,13 @@ function expireAdminTokens(){
     this.adminTokens = {};
 }
 
-var AdminStringServerPrototypePatch = {
-    "appendString": appendString,
-    "isAdminSession": isAdminSession,
-    "createAdminToken":createAdminToken,
-    "expireAdminTokens": expireAdminTokens,
-	"init": function init(port, securePort, httpsOptions, callback){
-	    var outstanding = 2;
-	    function eachBack(){
+function init(port, securePort, httpsOptions, callback){
+    var outstanding = 2;
+    function eachBack(){
 		if(!--outstanding)
 		    return callback.apply(this, arguments);
-	    }
-	    function callOnce(fn, noisy){
+    }
+    function callOnce(fn, noisy){
 		return function vapor(){
 		    var result = fn.apply(this, arguments);
 		    fn = function(){
@@ -48,18 +43,18 @@ var AdminStringServerPrototypePatch = {
 		    };
 		    return result;
 		};
-	    }
-	    function fluentCall(ob){
+    }
+    function fluentCall(ob){
 		var args = [].slice.call(arguments, 1);
 		this.apply(ob, args);
 		return ob;
-	    }
-	    function fluentKeyCall(ob, key){
+    }
+    function fluentKeyCall(ob, key){
 		var args = [].slice.call(arguments, 2);
 		args.unshift(ob);
 		return fluentCall.apply(ob[key], args);
-	    }
-	    return this.servers = {
+    }
+    return this.servers = {
 		http: fluentKeyCall(
 		    this.getServerPerProtocol("HTTP"),
 		    "setPort",
@@ -83,41 +78,57 @@ var AdminStringServerPrototypePatch = {
 			callOnce(eachBack)
 		    ) :
 		callOnce(eachBack)()
-	    };
-	},
-	"getServerPerProtocol": function getServerPerProtocol(prot){
-	    var server = new Server.Server();
-	    server.routes = this["getHttp" + (("HTTPS" == prot) ? "s" : "") + "RouterList"]();
-	    return server;
-	},
-	"makeRouter": function makeRouter(matcher, responder){
-	    var result = function router(request){
-		if(matcher(request)) return responder;
-	    }
-	    result.matcher = matcher;
-	    result.responder = responder;
-	    return result;
-	},
-	"makeUrlMatcher": function makeUrlMatcher(predicate){
+    };
+}
+
+function getServerPerProtocol(prot){
+    var server = new Server.Server();
+    server.routes = this["getHttp" + (("HTTPS" == prot) ? "s" : "") + "RouterList"]();
+    return server;
+}
+
+function makeRouter(matcher, responder){
+    var result = function router(request){
+	if(matcher(request)) return responder;
+    }
+    result.matcher = matcher;
+    result.responder = responder;
+    return result;
+}
+
+function makeUrlMatcher(predicate){
 	    var result = function urlMatcher(request){
 		return predicate(request.url);
 	    }
 	    result.predicate = predicate;
 	    return result;
-	},
-	"makeExactMatcher": function makeExactMatcher(path){
+}
+
+function makeExactMatcher(path){
 	    var result = this.makeUrlMatcher(
 		function(url){return url == path;}
 	    );
 	    result.path = path;
 	    return result;
-	},
-	"dictToAlist": function dictToAlist(dictionary){
+}
+
+function dictToAlist(dictionary){
 	    var result = [];
 	    for(var k in dictionary)
 		result.push([k, dictionary[k]]);
 	    return result;
-	},
+}
+
+var AdminStringServerPrototypePatch = {
+    "isAdminSession": isAdminSession,
+    "createAdminToken":createAdminToken,
+    "expireAdminTokens": expireAdminTokens,
+    "init": init,
+    "getServerPerProtocol": getServerPerProtocol,
+    "makeRouter": makeRouter,
+    "makeUrlMatcher": makeUrlMatcher,
+    "makeExactMatcher": makeExactMatcher,
+    "dictToAlist": dictToAlist,
 	"alistToDict": function alistToDict(alist, stacks){
 	    var result = {};
 	    alist.map(
