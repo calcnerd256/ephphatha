@@ -248,15 +248,15 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	    dictionary,
 	    function(kv){
 		var key = kv[0];
-		var v = kv[1];
-		var parent = v[0];
+		var value = kv[1];
+		var parent = value[0];
 		if(parent == key)
 		    return [key, ["error", "cycle"]];
 		if(!(parent in dictionary)) return kv;
 		par = dictionary[parent];
 		return [
 		    key,
-		    [par[0], par[1] + "/" + v[1]]
+		    [par[0], par[1] + "/" + value[1]]
 		];
 	    }
 	);
@@ -277,9 +277,9 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     var paths = this.dictionaryMap(
 	pathDictionary,
 	function(kv){
-	    var k = kv[0];
-	    var v = kv[1];
-	    return [k, v[1]];
+	    var key = kv[0];
+	    var value = kv[1];
+	    return [key, value[1]];
 	}
     );
 
@@ -295,25 +295,15 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	    )
 	)
     );
-    var moreRouters = this.dictToExactRouterList(
-	this.dictIndirect(
-	    paths,
-	    {
-		favicon: function(req, res){
-		    res.writeHead(404, "no favicon yet");
-		    res.end("go away");
-		},
-		append: this.methodRoutingResponder(
-		    {
-			"GET": this.constantResponder(
+    var handleAppendGet = this.constantResponder(
 			    [
 				"<FORM METHOD=\"POST\">",
 				" <TEXTAREA NAME=\"string\"></TEXTAREA>",
 				" <INPUT TYPE=\"SUBMIT\"></INPUT>",
 				"</FORM>"
 			    ].join("\n")
-			),
-			POST: function(req, res){
+    );
+    var handleAppendPost = function handleAppendPost(req, res){
 			    var data = [];
 			    req.on("data", function(chunk){data.push(chunk)});
 			    req.on(
@@ -333,7 +323,19 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 				    res.end("POST successful: \n" + string);
 				}
 			    );
-			}
+    }
+    var moreRouters = this.dictToExactRouterList(
+	this.dictIndirect(
+	    paths,
+	    {
+		favicon: function(req, res){
+		    res.writeHead(404, "no favicon yet");
+		    res.end("go away");
+		},
+		append: this.methodRoutingResponder(
+		    {
+			"GET": handleAppendGet,
+			POST: handleAppendPost
 		    }
 		)
 	    }
