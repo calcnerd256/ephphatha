@@ -28,24 +28,24 @@ AdminStringServer.prototype.expireAdminTokens = function expireAdminTokens(){
 }
 
 function callOnce(fn, noisy){
-	return function vapor(){
-	    var result = fn.apply(this, arguments);
-	    fn = function(){
-		if(noisy)
-		    throw new Error("attempted to call a once-only function multiple times");
-	    };
-	    return result;
+    return function vapor(){
+	var result = fn.apply(this, arguments);
+	fn = function(){
+	    if(noisy)
+		throw new Error("attempted to call a once-only function multiple times");
 	};
+	return result;
+    };
 }
 function fluentCall(ob){
-	var args = [].slice.call(arguments, 1);
-	this.apply(ob, args);
-	return ob;
+    var args = [].slice.call(arguments, 1);
+    this.apply(ob, args);
+    return ob;
 }
 function fluentKeyCall(ob, key){
-	var args = [].slice.call(arguments, 2);
-	args.unshift(ob);
-	return fluentCall.apply(ob[key], args);
+    var args = [].slice.call(arguments, 2);
+    args.unshift(ob);
+    return fluentCall.apply(ob[key], args);
 }
 
 
@@ -57,28 +57,30 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
 	    return callback.apply(this, arguments);
     }
     var httpServer = fluentKeyCall(
-	    this.getServerPerProtocol("HTTP"),
+	this.getServerPerProtocol("HTTP"),
+	"setPort",
+	port
+    ).init(
+	http.createServer,
+	callOnce(eachBack)
+    );
+    var httpsBack = callOnce(eachBack)
+    var httpsServer;
+    httpsServer = httpsOptions ?
+	fluentKeyCall(
+	    this.getServerPerProtocol("HTTPS"),
 	    "setPort",
-	    port
+	    securePort
 	).init(
-	    http.createServer,
-	    callOnce(eachBack)
-	);
-    var httpsServer = httpsOptions ?
-	    fluentKeyCall(
-		this.getServerPerProtocol("HTTPS"),
-		"setPort",
-		securePort
-	    ).init(
-		function(responder){
-		    return https.createServer(
-			httpsOptions,
-			responder
-		    );
-		},
-		callOnce(eachBack)
-	    ) :
-	callOnce(eachBack)()
+	    function(responder){
+		return https.createServer(
+		    httpsOptions,
+		    responder
+		);
+	    },
+	    httpsBack
+	) :
+        httpsBack()
     this.servers = {
 	http: httpServer,
 	https: httpsServer
