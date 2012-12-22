@@ -64,10 +64,11 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
 	http.createServer,
 	callOnce(eachBack)
     );
-    var httpsBack = callOnce(eachBack)
+    var httpsBack = callOnce(eachBack);
     var httpsServer;
-    httpsServer = httpsOptions ?
-	fluentKeyCall(
+    if(!httpsOptions) httpsServer = httpsBack();
+    else
+	httpsServer = fluentKeyCall(
 	    this.getServerPerProtocol("HTTPS"),
 	    "setPort",
 	    securePort
@@ -79,8 +80,8 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
 		);
 	    },
 	    httpsBack
-	) :
-        httpsBack()
+	);
+
     this.servers = {
 	http: httpServer,
 	https: httpsServer
