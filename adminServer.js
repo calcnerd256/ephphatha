@@ -233,14 +233,7 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
 AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     var index = "index";
     var that = this;
-    var paths = (
-	function reduceLoop(stepper, terminator, terminate, d){
-	    while(!terminator(d))
-		d = stepper(d);
-	    return terminate(d);
-	}
-    )(
-	function stepper(d){
+    function stepper(d){
 	    return that.dictionaryMap(
 		d,
 		function(kv){
@@ -257,8 +250,8 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		    ];
 		}
 	    );
-	},
-	function terminator(d){
+    }
+    function terminator(d){
 	    for(var k in d)
 		if(d[k][0] in d)
 		    if(
@@ -267,26 +260,36 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		    )
 			return false;
 	    return true;
-	},
-	function terminate(d){
+    }
+    function terminate(d){
 	    return that.dictionaryMap(
 		d,
 		function(kv){
 		    return [kv[0], kv[1][1]];
 		}
 	    );
-	},
-	{
+    }
+    var pathDictionary = {
 	    "empty": [null, ""],
 	    "root": ["empty", ""],
 	    "index": ["empty", "index"],
 	    "indexhtml": ["empty", "index.html"],
 	    "favicon": ["empty", "favicon.ico"],
 	    "append": ["empty", "append"]
+    };
+    var paths = (
+	function reduceLoop(stepper, terminator, terminate, d){
+	    while(!terminator(d))
+		d = stepper(d);
+	    return terminate(d);
 	}
+    )(
+	stepper,
+	terminator,
+	terminate,
+	pathDictionary
     );
-    return [].concat(// early binding is bad :(
-	this.dictToExactRouterList(
+    var constantStaticRouters = this.dictToExactRouterList(
 	    this.constantStaticRouterDict(
 		this.dictIndirect(
 		    paths,
@@ -297,8 +300,8 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		    }
 		)
 	    )
-	),
-	this.dictToExactRouterList(
+    );
+    var moreRouters = this.dictToExactRouterList(
 	    this.dictIndirect(
 		paths,
 		{
@@ -341,7 +344,10 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		    )
 		}
 	    )
-	),
+    );
+    return [].concat(// early binding is bad :(
+	constantStaticRouters,
+	moreRouters,
 	[
 	],
 	[]
@@ -349,15 +355,17 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 }
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
+    function handleAdminIndexRequest(req, res){
+		    res.end("admin");
+    }
+    function handleAdminLoginRequest(req, res){
+		    res.end("login");
+    }
     return [].concat(
 	this.dictToExactRouterList(
 	    {
-		"/admin": function handleAdminIndexRequest(req, res){
-		    res.end("admin");
-		},
-		"/admin/login": function handleAdminLoginRequest(req, res){
-		    res.end("login");
-		}
+		"/admin": handleAdminIndexRequest,
+		"/admin/login": handleAdminLoginRequest
 	    }
 	),
 	this.getHttpRouterList()
