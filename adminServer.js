@@ -2,6 +2,7 @@ var Server = require("./server");
 var http = require("http");
 var https = require("https");
 var crypto = require("crypto");
+var FormStream = require("form_stream").FormStream;
 
 function AdminStringServer(){
     this.strings = [];
@@ -342,28 +343,38 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	].join("\n")
     );
     var handleAppendPost = function handleAppendPost(req, res){
-	var data = [];
-	req.on("data", function(chunk){data.push(chunk)});
-	req.on(
+	var form = new FormStream(req);
+	var noString = true;
+	function stringBack(string){
+	    index = that.appendString(string);
+	    res.writeHead(200, {"Content-type": "text/plain"});
+	    return res.end(
+		"POST successful: " +
+		    index +
+		    "\n" +
+		    string
+	    );
+	}
+	form.on(
+	    "s_string",
+	    function(stream){
+		noString = false;
+		var buf = [];
+		stream.on(
+		    "data",
+		    buf.push.bind(buf)
+		).on(
+		    "end",
+		    function(){
+			return stringBack(buf.join(""));
+		    }
+		).resume();
+	    }
+	).on(
 	    "end",
-	    function endBack(){
-		//TODO: don't buffer the whole thing like that
-		var input = data.join("");
-		var alist = that.urlDecodeFormDataToAlist(input);
-		var dict = that.alistToDict(alist);
-		if(!("string" in dict)){
-		    res.end("bad POST attempt");
-		    return;
-		}
-		var string = dict.string;
-		index = that.appendString(string);
-		res.writeHead(200, {"Content-type": "text/plain"});
-		res.end(
-		    "POST successful: " +
-			index +
-			"\n" +
-			string
-		);
+	    function(){
+		if(noString)
+		    return res.end("bad POST attempt");
 	    }
 	);
     }
@@ -409,6 +420,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	"</HTML>",
 	""
     ].join("\n");
+    var passwordFieldName = "password";
     var adminLoginSource = [
 	"<HTML>",
 	" <HEAD>",
@@ -425,6 +437,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
     var handleAdminLoginGetRequest = this.constantResponder(adminLoginSource);
     function handleAdminLoginPostRequest(req, res){
+	//TODO: get the password out of the request
 	res.end("login POST attempt");
     }
     var routingDictionary = {
