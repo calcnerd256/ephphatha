@@ -109,7 +109,7 @@ POST
 
 ** tests
 run server
- node serve.js
+: node serve.js
 visit https://localhost:15214/
  see links
  follow links

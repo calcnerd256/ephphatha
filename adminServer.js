@@ -2,7 +2,8 @@ var Server = require("./server");
 var http = require("http");
 var https = require("https");
 var crypto = require("crypto");
-var FormStream = require("form_stream").FormStream;
+var formStream = require("form_stream")
+var FormStream = formStream.FormStream;
 
 function AdminStringServer(){
     this.strings = [];
@@ -421,6 +422,9 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	""
     ].join("\n");
     var passwordFieldName = "password";
+    var inputs = [
+	{"name": passwordFieldName, "type": "password"}
+    ];
     var adminLoginSource = [
 	"<HTML>",
 	" <HEAD>",
@@ -428,6 +432,20 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	" <BODY>",
 	"  log in",
 	"  <FORM METHOD=\"POST\">",
+	"   " + inputs.map(
+	    function(inp){
+		return "<INPUT " +
+		    this.dictToAlist(inp).map(
+			function(pair){
+			    return pair[0] +
+				"=\"" +
+				escape(pair[1]) +
+				"\"";
+			}
+		    ).join(" ") +
+		    "></INPUT>";
+	    }.bind(this)
+	).join("   \n"),
 	"   <INPUT TYPE=\"submit\"></INPUT>",
 	"  </FORM>",
 	" </BODY>",
@@ -438,7 +456,26 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     var handleAdminLoginGetRequest = this.constantResponder(adminLoginSource);
     function handleAdminLoginPostRequest(req, res){
 	//TODO: get the password out of the request
-	res.end("login POST attempt");
+	var form = new FormStream(req);
+	var done = false;
+	form.on(
+	    "s_" + passwordFieldName,
+	    function(s){
+		done = true;
+		formStream.bufferChunks(
+		    s,
+		    function(password){
+			res.end("login attempt");
+		    }
+		).resume();
+	    }
+	).on(
+	    "end",
+	    function(){
+		if(!done)
+		    return res.end("bad login");
+	    }
+	);
     }
     var routingDictionary = {
 	"/admin": handleAdminIndexRequest,
