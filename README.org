@@ -82,7 +82,6 @@ access the append form
 
 admin secure-only cookie
  session token (not password)
-  how should I generate that?
  do not allow insecure admin access
   enable that later
 ***** actions

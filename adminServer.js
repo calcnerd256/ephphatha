@@ -6,8 +6,23 @@ var formStream = require("form_stream")
 var FormStream = formStream.FormStream;
 
 function AdminStringServer(){
+    this.generatePassword(
+	(
+	    function(password){
+		this.setPassword(password);
+		console.log("Admin password is \"" + this.password + "\". Please change it immediately.");
+	    }
+	).bind(this)
+    );
     this.strings = [];
     this.adminTokens = {};
+}
+
+AdminStringServer.prototype.generatePassword = function(callback){
+    return this.generateRandomHex(8, callback);
+}
+AdminStringServer.prototype.setPassword = function setPassword(newPass){
+    this.password = newPass;
 }
 
 AdminStringServer.prototype.appendString = function appendString(str){
@@ -21,24 +36,43 @@ AdminStringServer.prototype.isAdminSession = function isAdminSession(req){
     return false;
 }
 
-AdminStringServer.prototype.createAdminToken = function createAdminToken(callback, errorBack, noisy){
-    var that = this;
-    if(!callback) callback = noisy ? function(){throw arguments;} : console.log.bind(console);
+AdminStringServer.prototype.generateRandomHex = function generateRandomHex(length, callback, errorBack, noisy){
+    if(!callback)
+	callback = noisy ?
+	    function(){throw arguments;} :
+            console.log.bind(console);
     if("function" != typeof errorBack)
-	errorBack = noisy ? function(e){throw e;} : function(){return callback();};
-    var tokenLength = 64;
+	errorBack = noisy ?
+	    function(e){throw e;} :
+            function(){return callback();};
+    function toHex(b){return b.toString(16);}
+    function pad(str){
+	while(str.length < 2)
+	    str = "0" + str;
+	return str;
+    }
     return crypto.randomBytes(
-	tokenLength / 2,
+	length / 2,
 	function(e, buf){
 	    if(e) return errorBack(e);
-	    function toHex(b){return b.toString(16);}
-	    function pad(str){while(str.length < 2) str = "0" + str; return str;}
-	    var token = [].map.call(buf, toHex).map(pad).join("");
+	    var randomHex = [].map.call(buf, toHex).map(pad).join("");
+	    return callback(randomHex);
+	}
+    );
+}
+AdminStringServer.prototype.createAdminToken = function createAdminToken(callback, errorBack, noisy){
+    var that = this;
+    var tokenLength = 64;
+    return this.generateRandomHex(
+	tokenLength,
+	function(token){
 	    if(token in that.adminTokens && "active" == that.adminTokens[token])
 		return errorBack("collision");
 	    that.adminTokens[token] = "active";
 	    return callback(token);
-	}
+	},
+	errorBack,
+	noisy
     );
 }
 
@@ -175,7 +209,7 @@ AdminStringServer.prototype.dictToExactRouterList = function dictToExactRouterLi
 		that.makeExactMatcher(args[0]),
 		args[1]
 	    );
-	}
+	}.bind(this)
     );
 }
 
@@ -455,7 +489,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
     var handleAdminLoginGetRequest = this.constantResponder(adminLoginSource);
     function handleAdminLoginPostRequest(req, res){
-	//TODO: get the password out of the request
 	var form = new FormStream(req);
 	var done = false;
 	form.on(
@@ -465,10 +498,17 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 		formStream.bufferChunks(
 		    s,
 		    function(password){
-			res.end("login attempt");
-		    }
+			if(password == this.password)
+			    return (
+				function(s){
+				    res.end("login success");
+				}.bind(this)
+			    )(res)
+			//res.writeHead(403);
+			res.end("login failure");
+		    }.bind(this)
 		).resume();
-	    }
+	    }.bind(this)
 	).on(
 	    "end",
 	    function(){
@@ -483,7 +523,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     routingDictionary[adminLoginUrl] = this.methodRoutingResponder(
 	{
 	    "GET": handleAdminLoginGetRequest,
-	    "POST": handleAdminLoginPostRequest
+	    "POST": handleAdminLoginPostRequest.bind(this)
 	}
     );
     return [].concat(
