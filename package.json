@@ -3,6 +3,6 @@
 	"version": "0.0.0",
 	"main": "./server.js",
 	"dependencies": {
-		"node_form_stream": "https://github.com/calcnerd256/node_form_stream/tarball/master",
+		"node_form_stream": "https://github.com/calcnerd256/node_form_stream/tarball/master"
 	}
 }
