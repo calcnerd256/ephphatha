@@ -440,6 +440,23 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     );
 }
 
+AdminStringServer.prototype.requestIsAdmin = function requestIsAdmin(req){
+    var headers = req.headers;
+    var cookie = headers.cookie;
+    if(!cookie) return false;
+    var crumbs = cookie.split(";");
+    var alist = crumbs.map(
+	function(s){
+	    var result = s.split("=");
+	    var key = result.shift().trim();
+	    return [key, result.join("=")];
+	}
+    );
+    var dict = this.alistToDict(alist);
+    var token = dict.token;
+    return token in this.adminTokens && "active" == this.adminTokens[token];
+}
+
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     var that = this;
     var adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
@@ -531,17 +548,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     var routingDictionary = {
 	"/admin": handleAdminIndexRequest,
 	"/admin/test": function(req, res){
-	    cookie = this.alistToDict(
-		req.headers.cookie.split(";").map(
-		    function(s){
-			var result = s.split("=");
-			var key = result.shift().trim();
-			return [key, result.join("=")];
-		    }
-		)
-	    );
-	    console.log([cookie, req.headers]);
-	    return res.end("ok");
+	    return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
 	}.bind(this)
     };
     routingDictionary[adminLoginUrl] = this.methodRoutingResponder(
