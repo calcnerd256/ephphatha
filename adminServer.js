@@ -499,12 +499,23 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 		    s,
 		    function(password){
 			if(password == this.password)
-			    return (
-				function(s){
-				    res.end("login success");
-				}.bind(this)
-			    )(res)
-			//res.writeHead(403);
+			    return this.createAdminToken(
+				function(token){
+				    var cookie = [
+					"token=" + token,
+					"Path=/",
+					"Secure",
+					"HttpOnly"
+				    ].join("; ");
+				    res.setHeader("Set-Cookie", cookie);
+				    res.end("login success " + token);
+				}.bind(this),
+				function(e){
+				    res.statusCode = 500;
+				    res.end("oops");
+				}
+			    );
+			res.statusCode = 403;
 			res.end("login failure");
 		    }.bind(this)
 		).resume();
@@ -519,6 +530,19 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     }
     var routingDictionary = {
 	"/admin": handleAdminIndexRequest,
+	"/admin/test": function(req, res){
+	    cookie = this.alistToDict(
+		req.headers.cookie.split(";").map(
+		    function(s){
+			var result = s.split("=");
+			var key = result.shift().trim();
+			return [key, result.join("=")];
+		    }
+		)
+	    );
+	    console.log([cookie, req.headers]);
+	    return res.end("ok");
+	}.bind(this)
     };
     routingDictionary[adminLoginUrl] = this.methodRoutingResponder(
 	{
