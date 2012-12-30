@@ -569,16 +569,66 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	this.adminOnly(
 	    this.methodRoutingResponder(
 		{
-		    "GET": this.constantResponder(
-			[
+		    "GET": function(req, res){
+			if(!("clientSource" in this))
+			    this.clientSource = {};
+			if(!(this.clientSource.mover))
+			    this.clientSource.mover = function(evt){
+				if(!window.dragState)
+				    window.dragState = {dx: 0, dy: 0, frame: 0};
+				evt.preventDefault();
+				var t = evt.touches[0];
+				var x = t.clientX;
+				var y = t.clientY;
+				var dx = x - window.dragState.x;
+				if(!("x" in window.dragState)) dx = 0;
+				window.dragState.x = x;
+				var dy = y - window.dragState.y;
+				if(!("y" in window.dragState)) dy = 0;
+				window.dragState.y = y;
+				window.dragState.dx += dx;
+				window.dragState.dy += dy;
+				window.dragState.frame++;
+				if(!window.dragState.notReady){
+				    window.dragState.notReady = 1;
+				    setTimeout(
+					function(){
+					    window.dragState.notReady = 0
+					},
+					50
+				    );
+				    var xd = Math.floor(window.dragState.dx);
+				    var yd = Math.floor(window.dragState.dy);
+				    window.dragState.dx = 0;
+				    window.dragState.dy = 0;
+				    window.dragState.frame = 0;
+				    var xhr = new XMLHttpRequest();
+
+				    xhr.open("POST", "/admin/mouse");
+				    var postdata = "x=" +
+					xd +
+					"&y=" + yd;
+				    document.getElementById("test").value = postdata;
+				    xhr.send(postdata);
+				}
+			    };
+			var mover = this.clientSource.mover;
+			var src = [
 			    "<form method=\"POST\">",
 			    " <input name=\"x\"></input>",
 			    " <input name=\"y\"></input>",
 			    " <input type=\"submit\">",
 			    "</form>",
+			    "<input id=\"test\"></input>",
+			    "<script>",
+			    " document.addEventListener(\"touchstart\", function(evt){window.dragState = {dx:0, dy:0, frame:0};})",
+			    " document.addEventListener(\"touchmove\", " + mover + ");",
+			    "</script>",
 			    ""
 			].join("\n")
-		    ),
+			res.setHeader("Content-Type", "text/html");
+			res.end(src);
+		    }.bind(this),
 		    "POST": function(q, s){
 			var form = new FormStream(q);
 			var x = 0; var y = 0;
@@ -593,12 +643,21 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 			    var child_process = require("child_process");
 			    var kid = child_process.spawn(
 				"xdotool",
-				["mousemove_relative", x, y]
+				[
+				    "mousemove_relative",
+				    "--",//necessary for negative values of x and y
+				    "" + (+x),
+				    "" + (+y)
+				]
 			    );
 			    kid.on(
 				"exit",
 				function(code){
-				    s.end(code);
+				    if(code)
+					console.warn(
+					    ["xdotool mousemove_relative", x, y, "exited with code", code]
+					);
+				    s.end(""+code);
 				}
 			    );
 			}
