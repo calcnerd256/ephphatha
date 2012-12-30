@@ -553,20 +553,11 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	);
     }
     var routingDictionary = {
-	"/admin": handleAdminIndexRequest//,
-	/*"/admin/test": function(req, res){
+	"/admin": handleAdminIndexRequest,
+	"/admin/test": function(req, res){
 	    return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
-	}.bind(this)*/
-    };
-    routingDictionary[adminLoginUrl] = this.methodRoutingResponder(
-	{
-	    "GET": handleAdminLoginGetRequest,
-	    "POST": handleAdminLoginPostRequest.bind(this)
-	}
-    );
-    var cursorTest = this.makeRouter(
-	this.makeExactMatcher("/admin/mouse"),
-	this.adminOnly(
+	}.bind(this),
+	"/admin/mouse": this.adminOnly(
 	    this.methodRoutingResponder(
 		{
 		    "GET": function(req, res){
@@ -591,24 +582,21 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 				window.dragState.frame++;
 				if(!window.dragState.notReady){
 				    window.dragState.notReady = 1;
-				    setTimeout(
-					function(){
-					    window.dragState.notReady = 0
-					},
-					50
-				    );
 				    var xd = Math.floor(window.dragState.dx);
 				    var yd = Math.floor(window.dragState.dy);
 				    window.dragState.dx = 0;
 				    window.dragState.dy = 0;
 				    window.dragState.frame = 0;
 				    var xhr = new XMLHttpRequest();
+				    xhr.onreadystatechange = function(){
+					if(4 == xhr.readyState)
+					    window.dragState.notReady = 0;
+				    }
 
 				    xhr.open("POST", "/admin/mouse");
 				    var postdata = "x=" +
 					xd +
 					"&y=" + yd;
-				    document.getElementById("test").value = postdata;
 				    xhr.send(postdata);
 				}
 			    };
@@ -619,9 +607,16 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 			    " <input name=\"y\"></input>",
 			    " <input type=\"submit\">",
 			    "</form>",
-			    "<input id=\"test\"></input>",
 			    "<script>",
-			    " document.addEventListener(\"touchstart\", function(evt){window.dragState = {dx:0, dy:0, frame:0};})",
+			    " document.addEventListener(",
+			    "  \"touchstart\",",
+			    "  function(evt){",
+			    "   if(!window.dragState)",
+			    "    window.dragState = {dx:0, dy:0, frame:0};",
+			    "   delete window.dragState.x;",
+			    "   delete window.dragState.y;",
+			    "  }",
+			    " )",
 			    " document.addEventListener(\"touchmove\", " + mover + ");",
 			    "</script>",
 			    ""
@@ -703,6 +698,12 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 		}
 	    )
 	)
+    };
+    routingDictionary[adminLoginUrl] = this.methodRoutingResponder(
+	{
+	    "GET": handleAdminLoginGetRequest,
+	    "POST": handleAdminLoginPostRequest.bind(this)
+	}
     );
     var listingRouter = this.makeRouter(
 	this.makeUrlMatcher(
@@ -717,7 +718,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     return [].concat(
 	this.dictToExactRouterList(routingDictionary),
 	[
-	    cursorTest,
 	    listingRouter
 	],
 	this.getHttpRouterList(),
