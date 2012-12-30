@@ -582,8 +582,9 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 				window.dragState.frame++;
 				if(!window.dragState.notReady){
 				    window.dragState.notReady = 1;
-				    var xd = Math.floor(window.dragState.dx);
-				    var yd = Math.floor(window.dragState.dy);
+				    var sensitivity = 0.5;
+				    var xd = Math.floor(window.dragState.dx * sensitivity);
+				    var yd = Math.floor(window.dragState.dy * sensitivity);
 				    window.dragState.dx = 0;
 				    window.dragState.dy = 0;
 				    window.dragState.frame = 0;
@@ -611,6 +612,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 			    " document.addEventListener(",
 			    "  \"touchstart\",",
 			    "  function(evt){",
+			    "   //TODO make this happen when the focus finger changes",
 			    "   if(!window.dragState)",
 			    "    window.dragState = {dx:0, dy:0, frame:0};",
 			    "   delete window.dragState.x;",
@@ -650,7 +652,13 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 				function(code){
 				    if(code)
 					console.warn(
-					    ["xdotool mousemove_relative", x, y, "exited with code", code]
+					    [
+						"xdotool mousemove_relative",
+						x,
+						y,
+						"exited with code",
+						code
+					    ]
 					);
 				    s.end(""+code);
 				}
