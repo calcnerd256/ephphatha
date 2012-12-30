@@ -105,6 +105,10 @@ POST
 :  make that a next-time feature
 : /admin/login GET login form
 : /admin/login POST generate session and set HTTPS-only cookie
+: /admin/mouse GET mouse control via AJAX
+:  currently only uses a form
+: /admin/mouse POST
+:  depends upon xdotool
 
 ** tests
 run server

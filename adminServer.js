@@ -32,10 +32,6 @@ AdminStringServer.prototype.appendString = function appendString(str){
     return result;
 }
 
-AdminStringServer.prototype.isAdminSession = function isAdminSession(req){
-    return false;
-}
-
 AdminStringServer.prototype.generateRandomHex = function generateRandomHex(length, callback, errorBack, noisy){
     if(!callback)
 	callback = noisy ?
@@ -457,6 +453,17 @@ AdminStringServer.prototype.requestIsAdmin = function requestIsAdmin(req){
     return token in this.adminTokens && "active" == this.adminTokens[token];
 }
 
+AdminStringServer.prototype.adminOnly = function adminOnly(responder){
+    var result = function respond(req, res){
+	if(this.requestIsAdmin(req))
+	    return responder.apply(this, arguments);
+	res.statusCode = 403;
+	return res.end("not an admin");
+    }.bind(this);
+    result.responder = responder;
+    return result;
+}
+
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     var that = this;
     var adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
@@ -546,10 +553,10 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	);
     }
     var routingDictionary = {
-	"/admin": handleAdminIndexRequest,
-	"/admin/test": function(req, res){
+	"/admin": handleAdminIndexRequest//,
+	/*"/admin/test": function(req, res){
 	    return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
-	}.bind(this)
+	}.bind(this)*/
     };
     routingDictionary[adminLoginUrl] = this.methodRoutingResponder(
 	{
@@ -557,8 +564,103 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	    "POST": handleAdminLoginPostRequest.bind(this)
 	}
     );
+    var cursorTest = this.makeRouter(
+	this.makeExactMatcher("/admin/mouse"),
+	this.adminOnly(
+	    this.methodRoutingResponder(
+		{
+		    "GET": this.constantResponder(
+			[
+			    "<form method=\"POST\">",
+			    " <input name=\"x\"></input>",
+			    " <input name=\"y\"></input>",
+			    " <input type=\"submit\">",
+			    "</form>",
+			    ""
+			].join("\n")
+		    ),
+		    "POST": function(q, s){
+			var form = new FormStream(q);
+			var x = 0; var y = 0;
+			var state = [
+			    0,//x
+			    0,//y
+			    0//complete called once
+			];
+			function complete(){
+			    if(state[2]) return;
+			    state[2] = 1;
+			    var child_process = require("child_process");
+			    var kid = child_process.spawn(
+				"xdotool",
+				["mousemove_relative", x, y]
+			    );
+			    kid.on(
+				"exit",
+				function(code){
+				    s.end(code);
+				}
+			    );
+			}
+			form.on(
+			    "s_x",
+			    function(s){
+				state[0] = 1;
+				formStream.bufferChunks(
+				    s, 
+				    function(_x){
+					state[0] = 2;
+					x = _x;
+					if(2 == state[1])
+					    return complete();
+				    }
+				).resume();
+			    }
+			);
+			form.on(
+			    "s_y",
+			    function(s){
+				state[1] = 1;
+				formStream.bufferChunks(
+				    s,
+				    function(_y){
+					state[1] = 2;
+					y = _y;
+					if(2 == state[0])
+					    return complete();
+				    }
+				).resume();
+			    }
+			);
+			form.on(
+			    "end",
+			    function(){
+				if(state[0] == 1) return;
+				if(state[1] == 1) return;
+				complete();
+			    }
+			);
+		    }
+		}
+	    )
+	)
+    );
+    var listingRouter = this.makeRouter(
+	this.makeUrlMatcher(
+	    function(u){
+		return false;
+	    }
+	),
+	function(q, s){
+	    s.end("ok");
+	}
+    );
     return [].concat(
 	this.dictToExactRouterList(routingDictionary),
+	[
+	    cursorTest,
+	    listingRouter
+	],
 	this.getHttpRouterList(),
 	[]
     );
