@@ -17,6 +17,7 @@ Then, all you need to do is run
 and point your browser at [[https://localhost:15214/]]
 and calm your browser's complaints about the self-signed certificate.
 From there, everything should be discoverable by following hyperlinks.
+(well, not really, but some day maybe)
 * unsorted
 Apologies to anyone trying to read this.
 I use org-mode wrong, and I'm not going to change soon.
@@ -96,7 +97,10 @@ POST
 : /index.html index
 : /append GET form
 : /append POST append
-: /admin/ GET listing
+: /admin/index admin index
+: /admin admin index
+: /admin/index.html admin index
+: /admin/list GET listing
 : /admin/$num GET read $num-th element
 : /admin/$num DELETE remove $num-nth element, moving others down?
 : /admin/$num/exec POST run it, returning the string representation of the immediate return

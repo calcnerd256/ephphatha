@@ -1,6 +1,7 @@
 var Server = require("./server");
 var http = require("http");
 var https = require("https");
+var child_process = require("child_process");
 var crypto = require("crypto");
 var formStream = require("form_stream")
 var FormStream = formStream.FormStream;
@@ -637,7 +638,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 			function complete(){
 			    if(state[2]) return;
 			    state[2] = 1;
-			    var child_process = require("child_process");
 			    var kid = child_process.spawn(
 				"xdotool",
 				[
@@ -713,20 +713,74 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	    "POST": handleAdminLoginPostRequest.bind(this)
 	}
     );
-    var listingRouter = this.makeRouter(
+    var gconf = this.makeRouter(
 	this.makeUrlMatcher(
 	    function(u){
-		return false;
+		var parts = u.split("/");
+		//assume parts[0] == ""
+		if("admin" != parts[1]) return false;
+		if("gconf" != parts[2]) return false;
+		return true;
 	    }
 	),
-	function(q, s){
-	    s.end("ok");
-	}
+	this.adminOnly(
+	    this.methodRoutingResponder(
+		{
+		    "GET": function(q, s){
+			var u = q.url.split("/");
+			u.shift(); // ""
+			u.shift(); // "admin"
+			u.shift(); // "gconf"
+			var kid = child_process.spawn(
+			    "gconftool-2",
+			    [
+				"--all-dirs",
+				"/" + u.join("/")
+			    ]
+			)
+			var lex = new (formStream.SingleCharacterDelimiterLexerEmitter)(kid.stdout, "\n");
+			lex.on(
+			    "lexer",
+			    function(lineStream){
+				var sliced = new (formStream.FunctionImageStream)(
+				    new (formStream.SlicingStream)(lineStream, 1),
+				    escape
+				);
+				sliced.on("data", function(){console.log(arguments)});
+				formStream.bufferChunks(
+				    sliced.resume(),
+				    function(p){
+					s.write(
+					    "<a href=\"" +
+						(
+						    function last(xs){
+							return xs[xs.length - 1];
+						    }
+						)(p.split("/")) +
+						"\">" +
+						p +
+						"</a><br />\n"
+					);
+				    }
+				);
+				lineStream.resume();
+			    }
+			);
+			//kid.stdout.pipe(s);
+			lex.on(
+			    "end",
+			    function(){s.end();}
+			).resume();
+			//s.end("gconf " + u.join("/"));
+		    }
+		}
+	    )
+	)
     );
     return [].concat(
 	this.dictToExactRouterList(routingDictionary),
 	[
-	    listingRouter
+	    gconf
 	],
 	this.getHttpRouterList(),
 	[]
