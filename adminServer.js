@@ -731,12 +731,11 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 			u.shift(); // ""
 			u.shift(); // "admin"
 			u.shift(); // "gconf"
+			if(!u[u.length - 1]) u.pop(); //remove trailing slash
+			var p = "/" + u.join("/");
 			var kid = child_process.spawn(
 			    "gconftool-2",
-			    [
-				"--all-dirs",
-				"/" + u.join("/")
-			    ]
+			    ["--all-dirs", p]
 			)
 			var lex = new (formStream.SingleCharacterDelimiterLexerEmitter)(kid.stdout, "\n");
 			lex.on(
@@ -746,7 +745,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 				    new (formStream.SlicingStream)(lineStream, 1),
 				    escape
 				);
-				sliced.on("data", function(){console.log(arguments)});
 				formStream.bufferChunks(
 				    sliced.resume(),
 				    function(p){
@@ -757,7 +755,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 							return xs[xs.length - 1];
 						    }
 						)(p.split("/")) +
-						"\">" +
+						"/\">" +
 						p +
 						"</a><br />\n"
 					);
@@ -766,12 +764,18 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 				lineStream.resume();
 			    }
 			);
-			//kid.stdout.pipe(s);
 			lex.on(
 			    "end",
-			    function(){s.end();}
+			    function(){
+				var kiddo = child_process.spawn("gconftool-2", ["-a", p]);
+				s.write("<pre>\n");
+				kiddo.stdout.pipe(s);
+				kiddo.on(
+				    "exit",
+				    function(){s.end("</pre>\n");}
+				);
+			    }
 			).resume();
-			//s.end("gconf " + u.join("/"));
 		    }
 		}
 	    )
