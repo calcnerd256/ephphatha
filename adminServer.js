@@ -148,9 +148,7 @@ AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol
 }
 
 AdminStringServer.prototype.makeRouter = function makeRouter(matcher, responder){
- return Router.prototype.route.bind(
-  new Router(matcher, responder)
- );
+ return (new Router(matcher, responder)).toFunction();
 }
 
 AdminStringServer.prototype.makeUrlMatcher = function makeUrlMatcher(predicate){
@@ -200,10 +198,10 @@ AdminStringServer.prototype.dictToExactRouterList = function dictToExactRouterLi
     var that = this;
     return this.dictToAlist(dictionary).map(
 	function(args){
-	    return that.makeRouter(
+	 return new Router(
 		that.makeExactMatcher(args[0]),
 		args[1]
-	    );
+	 ).toFunction();
 	}.bind(this)
     );
 }
@@ -711,7 +709,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	    "POST": handleAdminLoginPostRequest.bind(this)
 	}
     );
-    var gconf = this.makeRouter(
+    var gconf = new Router(
 	this.makeUrlMatcher(
 	    function(u){
 		var parts = u.split("/");
@@ -778,11 +776,11 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 		}
 	    )
 	)
-    );
+    )
     return [].concat(
 	this.dictToExactRouterList(routingDictionary),
 	[
-	    gconf
+	 gconf.toFunction()
 	],
 	this.getHttpRouterList(),
 	[]
