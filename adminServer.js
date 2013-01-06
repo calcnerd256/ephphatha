@@ -5,22 +5,23 @@ var child_process = require("child_process");
 var crypto = require("crypto");
 var formStream = require("form_stream")
 var FormStream = formStream.FormStream;
+var Router = require("./HttpRequestRouter").Router;
 
 function AdminStringServer(){
-    this.generatePassword(
-	(
-	    function(password){
-		this.setPassword(password);
-		console.log("Admin password is \"" + this.password + "\". Please change it immediately.");
-	    }
-	).bind(this)
-    );
-    this.strings = [];
-    this.adminTokens = {};
+ this.generatePassword(
+  (
+   function(password){
+    this.setPassword(password);
+    console.log("Admin password is \"" + this.password + "\". Please change it immediately.");
+   }
+  ).bind(this)
+ );
+ this.strings = [];
+ this.adminTokens = {};
 }
 
 AdminStringServer.prototype.generatePassword = function(callback){
-    return this.generateRandomHex(8, callback);
+ return this.generateRandomHex(8, callback);
 }
 AdminStringServer.prototype.setPassword = function setPassword(newPass){
     this.password = newPass;
@@ -147,12 +148,9 @@ AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol
 }
 
 AdminStringServer.prototype.makeRouter = function makeRouter(matcher, responder){
-    var result = function router(request){
-	if(matcher(request)) return responder;
-    }
-    result.matcher = matcher;
-    result.responder = responder;
-    return result;
+ return Router.prototype.route.bind(
+  new Router(matcher, responder)
+ );
 }
 
 AdminStringServer.prototype.makeUrlMatcher = function makeUrlMatcher(predicate){
