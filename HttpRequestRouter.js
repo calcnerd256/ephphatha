@@ -1,13 +1,17 @@
 function Router(matcher, responder){
- if("function" != typeof matcher)
-  matcher = function match(){return false;};
+ if("function" != typeof matcher.match)
+  matcher = new Matcher(matcher);
  if("function" != typeof responder)
   responder = function respond(request, response){response.end("default response")};
- this.match = matcher;
+ this.matcher = matcher;
  this.respond = responder;
 }
 Router.prototype.route = function route(request){
- if(this.match(request))
+ if("match" in this.matcher)
+  return this.matcher.match(request) ?
+   this.respond.bind(this) :
+   false;
+ if(this.matcher(request))
   return this.respond.bind(this);
 }
 Router.prototype.toFunction = function(){
@@ -23,4 +27,19 @@ Router.prototype.bind = function bind(that){
  return this.bind.bind.apply(this.toFunction(), arguments);
 }
 
+function Matcher(predicate){
+ if("function" != typeof predicate)
+  predicate = function match(){return false;};
+ this.match = predicate;
+}
+
+function UrlMatcher(predicate){
+ Matcher.call(this, this.match.bind(this));
+ this.urlPredicate = predicate;
+}
+UrlMatcher.prototype.match = function match(request){
+ return this.urlPredicate(request.url);
+}
+
 this.Router = Router;
+this.UrlMatcher = UrlMatcher;
