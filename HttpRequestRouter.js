@@ -28,7 +28,9 @@ function Functor(fn){
  this["function"] = coerceToFunction(fn, true);
 }
 Functor.prototype.toFunction = function toFunction(){
- return this["function"].bind(this);
+ var result = this["function"].bind(this);
+ result.bindings = {"this": this};
+ return result;
 }
 Functor.prototype.call = function call(that){
  return this.call.call.apply(this.toFunction(), arguments);
@@ -37,12 +39,14 @@ Functor.prototype.apply = function apply(that, args){
  return this.apply.apply.apply(this.toFunction(), arguments);
 }
 Functor.prototype.bind = function bind(that){
- return this.bind.bind.apply(this.toFunction(), arguments);
+ var result = this.bind.bind.apply(this.toFunction(), arguments);
+ result.bindings = {"this": that, "arguments": arguments, "bound by": this};
+ return result;
 }
 Functor.coerceToFunction = coerceToFunction;
 
 function Router(matcher, responder){
- Functor.call(this, this.route.bind(this));
+ Functor.call(this, this.route);
  this.matcher = matcher instanceof Matcher ?
   matcher :
   new Matcher(matcher);
@@ -61,7 +65,7 @@ Router.prototype.route = function route(request){
 }
 
 function Matcher(predicate){
- Functor.call(this, this.match.bind(this));
+ Functor.call(this, this.match);
  this.matcher = coerceToFunction(
   predicate,
   false,
@@ -74,7 +78,7 @@ Matcher.prototype.match = function match(){
 }
 
 function UrlMatcher(predicate){
- Matcher.call(this, this.match.bind(this));
+ Matcher.call(this, this.match);
  this.urlPredicate = coerceToFunction(
   predicate,
   false,
