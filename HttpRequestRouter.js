@@ -63,7 +63,7 @@ function Matcher(predicate){
  this.matcher = coerceToFunction(
   predicate,
   false,
-  function match(){return false;}
+  function nope(){return false;}
  );
 }
 util.inherits(Matcher, Functor);
@@ -73,11 +73,19 @@ Matcher.prototype.match = function match(){
 
 function UrlMatcher(predicate){
  Matcher.call(this, this.match.bind(this));
- this.urlPredicate = predicate;
+ this.urlPredicate = coerceToFunction(
+  predicate,
+  false,
+  function nope(){return false;}
+ );
 }
+util.inherits(UrlMatcher, Matcher);
 UrlMatcher.prototype.match = function match(request){
- return this.urlPredicate(request.url);
+ return coerceToFunction(this.urlPredicate).bind(this)(request.url);
 }
 
+this.coerceToFunction = coerceToFunction;
+this.Functor = Functor;
 this.Router = Router;
+this.Matcher = Matcher;
 this.UrlMatcher = UrlMatcher;
