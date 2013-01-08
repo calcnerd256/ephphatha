@@ -164,9 +164,11 @@ AdminStringServer.prototype.makeUrlMatcher = function makeUrlMatcher(predicate){
 }
 
 AdminStringServer.prototype.makeExactMatcher = function makeExactMatcher(path){
-    var result = this.makeUrlMatcher(
-	function(url){return url == path;}
-    );
+ var result = (
+  new UrlMatcher(
+   function(url){return url == path;}
+  )
+ ).toFunction();
     result.path = path;
     return result;
 }
@@ -714,7 +716,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	}
     );
     var gconf = new Router(
-	this.makeUrlMatcher(
+	new UrlMatcher(
 	    function(u){
 		var parts = u.split("/");
 		//assume parts[0] == ""

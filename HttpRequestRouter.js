@@ -43,7 +43,9 @@ Functor.coerceToFunction = coerceToFunction;
 
 function Router(matcher, responder){
  Functor.call(this, this.route.bind(this));
- this.matcher = new Matcher(matcher);
+ this.matcher = matcher instanceof Matcher ?
+  matcher :
+  new Matcher(matcher);
  this.respond = coerceToFunction(
   responder,
   false,
