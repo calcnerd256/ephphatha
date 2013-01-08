@@ -5,14 +5,21 @@ var child_process = require("child_process");
 var crypto = require("crypto");
 var formStream = require("form_stream")
 var FormStream = formStream.FormStream;
-var Router = require("./HttpRequestRouter").Router;
+var router = require("./HttpRequestRouter");
+var coerceToFunction = router.coerceToFunction;
+var Router = router.Router;
+var UrlMatcher = router.UrlMatcher;
 
 function AdminStringServer(){
  this.generatePassword(
   (
-   function(password){
+   function setAndWarn(password){
     this.setPassword(password);
-    console.log("Admin password is \"" + this.password + "\". Please change it immediately.");
+    console.warn(
+     "Admin password is \"" +
+      this.password +
+      "\". Please change it immediately."
+    );
    }
   ).bind(this)
  );
@@ -24,8 +31,9 @@ AdminStringServer.prototype.generatePassword = function(callback){
  return this.generateRandomHex(8, callback);
 }
 AdminStringServer.prototype.setPassword = function setPassword(newPass){
-    this.password = newPass;
+ this.password = newPass;
 }
+
 
 AdminStringServer.prototype.appendString = function appendString(str){
     var result = this.strings.length;
@@ -152,11 +160,7 @@ AdminStringServer.prototype.makeRouter = function makeRouter(matcher, responder)
 }
 
 AdminStringServer.prototype.makeUrlMatcher = function makeUrlMatcher(predicate){
-    var result = function urlMatcher(request){
-	return predicate(request.url);
-    }
-    result.predicate = predicate;
-    return result;
+ return coerceToFunction(new UrlMatcher(predicate));
 }
 
 AdminStringServer.prototype.makeExactMatcher = function makeExactMatcher(path){
