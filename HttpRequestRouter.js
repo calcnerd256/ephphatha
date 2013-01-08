@@ -1,8 +1,11 @@
 var util = require("util");
 
-function coerceToFunction(fn, noisy){
+function coerceToFunction(fn, noisy, fallback){
+ //if you pass a non-function as fallback, you may get a non-function back out
  if("function" == typeof fn) return fn;
  var fail = function fail(){
+  if(!fallback)
+   fallback = function nop(){};
   if(noisy)
    throw new Error(
     [
@@ -13,7 +16,7 @@ function coerceToFunction(fn, noisy){
      this
     ]
    );
-  return function nop(){}
+  return fallback;
  }.bind(this);
  if(!fn) return fail();
  if("object" != typeof fn) return fail();
@@ -36,30 +39,36 @@ Functor.prototype.apply = function apply(that, args){
 Functor.prototype.bind = function bind(that){
  return this.bind.bind.apply(this.toFunction(), arguments);
 }
+Functor.coerceToFunction = coerceToFunction;
 
 function Router(matcher, responder){
- Functor.call(this, this.route);
- if("function" != typeof matcher.match)
-  matcher = new Matcher(matcher);
- if("function" != typeof responder)
-  responder = function respond(request, response){response.end("default response")};
- this.matcher = matcher;
- this.respond = responder;
+ Functor.call(this, this.route.bind(this));
+ this.matcher = new Matcher(matcher);
+ this.respond = coerceToFunction(
+  responder,
+  false,
+  function respond(request, response){
+   response.end("default response")
+  }
+ );
 }
 util.inherits(Router, Functor);
 Router.prototype.route = function route(request){
- if("match" in this.matcher)
-  return this.matcher.match(request) ?
-   this.respond.bind(this) :
-   false;
- if(this.matcher(request))
+ if(coerceToFunction(this.matcher).bind(this)(request))
   return this.respond.bind(this);
 }
 
 function Matcher(predicate){
- if("function" != typeof predicate)
-  predicate = function match(){return false;};
- this.match = predicate;
+ Functor.call(this, this.match.bind(this));
+ this.matcher = coerceToFunction(
+  predicate,
+  false,
+  function match(){return false;}
+ );
+}
+util.inherits(Matcher, Functor);
+Matcher.prototype.match = function match(){
+ return this.matcher.apply(this, arguments);
 }
 
 function UrlMatcher(predicate){
