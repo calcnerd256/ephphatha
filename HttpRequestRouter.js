@@ -90,8 +90,18 @@ UrlMatcher.prototype.match = function match(request){
  return coerceToFunction(this.urlPredicate).bind(this)(request.url);
 }
 
+function UrlExactMatcher(path){
+ UrlMatcher.call(this, this.matchPath);
+ this.path = path;
+}
+util.inherits(UrlExactMatcher, UrlMatcher);
+UrlExactMatcher.prototype.matchPath = function matchPath(path){
+ return this.path == path;
+}
+
 this.coerceToFunction = coerceToFunction;
 this.Functor = Functor;
 this.Router = Router;
 this.Matcher = Matcher;
 this.UrlMatcher = UrlMatcher;
+this.UrlExactMatcher = UrlExactMatcher;

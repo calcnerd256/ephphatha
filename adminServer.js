@@ -9,6 +9,7 @@ var router = require("./HttpRequestRouter");
 var coerceToFunction = router.coerceToFunction;
 var Router = router.Router;
 var UrlMatcher = router.UrlMatcher;
+var UrlExactMatcher = router.UrlExactMatcher;
 
 function AdminStringServer(){
  this.generatePassword(
@@ -102,8 +103,8 @@ function fluentCall(ob){
     return ob;
 }
 function fluentKeyCall(ob, key){
-    var args = [].slice.call(arguments, 2);
-    args.unshift(ob);
+    var args = [].slice.call(arguments, 1);
+    args[0] = ob;
     return fluentCall.apply(ob[key], args);
 }
 this.callOnce = callOnce;
@@ -158,19 +159,12 @@ AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol
 AdminStringServer.prototype.makeRouter = function makeRouter(matcher, responder){
  return (new Router(matcher, responder)).toFunction();
 }
-
 AdminStringServer.prototype.makeUrlMatcher = function makeUrlMatcher(predicate){
  return coerceToFunction(new UrlMatcher(predicate));
 }
 
 AdminStringServer.prototype.makeExactMatcher = function makeExactMatcher(path){
- var result = (
-  new UrlMatcher(
-   function(url){return url == path;}
-  )
- ).toFunction();
-    result.path = path;
-    return result;
+ return coerceToFunction(new UrlExactMatcher(path));
 }
 
 AdminStringServer.prototype.dictToAlist = function dictToAlist(dictionary){
