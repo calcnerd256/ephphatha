@@ -532,14 +532,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	    }
 	);
     }
- var libmouse = require("./mouse");
- var mouseResponder = new MethodRoutingResponder(
-  {
-   "GET": libmouse.handleGet,
-   "POST": libmouse.handlePost
-  }
- );
-
     var routingDictionary = {
 	"/admin": handleAdminIndexRequest,
 	"/admin/test": function(req, res){
@@ -552,7 +544,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	    "POST": handleAdminLoginPostRequest.bind(this)
 	}
     );
- var mouseRouter = new ExactRouter("/admin/mouse", mouseResponder)
  var gconf = new Router(
 	new UrlMatcher(
 	    function(u){
@@ -621,7 +612,12 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  );
     return [
      new ExactDictRouter(routingDictionary),
-     this.adminRoute(mouseRouter),
+     this.adminRoute(
+      new ExactRouter(
+       "/admin/mouse",
+       require("./mouse").responder
+      )
+     ),
      this.adminRoute(gconf),
      new RouterListRouter(this.getHttpRouterList())
     ];

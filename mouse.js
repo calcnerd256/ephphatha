@@ -1,6 +1,8 @@
 var child_process = require("child_process");
 var formStream = require("form_stream");
 var FormStream = formStream.FormStream;
+var router = require("./HttpRequestRouter");
+var MethodRoutingResponder = router.MethodRoutingResponder;
 //POST request depends upon xdotool
 
 function handleGet(req, res){
@@ -144,5 +146,15 @@ function handlePost(q, s){
 			);
 }
 
+var responder = new MethodRoutingResponder(
+  {
+   "GET": handleGet,
+   "POST": handlePost
+  }
+);
+
+
 this.handleGet = handleGet;
 this.handlePost = handlePost;
+this.responder = responder;
+this.respond = responder.toFunction();
