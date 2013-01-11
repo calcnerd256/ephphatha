@@ -99,9 +99,19 @@ UrlExactMatcher.prototype.matchPath = function matchPath(path){
  return this.path == path;
 }
 
+function dictionaryToAssociationList(dictionary){
+ var result = [];
+ for(var k in dictionary)
+  result.push([k, dictionary[k]]);
+ return result;
+}
+
 this.coerceToFunction = coerceToFunction;
 this.Functor = Functor;
+
 this.Router = Router;
 this.Matcher = Matcher;
 this.UrlMatcher = UrlMatcher;
 this.UrlExactMatcher = UrlExactMatcher;
+
+this.dictToAlist = dictionaryToAssociationList

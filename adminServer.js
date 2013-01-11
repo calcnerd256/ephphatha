@@ -10,6 +10,7 @@ var coerceToFunction = router.coerceToFunction;
 var Router = router.Router;
 var UrlMatcher = router.UrlMatcher;
 var UrlExactMatcher = router.UrlExactMatcher;
+var dictToAlist = router.dictToAlist;
 
 function AdminStringServer(){
  this.generatePassword(
@@ -167,12 +168,7 @@ AdminStringServer.prototype.makeExactMatcher = function makeExactMatcher(path){
  return coerceToFunction(new UrlExactMatcher(path));
 }
 
-AdminStringServer.prototype.dictToAlist = function dictToAlist(dictionary){
-    var result = [];
-    for(var k in dictionary)
-	result.push([k, dictionary[k]]);
-    return result;
-}
+AdminStringServer.prototype.dictToAlist = dictToAlist;
 
 AdminStringServer.prototype.alistToDict = function alistToDict(alist, stacks){
     var result = {};
@@ -196,10 +192,10 @@ AdminStringServer.prototype.alistToDict = function alistToDict(alist, stacks){
 
 AdminStringServer.prototype.dictToExactRouterList = function dictToExactRouterList(dictionary){
     var that = this;
-    return this.dictToAlist(dictionary).map(
+    return dictToAlist(dictionary).map(
 	function(args){
 	 return new Router(
-		that.makeExactMatcher(args[0]),
+	  new UrlExactMatcher(args[0]),
 		args[1]
 	 ).toFunction();
 	}.bind(this)
@@ -219,7 +215,7 @@ AdminStringServer.prototype.constantResponder = function constantResponder(str, 
 }
 
 AdminStringServer.prototype.dictionaryMap = function dictionaryMap(ob, fn){
-    return this.alistToDict(this.dictToAlist(ob).map(fn));
+    return this.alistToDict(dictToAlist(ob).map(fn));
 }
 
 AdminStringServer.prototype.constantStaticRouterDict = function constantStaticRouterDict(d){
