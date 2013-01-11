@@ -1,3 +1,6 @@
+var router = require("./HttpRequestRouter");
+var coerceToFunction = router.coerceToFunction;
+
 //this belongs in another file
 
 function createVeil(api, initialScope, grantAccess){
@@ -57,6 +60,7 @@ function objectifyVeilProjection(chans, veil){
 }
 
 function functionOrElse(candidate, fallback, noisy){
+ return coerceToFunction(candidate, noisy, fallback);
  if("function" == typeof candidate)
   return candidate;
  if("function" == typeof fallback)
@@ -71,6 +75,7 @@ function functionOrElse(candidate, fallback, noisy){
   throw result;
  };
 }
+
 
 this.Server = function Server(){
  //dependencies
@@ -140,6 +145,14 @@ this.Server.prototype.route = function route(req, callback, errback, noisy){
  )(
   (
    function getFirstRoute(rs, fallback){
+    function defaultRoute(req, res){
+     res.statusCode = 404;
+     return res.end("default default route");
+    }
+    return functionOrElse(
+     (new (router.RouterListRouter)(rs)).route(req),
+     fallback
+    )
     for(var i = 0; i < rs.length; i++)
      if("function" == typeof rs[i]){
       var r = rs[i](req);
@@ -148,10 +161,7 @@ this.Server.prototype.route = function route(req, callback, errback, noisy){
      }
     return functionOrElse(
      fallback,
-     function defaultRoute(req, res){
-      //TODO: set status code to 404
-      return res.end("default default route");
-     }
+     defaultRoute
     )
    }
   )(
@@ -161,6 +171,6 @@ this.Server.prototype.route = function route(req, callback, errback, noisy){
  );
 }
 this.Server.prototype.defaultRoute = function defaultRoute(req, res){
- //TODO: set status code to 404
+ res.statusCode = 404;
  return res.end("default route");
 }
