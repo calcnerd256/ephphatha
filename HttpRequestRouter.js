@@ -64,6 +64,12 @@ Router.prototype.route = function route(request){
   return this.respond.bind(this);
 }
 
+function ExactRouter(url, responder){
+ Router.call(this, new UrlExactMatcher(url), responder);
+ this.url = url;
+}
+util.inherits(ExactRouter, Router);
+
 function Matcher(predicate){
  Functor.call(this, this.match);
  this.matcher = coerceToFunction(
@@ -110,6 +116,8 @@ this.coerceToFunction = coerceToFunction;
 this.Functor = Functor;
 
 this.Router = Router;
+this.ExactRouter = ExactRouter;
+
 this.Matcher = Matcher;
 this.UrlMatcher = UrlMatcher;
 this.UrlExactMatcher = UrlExactMatcher;

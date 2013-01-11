@@ -8,6 +8,7 @@ var FormStream = formStream.FormStream;
 var router = require("./HttpRequestRouter");
 var coerceToFunction = router.coerceToFunction;
 var Router = router.Router;
+var ExactRouter = router.ExactRouter;
 var UrlMatcher = router.UrlMatcher;
 var UrlExactMatcher = router.UrlExactMatcher;
 var dictToAlist = router.dictToAlist;
@@ -194,8 +195,8 @@ AdminStringServer.prototype.dictToExactRouterList = function dictToExactRouterLi
     var that = this;
     return dictToAlist(dictionary).map(
 	function(args){
-	 return new Router(
-	  new UrlExactMatcher(args[0]),
+	 return new ExactRouter(
+	  args[0],
 		args[1]
 	 ).toFunction();
 	}.bind(this)
