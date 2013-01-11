@@ -150,11 +150,15 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
 
 AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol(prot){
     var server = new Server.Server();
-    server.routes = this[
+    var routes = this[
 	"getHttp" +
 	    (("HTTPS" == prot) ? "s" : "") +
 	    "RouterList"
     ]();
+ var route;
+ while(route = routes.pop())
+  server.unshiftRoute(route);
+ //server.routes = routes;
     return server;
 }
 

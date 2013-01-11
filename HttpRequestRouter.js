@@ -105,6 +105,35 @@ RouterListRouter.prototype.route = function route(request){
   )
    return responder;
 }
+RouterListRouter.prototype.getRoutes = function(){
+ return this.routes;
+}
+RouterListRouter.prototype.pushRoute = function(r){
+ return this.routes.push(r);
+}
+RouterListRouter.prototype.popRoute = function(r){
+ return this.routes.pop(r);
+}
+RouterListRouter.prototype.setRouteAtIndex = function(i, r){
+ var result = this.getRouteAtIndex(i);
+ this.routes[i] = r;
+ return result;
+}
+RouterListRouter.prototype.getRouteAtIndex = function(i){
+ return this.routes[i];
+}
+RouterListRouter.prototype.deleteRouteAtIndex = function(i){
+ var result = this.getRouteAtIndex(i);
+ delete this.routes[i];
+ return result;
+}
+RouterListRouter.prototype.shiftRoute = function(){
+ return this.routes.shift();
+}
+RouterListRouter.prototype.unshiftRoute = function(r){
+ return this.routes.unshift(r);
+}
+
 
 
 function Matcher(predicate){

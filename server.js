@@ -106,6 +106,34 @@ this.Server = function Server(){
   return this;
  }
 }
+this.Server.prototype.getRoutes = function(){
+ return this.routes;
+}
+this.Server.prototype.pushRoute = function(r){
+ return this.routes.push(r);
+}
+this.Server.prototype.popRoute = function(r){
+ return this.routes.pop(r);
+}
+this.Server.prototype.setRouteAtIndex = function(i, r){
+ var result = this.getRouteAtIndex(i);
+ this.routes[i] = r;
+ return result;
+}
+this.Server.prototype.getRouteAtIndex = function(i){
+ return this.routes[i];
+}
+this.Server.prototype.deleteRouteAtIndex = function(i){
+ var result = this.getRouteAtIndex(i);
+ delete this.routes[i];
+ return result;
+}
+this.Server.prototype.shiftRoute = function(){
+ return this.routes.shift();
+}
+this.Server.prototype.unshiftRoute = function(r){
+ return this.routes.unshift(r);
+}
 
 this.Server.prototype.serve = function serve(req, res){
  return this.route(
