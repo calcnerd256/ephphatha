@@ -415,13 +415,10 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	    }
 	)
     );
-    return [].concat(// early binding is bad :(
-     [constantStaticRouters],
-     [moreRouters],
-	[
-	],
-	[]
-    );
+    return [
+     constantStaticRouters,
+     moreRouters
+    ]
 }
 
 AdminStringServer.prototype.requestIsAdmin = function requestIsAdmin(req){
@@ -768,16 +765,11 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	    )
 	)
     )
-    return [].concat(
-     [
-       this.dictToExactRouterListRouter(routingDictionary)
-     ],
-	[
-	 gconf
-	],
-	this.getHttpRouterList(),
-	[]
-    );
+    return [
+     this.dictToExactRouterListRouter(routingDictionary),
+     gconf,
+     new RouterListRouter(this.getHttpRouterList())
+    ];
 }
 
 this.AdminStringServer = AdminStringServer;
