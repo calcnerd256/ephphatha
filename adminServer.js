@@ -9,6 +9,7 @@ var router = require("./HttpRequestRouter");
 var coerceToFunction = router.coerceToFunction;
 var Router = router.Router;
 var ExactRouter = router.ExactRouter;
+var RouterListRouter = router.RouterListRouter;
 var UrlMatcher = router.UrlMatcher;
 var UrlExactMatcher = router.UrlExactMatcher;
 var dictToAlist = router.dictToAlist;
@@ -161,6 +162,7 @@ AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol
  return server;
 }
 
+
 AdminStringServer.prototype.alistToDict = function alistToDict(alist, stacks){
     var result = {};
     alist.map(
@@ -181,16 +183,18 @@ AdminStringServer.prototype.alistToDict = function alistToDict(alist, stacks){
     return result;
 }
 
-AdminStringServer.prototype.dictToExactRouterList = function dictToExactRouterList(dictionary){
-    var that = this;
-    return dictToAlist(dictionary).map(
+
+AdminStringServer.prototype.dictToExactRouterListRouter = function dictToExactRouterList(dictionary){
+ return new RouterListRouter(
+  dictToAlist(dictionary).map(
 	function(args){
 	 return new ExactRouter(
 	  args[0],
 		args[1]
 	 ).toFunction();
 	}.bind(this)
-    );
+  )
+ );
 }
 
 AdminStringServer.prototype.constantResponder = function constantResponder(str, mimetype){
@@ -335,7 +339,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	}
     );
 
-    var constantStaticRouters = this.dictToExactRouterList(
+    var constantStaticRouters = this.dictToExactRouterListRouter(
 	this.constantStaticRouterDict(
 	    this.dictIndirect(
 		paths,
@@ -399,7 +403,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	    POST: handleAppendPost
 	}
     );
-    var moreRouters = this.dictToExactRouterList(
+    var moreRouters = this.dictToExactRouterListRouter(
 	this.dictIndirect(
 	    paths,
 	    {
@@ -412,8 +416,8 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	)
     );
     return [].concat(// early binding is bad :(
-	constantStaticRouters,
-	moreRouters,
+     [constantStaticRouters],
+     [moreRouters],
 	[
 	],
 	[]
@@ -766,12 +770,10 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     )
     return [].concat(
      [
-      new (router.RouterListRouter)(
-       this.dictToExactRouterList(routingDictionary)
-      ).toFunction()
+       this.dictToExactRouterListRouter(routingDictionary)
      ],
 	[
-	 gconf.toFunction()
+	 gconf
 	],
 	this.getHttpRouterList(),
 	[]

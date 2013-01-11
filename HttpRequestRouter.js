@@ -79,6 +79,7 @@ function RouterListRouter(subordinates){
    response.end("empty route");
   }
  );
+ if(!subordinates) subordinates = [];
  this.routes = subordinates.map(
   function(route){
    if("route" in route) return route;
