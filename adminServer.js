@@ -158,19 +158,6 @@ AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol
     return server;
 }
 
-AdminStringServer.prototype.makeRouter = function makeRouter(matcher, responder){
- return (new Router(matcher, responder)).toFunction();
-}
-AdminStringServer.prototype.makeUrlMatcher = function makeUrlMatcher(predicate){
- return coerceToFunction(new UrlMatcher(predicate));
-}
-
-AdminStringServer.prototype.makeExactMatcher = function makeExactMatcher(path){
- return coerceToFunction(new UrlExactMatcher(path));
-}
-
-AdminStringServer.prototype.dictToAlist = dictToAlist;
-
 AdminStringServer.prototype.alistToDict = function alistToDict(alist, stacks){
     var result = {};
     alist.map(
@@ -487,7 +474,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	"   " + inputs.map(
 	    function(inp){
 		return "<INPUT " +
-		    this.dictToAlist(inp).map(
+	         dictToAlist(inp).map(
 			function(pair){
 			    return pair[0] +
 				"=\"" +
