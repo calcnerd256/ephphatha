@@ -191,6 +191,20 @@ function dictionaryToAssociationList(dictionary){
  return result;
 }
 
+function MethodRoutingResponder(responders){
+ Functor.call(this, this.respond);
+ this.responders = responders;
+}
+util.inherits(MethodRoutingResponder, Functor);
+MethodRoutingResponder.prototype.respond = function respond(req, res){
+ var responders = this.responders;
+	if(req.method in responders)
+	    return responders[req.method](req, res);
+	//TODO: check if method is allowed at all for 501
+	res.writeHead(405, "This object doesn't support that method.");
+	res.end("no, you can't do that to this");
+}
+
 this.coerceToFunction = coerceToFunction;
 this.Functor = Functor;
 
@@ -205,3 +219,5 @@ this.UrlExactMatcher = UrlExactMatcher;
 
 this.dictionaryToAssociationList = dictionaryToAssociationList;
 this.dictToAlist = dictionaryToAssociationList
+
+this.MethodRoutingResponder = MethodRoutingResponder;

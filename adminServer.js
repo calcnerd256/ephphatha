@@ -14,6 +14,7 @@ var ExactDictRouter = router.ExactDictRouter;
 var UrlMatcher = router.UrlMatcher;
 var UrlExactMatcher = router.UrlExactMatcher;
 var dictToAlist = router.dictToAlist;
+var MethodRoutingResponder = router.MethodRoutingResponder;
 
 function AdminStringServer(){
  this.generatePassword(
@@ -218,18 +219,6 @@ AdminStringServer.prototype.constantStaticRouterDict = function constantStaticRo
     );
 }
 
-AdminStringServer.prototype.methodRoutingResponder = function methodRoutingResponder(responders){
-    var result = function(req, res){
-	if(req.method in responders)
-	    return responders[req.method](req, res);
-	//TODO: check if method is allowed at all for 501
-	res.writeHead(405, "This object doesn't support that method.");
-	res.end("no, you can't do that to this");
-    }
-    result.responders = responders;
-    return result;
-}
-
 AdminStringServer.prototype.dictIndirect = function dictIndirect(keys, vals){
     return this.dictionaryMap(
 	vals,
@@ -389,7 +378,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	    }
 	);
     }
-    var handleAppendRequest = this.methodRoutingResponder(
+    var handleAppendRequest = new MethodRoutingResponder(
 	{
 	    "GET": handleAppendGet,
 	    POST: handleAppendPost
@@ -544,11 +533,11 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	);
     }
  var libmouse = require("./mouse");
- var mouseResponder = this.methodRoutingResponder(
-		{
-		 "GET": libmouse.handleGet,
-		 "POST": libmouse.handlePost
-		}
+ var mouseResponder = new MethodRoutingResponder(
+  {
+   "GET": libmouse.handleGet,
+   "POST": libmouse.handlePost
+  }
  );
 
     var routingDictionary = {
@@ -557,7 +546,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	    return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
 	}.bind(this)
     };
-    routingDictionary[adminLoginUrl] = this.methodRoutingResponder(
+    routingDictionary[adminLoginUrl] = new MethodRoutingResponder(
 	{
 	    "GET": handleAdminLoginGetRequest,
 	    "POST": handleAdminLoginPostRequest.bind(this)
@@ -574,7 +563,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 		return true;
 	    }
 	),
-	    this.methodRoutingResponder(
+  new MethodRoutingResponder(
 		{
 		    "GET": function(q, s){
 			var u = q.url.split("/");
