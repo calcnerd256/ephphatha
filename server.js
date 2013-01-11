@@ -1,5 +1,6 @@
 var router = require("./HttpRequestRouter");
 var coerceToFunction = router.coerceToFunction;
+var RouterListRouter = router.RouterListRouter;
 
 //this belongs in another file
 
@@ -61,19 +62,6 @@ function objectifyVeilProjection(chans, veil){
 
 function functionOrElse(candidate, fallback, noisy){
  return coerceToFunction(candidate, noisy, fallback);
- if("function" == typeof candidate)
-  return candidate;
- if("function" == typeof fallback)
-  return fallback;
- if(!noisy)
-  return function(){};
- //throw new Error("non-function fallback");
- return function(){
-  var result = new Error("non-function used as fallback for an attempt at ensuring callability and default suppressed");
-  result.candidate = candidate;
-  result.fallback = fallback;
-  throw result;
- };
 }
 
 
@@ -126,7 +114,7 @@ this.Server.prototype.serve = function serve(req, res){
    return functionOrElse(
     responder,
     function(q, s){
-     //TODO: set the status code
+     s.statusCode = 404;
      return s.end("Router failed to return a function.");
     }
    )(req, res);
@@ -151,18 +139,8 @@ this.Server.prototype.route = function route(req, callback, errback, noisy){
     }
     return functionOrElse(
      (new (router.RouterListRouter)(rs)).route(req),
-     fallback
-    )
-    for(var i = 0; i < rs.length; i++)
-     if("function" == typeof rs[i]){
-      var r = rs[i](req);
-      if("function" == typeof r)
-       return r;
-     }
-    return functionOrElse(
-     fallback,
-     defaultRoute
-    )
+     functionOrElse(fallback, defaultRoute)
+    );
    }
   )(
    this.routes,
