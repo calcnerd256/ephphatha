@@ -135,6 +135,18 @@ RouterListRouter.prototype.unshiftRoute = function(r){
  return this.routes.unshift(r);
 }
 
+function ExactDictRouter(dict){
+ RouterListRouter.call(
+  this,
+  dictionaryToAssociationList(dict).map(
+   function(p){
+    return new ExactRouter(p[0], p[1]);
+   }
+  )
+ );
+}
+util.inherits(ExactDictRouter, RouterListRouter);
+
 
 
 function Matcher(predicate){
@@ -185,9 +197,11 @@ this.Functor = Functor;
 this.Router = Router;
 this.ExactRouter = ExactRouter;
 this.RouterListRouter = RouterListRouter;
+this.ExactDictRouter = ExactDictRouter;
 
 this.Matcher = Matcher;
 this.UrlMatcher = UrlMatcher;
 this.UrlExactMatcher = UrlExactMatcher;
 
+this.dictionaryToAssociationList = dictionaryToAssociationList;
 this.dictToAlist = dictionaryToAssociationList

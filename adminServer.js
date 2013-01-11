@@ -10,6 +10,7 @@ var coerceToFunction = router.coerceToFunction;
 var Router = router.Router;
 var ExactRouter = router.ExactRouter;
 var RouterListRouter = router.RouterListRouter;
+var ExactDictRouter = router.ExactDictRouter;
 var UrlMatcher = router.UrlMatcher;
 var UrlExactMatcher = router.UrlExactMatcher;
 var dictToAlist = router.dictToAlist;
@@ -185,16 +186,7 @@ AdminStringServer.prototype.alistToDict = function alistToDict(alist, stacks){
 
 
 AdminStringServer.prototype.dictToExactRouterListRouter = function dictToExactRouterList(dictionary){
- return new RouterListRouter(
-  dictToAlist(dictionary).map(
-	function(args){
-	 return new ExactRouter(
-	  args[0],
-		args[1]
-	 ).toFunction();
-	}.bind(this)
-  )
- );
+ return new ExactDictRouter(dictionary);
 }
 
 AdminStringServer.prototype.constantResponder = function constantResponder(str, mimetype){
