@@ -1,3 +1,8 @@
+var child_process = require("child_process");
+var formStream = require("form_stream");
+var FormStream = formStream.FormStream;
+//POST request depends upon xdotool
+
 function handleGet(req, res){
  var mover = function mover(evt){
 				if(!window.dragState)
@@ -62,4 +67,82 @@ function handleGet(req, res){
 			res.end(src);
 }
 
+function handlePost(q, s){
+			var form = new FormStream(q);
+			var x = 0; var y = 0;
+			var state = [
+			    0,//x
+			    0,//y
+			    0//complete called once
+			];
+			function complete(){
+			    if(state[2]) return;
+			    state[2] = 1;
+			    var kid = child_process.spawn(
+				"xdotool",
+				[
+				    "mousemove_relative",
+				    "--",//necessary for negative values of x and y
+				    "" + (+x),
+				    "" + (+y)
+				]
+			    );
+			    kid.on(
+				"exit",
+				function(code){
+				    if(code)
+					console.warn(
+					    [
+						"xdotool mousemove_relative",
+						x,
+						y,
+						"exited with code",
+						code
+					    ]
+					);
+				    s.end(""+code);
+				}
+			    );
+			}
+			form.on(
+			    "s_x",
+			    function(s){
+				state[0] = 1;
+				formStream.bufferChunks(
+				    s, 
+				    function(_x){
+					state[0] = 2;
+					x = _x;
+					if(2 == state[1])
+					    return complete();
+				    }
+				).resume();
+			    }
+			);
+			form.on(
+			    "s_y",
+			    function(s){
+				state[1] = 1;
+				formStream.bufferChunks(
+				    s,
+				    function(_y){
+					state[1] = 2;
+					y = _y;
+					if(2 == state[0])
+					    return complete();
+				    }
+				).resume();
+			    }
+			);
+			form.on(
+			    "end",
+			    function(){
+				if(state[0] == 1) return;
+				if(state[1] == 1) return;
+				complete();
+			    }
+			);
+}
+
 this.handleGet = handleGet;
+this.handlePost = handlePost;
