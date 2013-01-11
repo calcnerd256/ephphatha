@@ -70,6 +70,43 @@ function ExactRouter(url, responder){
 }
 util.inherits(ExactRouter, Router);
 
+function RouterListRouter(subordinates){
+ Router.call(
+  this,
+  new Matcher(function(){return false;}),
+  function(request, response){
+   response.statusCode = 404;
+   response.end("empty route");
+  }
+ );
+ this.routes = subordinates.map(
+  function(route){
+   if("route" in route) return route;
+   return coerceToFunction(route);
+  }
+ );
+}
+util.inherits(RouterListRouter, Router);
+RouterListRouter.prototype.route = function route(request){
+ var responder;
+ for(var i = 0; i < this.routes.length; i++)
+  if(
+   responder = (
+    function(route, req){
+     if("route" in route)
+      return coerceToFunction(route.route).bind(route)(req);
+     if("call" in route)
+      return coerceToFunction(route.call).bind(route)(this, req);
+     if("toFunction" in route)
+      return coerceToFunction(route.toFunction).bind(route)(this, req);
+     return coerceToFunction(route).bind(this)(req);
+    }.bind(this)
+   )(this.routes[i], request)
+  )
+   return responder;
+}
+
+
 function Matcher(predicate){
  Functor.call(this, this.match);
  this.matcher = coerceToFunction(
@@ -117,6 +154,7 @@ this.Functor = Functor;
 
 this.Router = Router;
 this.ExactRouter = ExactRouter;
+this.RouterListRouter = RouterListRouter;
 
 this.Matcher = Matcher;
 this.UrlMatcher = UrlMatcher;

@@ -762,7 +762,11 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	)
     )
     return [].concat(
-	this.dictToExactRouterList(routingDictionary),
+     [
+      new (router.RouterListRouter)(
+       this.dictToExactRouterList(routingDictionary)
+      ).toFunction()
+     ],
 	[
 	 gconf.toFunction()
 	],
