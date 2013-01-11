@@ -149,17 +149,16 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
 }
 
 AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol(prot){
-    var server = new Server.Server();
-    var routes = this[
+ var server = new Server.Server();
+ var routes = this[
 	"getHttp" +
 	    (("HTTPS" == prot) ? "s" : "") +
 	    "RouterList"
-    ]();
+ ]();
  var route;
  while(route = routes.pop())
   server.unshiftRoute(route);
- //server.routes = routes;
-    return server;
+ return server;
 }
 
 AdminStringServer.prototype.alistToDict = function alistToDict(alist, stacks){

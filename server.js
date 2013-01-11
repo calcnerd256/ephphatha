@@ -70,7 +70,7 @@ this.Server = function Server(){
  // createLockCell
  // objectifyVeilProjection
 
- this.routes = [];
+ this.routeListRouter = new RouterListRouter([]);
  var portCellFunction = createLockCell(15213);
  var portCell = objectifyVeilProjection(
   ["read", "write", "lock", "lockedp"],
@@ -105,35 +105,27 @@ this.Server = function Server(){
   );
   return this;
  }
-}
-this.Server.prototype.getRoutes = function(){
- return this.routes;
-}
-this.Server.prototype.pushRoute = function(r){
- return this.routes.push(r);
-}
-this.Server.prototype.popRoute = function(r){
- return this.routes.pop(r);
-}
-this.Server.prototype.setRouteAtIndex = function(i, r){
- var result = this.getRouteAtIndex(i);
- this.routes[i] = r;
- return result;
-}
-this.Server.prototype.getRouteAtIndex = function(i){
- return this.routes[i];
-}
-this.Server.prototype.deleteRouteAtIndex = function(i){
- var result = this.getRouteAtIndex(i);
- delete this.routes[i];
- return result;
-}
-this.Server.prototype.shiftRoute = function(){
- return this.routes.shift();
-}
-this.Server.prototype.unshiftRoute = function(r){
- return this.routes.unshift(r);
-}
+};
+
+[
+ "getRoutes",
+ "pushRoute",
+ "popRoute",
+ "setRouteAtIndex",
+ "getRouteAtIndex",
+ "deleteRouteAtIndex",
+ "shiftRoute",
+ "unshiftRoute"
+].map(
+ function(key){
+  this.Server.prototype[key] = function(){
+   return this.routeListRouter[key].apply(
+    this.routeListRouter,
+    arguments
+   );
+  }
+ }.bind(this)
+);
 
 this.Server.prototype.serve = function serve(req, res){
  return this.route(
@@ -166,12 +158,12 @@ this.Server.prototype.route = function route(req, callback, errback, noisy){
      return res.end("default default route");
     }
     return functionOrElse(
-     (new (router.RouterListRouter)(rs)).route(req),
+     rs.route(req),
      functionOrElse(fallback, defaultRoute)
     );
    }
   )(
-   this.routes,
+   this.routeListRouter,
    this.defaultRoute
   )
  );
