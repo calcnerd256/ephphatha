@@ -331,7 +331,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	}
     );
 
-    var constantStaticRouters = this.dictToExactRouterListRouter(
+ var constantStaticRouters = new ExactDictRouter(
 	this.constantStaticRouterDict(
 	    this.dictIndirect(
 		paths,
@@ -342,7 +342,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		}
 	    )
 	)
-    );
+ );
     var handleAppendGet = this.constantResponder(
 	[
 	    "<FORM METHOD=\"POST\">",
@@ -395,7 +395,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	    POST: handleAppendPost
 	}
     );
-    var moreRouters = this.dictToExactRouterListRouter(
+ var moreRouters = new ExactDictRouter(
 	this.dictIndirect(
 	    paths,
 	    {
@@ -406,7 +406,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		append: handleAppendRequest
 	    }
 	)
-    );
+ );
     return [
      constantStaticRouters,
      moreRouters
@@ -439,6 +439,20 @@ AdminStringServer.prototype.adminOnly = function adminOnly(responder){
     }.bind(this);
     result.responder = responder;
     return result;
+}
+AdminStringServer.prototype.adminRoute = function adminRoute(router){
+ var result = function route(req){
+  var responder = coerceToFunction(router)(req);
+  if(this.requestIsAdmin(req))
+   return responder;
+  return responder &&
+   function respond(req, res){
+    res.statusCode = 403;
+    return res.end("not an admin");
+   };
+ }.bind(this);
+ result.router = router;
+ return result;
 }
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
@@ -529,13 +543,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	    }
 	);
     }
-    var routingDictionary = {
-	"/admin": handleAdminIndexRequest,
-	"/admin/test": function(req, res){
-	    return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
-	}.bind(this),
-	"/admin/mouse": this.adminOnly(
-	    this.methodRoutingResponder(
+ var mouseResponder = this.methodRoutingResponder(
 		{
 		    "GET": function(req, res){
 			if(!("clientSource" in this))
@@ -680,8 +688,14 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 			);
 		    }
 		}
-	    )
-	)
+ );
+
+    var routingDictionary = {
+	"/admin": handleAdminIndexRequest,
+	"/admin/test": function(req, res){
+	    return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
+	}.bind(this),
+	"/admin/mouse": this.adminOnly(mouseResponder)
     };
     routingDictionary[adminLoginUrl] = this.methodRoutingResponder(
 	{
@@ -689,7 +703,8 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	    "POST": handleAdminLoginPostRequest.bind(this)
 	}
     );
-    var gconf = new Router(
+ var gconf = this.adminRoute(
+  new Router(
 	new UrlMatcher(
 	    function(u){
 		var parts = u.split("/");
@@ -699,7 +714,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 		return true;
 	    }
 	),
-	this.adminOnly(
 	    this.methodRoutingResponder(
 		{
 		    "GET": function(q, s){
@@ -755,10 +769,10 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 		    }
 		}
 	    )
-	)
-    )
+  )
+ );
     return [
-     this.dictToExactRouterListRouter(routingDictionary),
+     new ExactDictRouter(routingDictionary),
      gconf,
      new RouterListRouter(this.getHttpRouterList())
     ];
