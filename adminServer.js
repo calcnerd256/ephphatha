@@ -579,7 +579,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 					    window.dragState.notReady = 0;
 				    }
 
-				    xhr.open("POST", "/admin/mouse");
+				    xhr.open("POST", document.location.href);
 				    var postdata = "x=" +
 					xd +
 					"&y=" + yd;
@@ -694,8 +694,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	"/admin": handleAdminIndexRequest,
 	"/admin/test": function(req, res){
 	    return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
-	}.bind(this),
-	"/admin/mouse": this.adminOnly(mouseResponder)
+	}.bind(this)
     };
     routingDictionary[adminLoginUrl] = this.methodRoutingResponder(
 	{
@@ -703,8 +702,8 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	    "POST": handleAdminLoginPostRequest.bind(this)
 	}
     );
- var gconf = this.adminRoute(
-  new Router(
+ var mouseRouter = new ExactRouter("/admin/mouse", mouseResponder)
+ var gconf = new Router(
 	new UrlMatcher(
 	    function(u){
 		var parts = u.split("/");
@@ -769,11 +768,11 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 		    }
 		}
 	    )
-  )
  );
     return [
      new ExactDictRouter(routingDictionary),
-     gconf,
+     this.adminRoute(mouseRouter),
+     this.adminRoute(gconf),
      new RouterListRouter(this.getHttpRouterList())
     ];
 }
