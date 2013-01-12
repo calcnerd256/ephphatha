@@ -1,7 +1,7 @@
 var child_process = require("child_process");
 var formStream = require("form_stream");
 var FormStream = formStream.FormStream;
-var router = require("./HttpRequestRouter");
+var router = require("webserver_functors");
 var MethodRoutingResponder = router.MethodRoutingResponder;
 //POST request depends upon xdotool
 

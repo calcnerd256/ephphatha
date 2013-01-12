@@ -1,4 +1,4 @@
-var router = require("./HttpRequestRouter");
+var router = require("webserver_functors");
 var coerceToFunction = router.coerceToFunction;
 var RouterListRouter = router.RouterListRouter;
 
