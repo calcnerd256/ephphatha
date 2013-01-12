@@ -557,7 +557,18 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   (
    function(responder){
     var result = function(req, res){
-     return coerceToFunction(responder)(req, res);
+     var url = req.url;
+     var u = url.split("/");
+     u.shift(); // ""
+     u.shift(); // "admin"
+     u.shift(); // "gconf"
+     u.unshift("");
+     url = u.join("/");
+     var request = {
+      __proto__: req,
+      url: url
+     };
+     return coerceToFunction(responder)(request, res);
     }
     result.responder = responder;
     return result;
@@ -568,8 +579,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 		    "GET": function(q, s){
 			var u = q.url.split("/");
 			u.shift(); // ""
-			u.shift(); // "admin"
-			u.shift(); // "gconf"
 			if(!u[u.length - 1]) u.pop(); //remove trailing slash
 			var p = "/" + u.join("/");
 			var kid = child_process.spawn(
