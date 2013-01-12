@@ -4,6 +4,7 @@
 	"main": "./server.js",
 	"dependencies": {
 		"node_form_stream": "https://github.com/calcnerd256/node_form_stream/tarball/master",
-		"webserver_functors": "https://github.com/calcnerd256/node_webserver_functors/tarball/master"
+		"webserver_functors": "https://github.com/calcnerd256/node_webserver_functors/tarball/master",
+		"webmouse": "https://github.com/calcnerd256/node_webmouse/tarball/master"
 	}
 }

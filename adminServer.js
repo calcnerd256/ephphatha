@@ -615,7 +615,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
      this.adminRoute(
       new ExactRouter(
        "/admin/mouse",
-       require("./mouse").responder
+       require("webmouse").responder
       )
      ),
      this.adminRoute(gconf),
