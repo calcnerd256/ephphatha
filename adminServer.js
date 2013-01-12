@@ -555,8 +555,15 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	    }
 	),
   (
-   function(responder){
+   function responderRequestTransform(transformRequest, responder){
     var result = function(req, res){
+     return coerceToFunction(responder)(transformRequest(req), res);
+    }
+    result.responder = responder;
+    return result;
+   }
+  )(
+   function transformRequest(req){
      var url = req.url;
      var u = url.split("/");
      u.shift(); // ""
@@ -568,12 +575,8 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
       __proto__: req,
       url: url
      };
-     return coerceToFunction(responder)(request, res);
-    }
-    result.responder = responder;
-    return result;
-   }
-  )(
+    return request;
+   },
    require("web_gconf").responder
   )
  );
