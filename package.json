@@ -5,6 +5,7 @@
 	"dependencies": {
 		"node_form_stream": "https://github.com/calcnerd256/node_form_stream/tarball/master",
 		"webserver_functors": "https://github.com/calcnerd256/node_webserver_functors/tarball/master",
-		"webmouse": "https://github.com/calcnerd256/node_webmouse/tarball/master"
+		"webmouse": "https://github.com/calcnerd256/node_webmouse/tarball/master",
+		"web_gconf": "https://github.com/calcnerd256/node_web_gconf/tarball/master"
 	}
 }

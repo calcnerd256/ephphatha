@@ -574,7 +574,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     return result;
    }
   )(
-   require("./gconf").responder
+   require("web_gconf").responder
   )
  );
     return [
