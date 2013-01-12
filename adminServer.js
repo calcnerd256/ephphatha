@@ -4,17 +4,17 @@ var https = require("https");
 var child_process = require("child_process");
 var crypto = require("crypto");
 var formStream = require("form_stream")
-var FormStream = formStream.FormStream;
+ var FormStream = formStream.FormStream;
 var router = require("webserver_functors");
-var coerceToFunction = router.coerceToFunction;
-var Router = router.Router;
-var ExactRouter = router.ExactRouter;
-var RouterListRouter = router.RouterListRouter;
-var ExactDictRouter = router.ExactDictRouter;
-var UrlMatcher = router.UrlMatcher;
-var UrlExactMatcher = router.UrlExactMatcher;
-var dictToAlist = router.dictToAlist;
-var MethodRoutingResponder = router.MethodRoutingResponder;
+ var coerceToFunction = router.coerceToFunction;
+ var Router = router.Router;
+ var ExactRouter = router.ExactRouter;
+ var RouterListRouter = router.RouterListRouter;
+ var ExactDictRouter = router.ExactDictRouter;
+ var UrlMatcher = router.UrlMatcher;
+ var UrlExactMatcher = router.UrlExactMatcher;
+ var dictToAlist = router.dictToAlist;
+ var MethodRoutingResponder = router.MethodRoutingResponder;
 
 function AdminStringServer(){
  this.generatePassword(
@@ -554,7 +554,16 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 		return true;
 	    }
 	),
-  new MethodRoutingResponder(
+  (
+   function(responder){
+    var result = function(req, res){
+     return coerceToFunction(responder)(req, res);
+    }
+    result.responder = responder;
+    return result;
+   }
+  )(
+   new MethodRoutingResponder(
 		{
 		    "GET": function(q, s){
 			var u = q.url.split("/");
@@ -608,7 +617,8 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 			).resume();
 		    }
 		}
-	    )
+   )
+  )
  );
     return [
      new ExactDictRouter(routingDictionary),
