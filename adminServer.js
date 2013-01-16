@@ -551,6 +551,29 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    res.write("<LI><A HREF=\"" + i + "\">" + i + "</A></LI>\n");
   res.end("listing");
  }
+ var readString = new Router(
+  new UrlMatcher(
+   function match(u){
+    var p = u.split("/");
+    if(3 != p.length) return false;
+    if("admin" != p[1]) return false;
+    return +p[2] == p[2];
+   }
+  ),
+  function showString(req, res){
+   var p = req.url.split("/");
+   var n = +p[2];
+   var strs = this.strings;
+   if(!(n in strs))
+    return (
+     function(r){
+      r.writeHead(404);
+      r.end("index out of bounds");
+     }
+    )(res);
+   return res.end(strs[n]);
+  }.bind(this)
+ );
     var routingDictionary = {
 	"/admin/": handleAdminIndexRequest,
 	"/admin/test": function(req, res){
@@ -565,15 +588,15 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	}
     );
  var gconf = new Router(
-	new UrlMatcher(
-	    function(u){
+  new UrlMatcher(
+   function(u){
 		var parts = u.split("/");
 		//assume parts[0] == ""
 		if("admin" != parts[1]) return false;
 		if("gconf" != parts[2]) return false;
 		return true;
-	    }
-	),
+   }
+  ),
   (
    function responderRequestTransform(transformRequest, responder){
     var result = function(req, res){
@@ -601,8 +624,9 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    require("web_gconf").responder
   )
  );
-    return [
+ return [
      new ExactDictRouter(routingDictionary),
+  readString,
      this.adminRoute(
       new ExactRouter(
        "/admin/mouse",
@@ -611,7 +635,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
      ),
      this.adminRoute(gconf),
      new RouterListRouter(this.getHttpRouterList())
-    ];
+ ];
 }
 
 this.AdminStringServer = AdminStringServer;
