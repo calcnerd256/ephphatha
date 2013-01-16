@@ -448,7 +448,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  var that = this;
  var adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
  var adminIndexSource = [
-	"<HTML>",
+  "<HTML>",
 	" <HEAD>",
 	" </HEAD>",
 	" <BODY>",
@@ -472,11 +472,11 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	""
  ].join("\n");
     var passwordFieldName = "password";
-    var inputs = [
+ var inputs = [
 	{"name": passwordFieldName, "type": "password"}
-    ];
+ ];
  var adminLoginSource = [
-	"<HTML>",
+  "<HTML>",
 	" <HEAD>",
 	" </HEAD>",
 	" <BODY>",
@@ -502,12 +502,12 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	"</HTML>",
 	""
  ].join("\n");
-    var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
-    var handleAdminLoginGetRequest = this.constantResponder(adminLoginSource);
+ var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
+ var handleAdminLoginGetRequest = this.constantResponder(adminLoginSource);
  function handleAdminLoginPostRequest(req, res){
-	var form = new FormStream(req);
-	var done = false;
-	form.on(
+  var form = new FormStream(req);
+  var done = false;
+  form.on(
 	    "s_" + passwordFieldName,
 	    function(s){
 		done = true;
@@ -536,13 +536,13 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 		    }.bind(this)
 		).resume();
 	    }.bind(this)
-	).on(
+  ).on(
 	    "end",
 	    function(){
 		if(!done)
 		    return res.end("bad login");
 	    }
-	);
+  );
  }
  function listStrings(req, res){
   var strs = this.strings;
@@ -574,27 +574,27 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    return res.end(strs[n]);
   }.bind(this)
  );
-    var routingDictionary = {
-	"/admin/": handleAdminIndexRequest,
-	"/admin/test": function(req, res){
+ var routingDictionary = {
+  "/admin/": handleAdminIndexRequest,
+  "/admin/test": function(req, res){
 	    return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
-	}.bind(this),
-     "/admin/list": this.adminOnly(listStrings.bind(this))
-    };
-    routingDictionary[adminLoginUrl] = new MethodRoutingResponder(
-	{
+  }.bind(this),
+  "/admin/list": this.adminOnly(listStrings.bind(this))
+ };
+ routingDictionary[adminLoginUrl] = new MethodRoutingResponder(
+  {
 	    "GET": handleAdminLoginGetRequest,
 	    "POST": handleAdminLoginPostRequest.bind(this)
-	}
-    );
+  }
+ );
  var gconf = new Router(
   new UrlMatcher(
    function(u){
-		var parts = u.split("/");
-		//assume parts[0] == ""
-		if("admin" != parts[1]) return false;
-		if("gconf" != parts[2]) return false;
-		return true;
+    var parts = u.split("/");
+    //assume parts[0] == ""
+    if("admin" != parts[1]) return false;
+    if("gconf" != parts[2]) return false;
+    return true;
    }
   ),
   (
@@ -625,16 +625,16 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   )
  );
  return [
-     new ExactDictRouter(routingDictionary),
+  new ExactDictRouter(routingDictionary),
   readString,
-     this.adminRoute(
+  this.adminRoute(
       new ExactRouter(
        "/admin/mouse",
        require("webmouse").responder
       )
-     ),
-     this.adminRoute(gconf),
-     new RouterListRouter(this.getHttpRouterList())
+  ),
+  this.adminRoute(gconf),
+  new RouterListRouter(this.getHttpRouterList())
  ];
 }
 
