@@ -449,41 +449,41 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  var adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
  var adminIndexSource = [
   "<HTML>",
-	" <HEAD>",
-	" </HEAD>",
-	" <BODY>",
-	"  admin",
-	"  <BR />",
-	"  <A HREF=\"" + adminLoginUrl + "\">log in</A>",
-        "  <BR />",
-     "  " + dictToAlist(
+  " <HEAD>",
+  " </HEAD>",
+  " <BODY>",
+  "  admin",
+  "  <BR />",
+  "  <A HREF=\"" + adminLoginUrl + "\">log in</A>",
+  "  <BR />",
+  "  " + dictToAlist(
       {
        "gconf/": "gconf",
        mouse: "mouse",
        list: "list"
       }
-     ).map(
+  ).map(
       function(kv){
        return "<A HREF=\"" + kv[0] + "\">" + kv[1] + "</A>\n  <BR />";
       }
-     ).join("\n  "),
-	" </BODY>",
-	"</HTML>",
-	""
+  ).join("\n  "),
+  " </BODY>",
+  "</HTML>",
+  ""
  ].join("\n");
-    var passwordFieldName = "password";
+ var passwordFieldName = "password";
  var inputs = [
-	{"name": passwordFieldName, "type": "password"}
+  {"name": passwordFieldName, "type": "password"}
  ];
  var adminLoginSource = [
   "<HTML>",
-	" <HEAD>",
-	" </HEAD>",
-	" <BODY>",
-	"  log in",
-	"  <FORM METHOD=\"POST\">",
-	"   " + inputs.map(
-	    function(inp){
+  " <HEAD>",
+  " </HEAD>",
+  " <BODY>",
+  "  log in",
+  "  <FORM METHOD=\"POST\">",
+  "   " + inputs.map(
+   function(inp){
 		return "<INPUT " +
 	         dictToAlist(inp).map(
 			function(pair){
@@ -494,13 +494,13 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 			}
 		    ).join(" ") +
 		    "></INPUT>";
-	    }.bind(this)
-	).join("   \n"),
-	"   <INPUT TYPE=\"submit\"></INPUT>",
-	"  </FORM>",
-	" </BODY>",
-	"</HTML>",
-	""
+   }.bind(this)
+  ).join("   \n"),
+  "   <INPUT TYPE=\"submit\"></INPUT>",
+  "  </FORM>",
+  " </BODY>",
+  "</HTML>",
+  ""
  ].join("\n");
  var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
  var handleAdminLoginGetRequest = this.constantResponder(adminLoginSource);
@@ -508,8 +508,8 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   var form = new FormStream(req);
   var done = false;
   form.on(
-	    "s_" + passwordFieldName,
-	    function(s){
+   "s_" + passwordFieldName,
+   function(s){
 		done = true;
 		formStream.bufferChunks(
 		    s,
@@ -535,13 +535,13 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 			res.end("login failure");
 		    }.bind(this)
 		).resume();
-	    }.bind(this)
+   }.bind(this)
   ).on(
-	    "end",
-	    function(){
+   "end",
+   function(){
 		if(!done)
 		    return res.end("bad login");
-	    }
+   }
   );
  }
  function listStrings(req, res){
@@ -577,14 +577,14 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  var routingDictionary = {
   "/admin/": handleAdminIndexRequest,
   "/admin/test": function(req, res){
-	    return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
+   return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
   }.bind(this),
   "/admin/list": this.adminOnly(listStrings.bind(this))
  };
  routingDictionary[adminLoginUrl] = new MethodRoutingResponder(
   {
-	    "GET": handleAdminLoginGetRequest,
-	    "POST": handleAdminLoginPostRequest.bind(this)
+   "GET": handleAdminLoginGetRequest,
+   "POST": handleAdminLoginPostRequest.bind(this)
   }
  );
  var gconf = new Router(
@@ -628,10 +628,10 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   new ExactDictRouter(routingDictionary),
   readString,
   this.adminRoute(
-      new ExactRouter(
-       "/admin/mouse",
-       require("webmouse").responder
-      )
+   new ExactRouter(
+    "/admin/mouse",
+    require("webmouse").responder
+   )
   ),
   this.adminRoute(gconf),
   new RouterListRouter(this.getHttpRouterList())
