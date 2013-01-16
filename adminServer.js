@@ -456,10 +456,17 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	"  <BR />",
 	"  <A HREF=\"" + adminLoginUrl + "\">log in</A>",
         "  <BR />",
-	"  <A HREF=\"gconf/\">gconf</A>",
-        "  <BR />",
-	"  <A HREF=\"mouse\">mouse</A>",
-        "  <BR />",
+     "  " + dictToAlist(
+      {
+       "gconf/": "gconf",
+       mouse: "mouse",
+       list: "list"
+      }
+     ).map(
+      function(kv){
+       return "<A HREF=\"" + kv[0] + "\">" + kv[1] + "</A>\n  <BR />";
+      }
+     ).join("\n  "),
 	" </BODY>",
 	"</HTML>",
 	""
@@ -537,11 +544,15 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	    }
 	);
     }
+ function listStrings(req, res){
+  res.end("listing");
+ }
     var routingDictionary = {
 	"/admin/": handleAdminIndexRequest,
 	"/admin/test": function(req, res){
 	    return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
-	}.bind(this)
+	}.bind(this),
+     "/admin/list": this.adminOnly(listStrings.bind(this))
     };
     routingDictionary[adminLoginUrl] = new MethodRoutingResponder(
 	{
