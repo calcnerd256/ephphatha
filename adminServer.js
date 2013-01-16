@@ -445,9 +445,9 @@ AdminStringServer.prototype.adminRoute = function adminRoute(router){
 }
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
-    var that = this;
-    var adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
-    var adminIndexSource = [
+ var that = this;
+ var adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
+ var adminIndexSource = [
 	"<HTML>",
 	" <HEAD>",
 	" </HEAD>",
@@ -470,12 +470,12 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	" </BODY>",
 	"</HTML>",
 	""
-    ].join("\n");
+ ].join("\n");
     var passwordFieldName = "password";
     var inputs = [
 	{"name": passwordFieldName, "type": "password"}
     ];
-    var adminLoginSource = [
+ var adminLoginSource = [
 	"<HTML>",
 	" <HEAD>",
 	" </HEAD>",
@@ -501,10 +501,10 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	" </BODY>",
 	"</HTML>",
 	""
-    ].join("\n");
+ ].join("\n");
     var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
     var handleAdminLoginGetRequest = this.constantResponder(adminLoginSource);
-    function handleAdminLoginPostRequest(req, res){
+ function handleAdminLoginPostRequest(req, res){
 	var form = new FormStream(req);
 	var done = false;
 	form.on(
@@ -543,8 +543,12 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 		    return res.end("bad login");
 	    }
 	);
-    }
+ }
  function listStrings(req, res){
+  var strs = this.strings;
+  res.writeHead(200, {"Content-Type": "text/html"})
+  for(var i = 0; i < strs.length; i++)
+   res.write("<LI><A HREF=\"" + i + "\">" + i + "</A></LI>\n");
   res.end("listing");
  }
     var routingDictionary = {
