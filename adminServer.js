@@ -251,7 +251,7 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
 
 AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     var appendUrl = "/append";
-    var adminUrl = "/admin";//TODO: make this point to HTTPS only
+    var adminUrl = "/admin/";//TODO: make this point to HTTPS only
     var index = [
 	"<HTML>",
 	" <HEAD>",
@@ -455,6 +455,11 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	"  admin",
 	"  <BR />",
 	"  <A HREF=\"" + adminLoginUrl + "\">log in</A>",
+        "  <BR />",
+	"  <A HREF=\"gconf/\">gconf</A>",
+        "  <BR />",
+	"  <A HREF=\"mouse\">mouse</A>",
+        "  <BR />",
 	" </BODY>",
 	"</HTML>",
 	""
@@ -533,7 +538,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 	);
     }
     var routingDictionary = {
-	"/admin": handleAdminIndexRequest,
+	"/admin/": handleAdminIndexRequest,
 	"/admin/test": function(req, res){
 	    return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
 	}.bind(this)
@@ -564,17 +569,18 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    }
   )(
    function transformRequest(req){
-     var url = req.url;
-     var u = url.split("/");
+    var url = req.url;
+    var u = url.split("/");
      u.shift(); // ""
      u.shift(); // "admin"
      u.shift(); // "gconf"
      u.unshift("");
-     url = u.join("/");
-     var request = {
-      __proto__: req,
-      url: url
-     };
+    url = u.join("/");
+    var request = {
+     __proto__: req,
+     url: url,
+     original_url: req.url
+    };
     return request;
    },
    require("web_gconf").responder
