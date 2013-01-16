@@ -457,15 +457,15 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   "  <A HREF=\"" + adminLoginUrl + "\">log in</A>",
   "  <BR />",
   "  " + dictToAlist(
-      {
-       "gconf/": "gconf",
-       mouse: "mouse",
-       list: "list"
-      }
+   {
+    "gconf/": "gconf",
+    mouse: "mouse",
+    list: "list"
+   }
   ).map(
-      function(kv){
-       return "<A HREF=\"" + kv[0] + "\">" + kv[1] + "</A>\n  <BR />";
-      }
+   function(kv){
+    return "<A HREF=\"" + kv[0] + "\">" + kv[1] + "</A>\n  <BR />";
+   }
   ).join("\n  "),
   " </BODY>",
   "</HTML>",
@@ -484,16 +484,16 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   "  <FORM METHOD=\"POST\">",
   "   " + inputs.map(
    function(inp){
-		return "<INPUT " +
-	         dictToAlist(inp).map(
-			function(pair){
-			    return pair[0] +
-				"=\"" +
-				escape(pair[1]) +
-				"\"";
-			}
-		    ).join(" ") +
-		    "></INPUT>";
+    return "<INPUT " +
+     dictToAlist(inp).map(
+      function(pair){
+       return pair[0] +
+	"=\"" +
+	escape(pair[1]) +
+	"\"";
+      }
+     ).join(" ") +
+     "></INPUT>";
    }.bind(this)
   ).join("   \n"),
   "   <INPUT TYPE=\"submit\"></INPUT>",
@@ -510,37 +510,37 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   form.on(
    "s_" + passwordFieldName,
    function(s){
-		done = true;
-		formStream.bufferChunks(
-		    s,
-		    function(password){
-			if(password == this.password)
-			    return this.createAdminToken(
-				function(token){
-				    var cookie = [
-					"token=" + token,
-					"Path=/",
-					"Secure",
-					"HttpOnly"
-				    ].join("; ");
-				    res.setHeader("Set-Cookie", cookie);
-				    res.end("login success " + token);
-				}.bind(this),
-				function(e){
-				    res.statusCode = 500;
-				    res.end("oops");
-				}
-			    );
-			res.statusCode = 403;
-			res.end("login failure");
-		    }.bind(this)
-		).resume();
+    done = true;
+    formStream.bufferChunks(
+     s,
+     function(password){
+      if(password == this.password)
+       return this.createAdminToken(
+	function(token){
+	 var cookie = [
+	  "token=" + token,
+	  "Path=/",
+	  "Secure",
+	  "HttpOnly"
+	 ].join("; ");
+	 res.setHeader("Set-Cookie", cookie);
+	 res.end("login success " + token);
+	}.bind(this),
+	function(e){
+	 res.statusCode = 500;
+	 res.end("oops");
+	}
+       );
+      res.statusCode = 403;
+      res.end("login failure");
+     }.bind(this)
+    ).resume();
    }.bind(this)
   ).on(
    "end",
    function(){
-		if(!done)
-		    return res.end("bad login");
+    if(!done)
+     return res.end("bad login");
    }
   );
  }
