@@ -98,7 +98,7 @@ POST
 : /append GET form
 : /append POST append
 : /admin/index admin index
-: /admin admin index
+: /admin/ admin index
 : /admin/index.html admin index
 : /admin/list GET listing
 : /admin/$num GET read $num-th element
@@ -110,7 +110,6 @@ POST
 : /admin/login GET login form
 : /admin/login POST generate session and set HTTPS-only cookie
 : /admin/mouse GET mouse control via AJAX
-:  currently only uses a form
 : /admin/mouse POST
 :  depends upon xdotool
 
