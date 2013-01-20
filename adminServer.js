@@ -256,12 +256,12 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
   function(xs){
    k = xs.shift();
    return [
-		k,
-		xs.join("=")
+    k,
+    xs.join("=")
    ].map(
-		function(s){
+    function(s){
 		    return s.split("+").join(" ");
-		}
+    }
    ).map(decodeURIComponent);
   }
  );
@@ -297,8 +297,8 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
  function stepper(dictionary){
   return that.dictionaryMap(
-	    dictionary,
-	    function(kv){
+   dictionary,
+   function(kv){
 		var key = kv[0];
 		var value = kv[1];
 		var parent = value[0];
@@ -313,12 +313,12 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 			par[1] + "/" + value[1]
 		    ]
 		];
-	    }
+   }
   );
  }
  function terminator(dictionary){
   for(var key in dictionary)
-	    if(dictionary[key][0] in dictionary)
+   if(dictionary[key][0] in dictionary)
 		if(
 		    "error" != key ||
 			"error" != dictionary[key][0]
@@ -332,50 +332,50 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
  var paths = this.dictionaryMap(
   pathDictionary,
   function(kv){
-	    var key = kv[0];
-	    var value = kv[1];
-	    return [key, value[1]];
+   var key = kv[0];
+   var value = kv[1];
+   return [key, value[1]];
   }
  );
 
  var constantStaticRouters = new ExactDictRouter(
   this.constantStaticRouterDict(
    this.dictIndirect(
-		paths,
-		{
+    paths,
+    {
 		    root: index,
 		    index: index,
 		    indexhtml: index
-		}
+    }
    )
   )
  );
  var handleAppendGet = this.constantResponder(
   [
-	    "<FORM METHOD=\"POST\">",
-	    " <TEXTAREA NAME=\"string\"></TEXTAREA>",
-	    //TODO make the name of that field a variable
-	    // such that elsewhere the form-processing code uses that same variable
-	    " <INPUT TYPE=\"SUBMIT\"></INPUT>",
-	    "</FORM>"
+   "<FORM METHOD=\"POST\">",
+   " <TEXTAREA NAME=\"string\"></TEXTAREA>",
+   //TODO make the name of that field a variable
+   // such that elsewhere the form-processing code uses that same variable
+   " <INPUT TYPE=\"SUBMIT\"></INPUT>",
+   "</FORM>"
   ].join("\n")
  );
  var handleAppendPost = function handleAppendPost(req, res){
   var form = new FormStream(req);
   var noString = true;
   function stringBack(string){
-	    index = that.appendString(string);
-	    res.writeHead(200, {"Content-type": "text/plain"});
-	    return res.end(
+   index = that.appendString(string);
+   res.writeHead(200, {"Content-type": "text/plain"});
+   return res.end(
 		"POST successful: " +
 		    index +
 		    "\n" +
 		    string
-	    );
+   );
   }
   form.on(
-	    "s_string",
-	    function(stream){
+   "s_string",
+   function(stream){
 		noString = false;
 		var buf = [];
 		stream.on(
@@ -387,31 +387,31 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 			return stringBack(buf.join(""));
 		    }
 		).resume();
-	    }
+   }
   ).on(
-	    "end",
-	    function(){
+   "end",
+   function(){
 		if(noString)
 		    return res.end("bad POST attempt");
-	    }
+   }
   );
  }
  var handleAppendRequest = new MethodRoutingResponder(
   {
-	    "GET": handleAppendGet,
-	    POST: handleAppendPost
+   "GET": handleAppendGet,
+   POST: handleAppendPost
   }
  );
  var moreRouters = new ExactDictRouter(
   this.dictIndirect(
-	    paths,
-	    {
+   paths,
+   {
 		favicon: function handleFaviconRequest(req, res){
 		    res.writeHead(404, "no favicon yet");
 		    res.end("go away");
 		},
 		append: handleAppendRequest
-	    }
+   }
   )
  );
  return [
@@ -427,9 +427,9 @@ AdminStringServer.prototype.requestIsAdmin = function requestIsAdmin(req){
  var crumbs = cookie.split(";");
  var alist = crumbs.map(
   function(s){
-	    var result = s.split("=");
-	    var key = result.shift().trim();
-	    return [key, result.join("=")];
+   var result = s.split("=");
+   var key = result.shift().trim();
+   return [key, result.join("=")];
   }
  );
  var dict = this.alistToDict(alist);
@@ -572,6 +572,9 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
      " <A HREF=\"../" + i + "\">" + i + "</A>",
      " <FORM METHOD=\"POST\" ACTION=\"../" + i + "/del\">",
      "  <INPUT TYPE=\"submit\" VALUE=\"delete\"></INPUT>",
+     " </FORM>",
+     " <FORM METHOD=\"POST\" ACTION=\"../" + i + "/exec\">",
+     "  <INPUT TYPE=\"submit\" VALUE=\"eval\"></INPUT>",
      " </FORM>",
      "</LI>",
      ""
