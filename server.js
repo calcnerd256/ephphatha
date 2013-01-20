@@ -128,6 +128,7 @@ this.Server = function Server(){
 );
 
 this.Server.prototype.serve = function serve(req, res){
+ try{
  return this.route(
   req,
   function(responder){
@@ -140,6 +141,12 @@ this.Server.prototype.serve = function serve(req, res){
    )(req, res);
   }
  );
+ }
+ catch(e){
+  console.warn(["request failed", e]);
+  res.statusCode = 500;
+  res.end("failed to serve request");
+ }
 }
 this.Server.prototype.route = function route(req, callback, errback, noisy){
  return functionOrElse(

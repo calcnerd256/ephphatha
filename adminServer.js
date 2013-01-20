@@ -303,15 +303,15 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     var value = kv[1];
     var parent = value[0];
     if(parent == key)
-		    return [key, ["error", "cycle"]];
+     return [key, ["error", "cycle"]];
     if(!(parent in dictionary)) return kv;
     par = dictionary[parent];
     return [
-		    key,
-		    [
+     key,
+     [
 			par[0],
 			par[1] + "/" + value[1]
-		    ]
+     ]
     ];
    }
   );
@@ -320,10 +320,10 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
   for(var key in dictionary)
    if(dictionary[key][0] in dictionary)
     if(
-		    "error" != key ||
+     "error" != key ||
 			"error" != dictionary[key][0]
     )
-		    return false;
+     return false;
   return true;
  }
 
@@ -368,9 +368,9 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
    res.writeHead(200, {"Content-type": "text/plain"});
    return res.end(
     "POST successful: " +
-		    index +
-		    "\n" +
-		    string
+     index +
+     "\n" +
+     string
    );
   }
   form.on(
@@ -379,20 +379,20 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     noString = false;
     var buf = [];
     stream.on(
-		    "data",
-		    buf.push.bind(buf)
+     "data",
+     buf.push.bind(buf)
     ).on(
-		    "end",
-		    function(){
+     "end",
+     function(){
 			return stringBack(buf.join(""));
-		    }
+     }
     ).resume();
    }
   ).on(
    "end",
    function(){
     if(noString)
-		    return res.end("bad POST attempt");
+     return res.end("bad POST attempt");
    }
   );
  }
@@ -407,8 +407,8 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
    paths,
    {
     favicon: function handleFaviconRequest(req, res){
-		    res.writeHead(404, "no favicon yet");
-		    res.end("go away");
+     res.writeHead(404, "no favicon yet");
+     res.end("go away");
     },
     append: handleAppendRequest
    }
@@ -645,6 +645,36 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    return res.end(str);
   }.bind(this)
  );
+
+ var stringExec = new Router(
+  new UrlMatcher(
+   function match(u){
+    var p = matchStringUrlPrefix(u);
+    return "exec" == p[1];
+   }
+  ),
+  function execString(req, res){
+   if("GET" == req.method)
+    return (
+     function(r){
+      r.setHeader("Content-Type", "text/html");
+      return r;
+     }
+    )(res).end(
+     [
+      "<FORM METHOD=\"POST\">",
+      " <INPUT TYPE=\"SUBMIT\"></INPUT>",
+      "</FORM>"
+     ].join("\n")
+    );
+   var p = matchStringUrlPrefix(req.url);
+   var i = +p[0];
+   if(!(i in this.strings))
+    res.statusCode = 404;
+   str = ""+this.execString(i);
+   return res.end(str);
+  }.bind(this)
+ );
  var routingDictionary = {
   "/admin/": handleAdminIndexRequest,
   "/admin/index": handleAdminIndexRequest,
@@ -660,13 +690,13 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    "POST": handleAdminLoginPostRequest.bind(this)
   }
  );
-   function responderRequestTransform(transformRequest, responder){
+ function responderRequestTransform(transformRequest, responder){
     var result = function(req, res){
      return coerceToFunction(responder)(transformRequest(req), res);
     }
     result.responder = responder;
     return result;
-   }
+ }
  var gconf = new Router(
   new UrlMatcher(
    function(u){
@@ -700,6 +730,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   new ExactDictRouter(routingDictionary),
   this.adminRoute(stringDav),
   this.adminRoute(stringDel),
+  this.adminRoute(stringExec),
   this.adminRoute(
    new ExactRouter(
     "/admin/mouse/",
