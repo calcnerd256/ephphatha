@@ -64,41 +64,41 @@ AdminStringServer.prototype.deleteString = function deleteString(index){
 
 AdminStringServer.prototype.generateRandomHex = function generateRandomHex(length, callback, errorBack, noisy){
  if(!callback)
-	callback = noisy ?
-	    function(){throw arguments;} :
-            console.log.bind(console);
+  callback = noisy ?
+  function(){throw arguments;} :
+ console.log.bind(console);
  if("function" != typeof errorBack)
-	errorBack = noisy ?
-	    function(e){throw e;} :
-            function(){return callback();};
+  errorBack = noisy ?
+  function(e){throw e;} :
+ function(){return callback();};
  function toHex(b){return b.toString(16);}
  function pad(str){
-	while(str.length < 2)
-	    str = "0" + str;
-	return str;
+  while(str.length < 2)
+   str = "0" + str;
+  return str;
  }
  return crypto.randomBytes(
-	length / 2,
-	function(e, buf){
-	    if(e) return errorBack(e);
-	    var randomHex = [].map.call(buf, toHex).map(pad).join("");
-	    return callback(randomHex);
-	}
+  length / 2,
+  function(e, buf){
+   if(e) return errorBack(e);
+   var randomHex = [].map.call(buf, toHex).map(pad).join("");
+   return callback(randomHex);
+  }
  );
 }
 AdminStringServer.prototype.createAdminToken = function createAdminToken(callback, errorBack, noisy){
  var that = this;
  var tokenLength = 64;
  return this.generateRandomHex(
-	tokenLength,
-	function(token){
-	    if(token in that.adminTokens && "active" == that.adminTokens[token])
-		return errorBack("collision");
-	    that.adminTokens[token] = "active";
-	    return callback(token);
-	},
-	errorBack,
-	noisy
+  tokenLength,
+  function(token){
+   if(token in that.adminTokens && "active" == that.adminTokens[token])
+    return errorBack("collision");
+   that.adminTokens[token] = "active";
+   return callback(token);
+  },
+  errorBack,
+  noisy
  );
 }
 
@@ -108,23 +108,23 @@ AdminStringServer.prototype.expireAdminTokens = function expireAdminTokens(){
 
 function callOnce(fn, noisy){
  return function vapor(){
-	var result = fn.apply(this, arguments);
-	fn = function(){
-	    if(noisy)
-		throw new Error("attempted to call a once-only function multiple times");
-	};
-	return result;
+  var result = fn.apply(this, arguments);
+  fn = function(){
+   if(noisy)
+    throw new Error("attempted to call a once-only function multiple times");
+  };
+  return result;
  };
 }
 function fluentCall(ob){
-    var args = [].slice.call(arguments, 1);
-    this.apply(ob, args);
-    return ob;
+ var args = [].slice.call(arguments, 1);
+ this.apply(ob, args);
+ return ob;
 }
 function fluentKeyCall(ob, key){
-    var args = [].slice.call(arguments, 1);
-    args[0] = ob;
-    return fluentCall.apply(ob[key], args);
+ var args = [].slice.call(arguments, 1);
+ args[0] = ob;
+ return fluentCall.apply(ob[key], args);
 }
 this.callOnce = callOnce;
 this.fluentCall = fluentCall;
@@ -134,33 +134,33 @@ this.fluentKeyCall = fluentKeyCall;
 AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
  var outstanding = 2;
  function eachBack(){
-	if(!--outstanding)
-	    return callback.apply(this, arguments);
+  if(!--outstanding)
+   return callback.apply(this, arguments);
  }
  var httpServer = fluentKeyCall(
-	this.getServerPerProtocol("HTTP"),
-	"setPort",
-	port
+  this.getServerPerProtocol("HTTP"),
+  "setPort",
+  port
  ).init(http.createServer, callOnce(eachBack));
  var httpsBack = callOnce(eachBack);
  var httpsServer;
  function createHttpsServerClosure(responder){
-		return https.createServer(
-		    httpsOptions,
-		    responder
-		);
+  return https.createServer(
+   httpsOptions,
+   responder
+  );
  }
  if(!httpsOptions) httpsServer = httpsBack();
  else
-	httpsServer = fluentKeyCall(
-	    this.getServerPerProtocol("HTTPS"),
-	    "setPort",
-	    securePort
-	).init(createHttpsServerClosure, httpsBack);
+  httpsServer = fluentKeyCall(
+   this.getServerPerProtocol("HTTPS"),
+   "setPort",
+   securePort
+  ).init(createHttpsServerClosure, httpsBack);
 
  this.servers = {
-	http: httpServer,
-	https: httpsServer
+  http: httpServer,
+  https: httpsServer
  };
  return this.servers;
 }
@@ -182,19 +182,19 @@ AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol
 AdminStringServer.prototype.alistToDict = function alistToDict(alist, stacks){
  var result = {};
  alist.map(
-	stacks ?
-	    function(kv){
+  stacks ?
+   function(kv){
 		var k = kv[0];
 		var v = kv[1];
 		if(!(k in result)) result[k] = [];
 		result[k].push(v);
-	    } :
-	    function(kv){
+   } :
+   function(kv){
 		var k = kv[0];
 		var v = kv[1];
 		if(k in result) return;
 		result[k] = v;
-	    }
+   }
  );
  return result;
 }
@@ -205,15 +205,15 @@ AdminStringServer.prototype.dictToExactRouterListRouter = function dictToExactRo
 }
 
 AdminStringServer.prototype.constantResponder = function constantResponder(str, mimetype){
-    if(!mimetype) mimetype = "text/html";
-    var result = function(req, res){
-	if("text/plain" != mimetype)
-	    res.writeHead(200, {"Content-type": mimetype});
-	res.end(str);
-    };
-    result.str = str;
-    result.mimetype = mimetype;
-    return result;
+ if(!mimetype) mimetype = "text/html";
+ var result = function(req, res){
+  if("text/plain" != mimetype)
+   res.writeHead(200, {"Content-type": mimetype});
+  res.end(str);
+ };
+ result.str = str;
+ result.mimetype = mimetype;
+ return result;
 }
 
 AdminStringServer.prototype.dictionaryMap = function dictionaryMap(ob, fn){
@@ -223,33 +223,33 @@ AdminStringServer.prototype.dictionaryMap = function dictionaryMap(ob, fn){
 AdminStringServer.prototype.constantStaticRouterDict = function constantStaticRouterDict(d){
  var that = this;
  return this.dictionaryMap(
-	d,
-	function(kv){
-	    return [
-		kv[0],
-		that.constantResponder(kv[1])
-	    ];
-	}
+  d,
+  function(kv){
+   return [
+    kv[0],
+    that.constantResponder(kv[1])
+   ];
+  }
  );
 }
 
 AdminStringServer.prototype.dictIndirect = function dictIndirect(keys, vals){
  return this.dictionaryMap(
-	vals,
-	function(kv){
-	    var k = kv[0];
-	    return [keys[k], vals[k]];
-	}
+  vals,
+  function(kv){
+   var k = kv[0];
+   return [keys[k], vals[k]];
+  }
  );
 }
 
 AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDataToAlist(str){
  return str.split(";").map(
-	function(s){
-	    return s.split("=");
-	}
+  function(s){
+   return s.split("=");
+  }
  ).map(
-	function(xs){
+  function(xs){
 	    k = xs.shift();
 	    return [
 		k,
@@ -259,14 +259,14 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
 		    return s.split("+").join(" ");
 		}
 	    ).map(decodeURIComponent);
-	}
+  }
  );
 }
 
 AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
-    var appendUrl = "/append";
-    var adminUrl = "/admin/";//TODO: make this point to HTTPS only
-    var index = [
+ var appendUrl = "/append";
+ var adminUrl = "/admin/";//TODO: make this point to HTTPS only
+ var index = [
 	"<HTML>",
 	" <HEAD>",
 	" </HEAD>",
@@ -279,19 +279,19 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	" </BODY>",
 	"</HTML>",
 	""
-    ].join("\n");
-    var that = this;
+ ].join("\n");
+ var that = this;
 
-    var pathDictionary = {
+ var pathDictionary = {
 	"empty": [null, ""],
 	"root": ["empty", ""],
 	"index": ["empty", "index"],
 	"indexhtml": ["empty", "index.html"],
 	"favicon": ["empty", "favicon.ico"],
 	"append": ["empty", "append"]
-    };
+ };
 
-    function stepper(dictionary){
+ function stepper(dictionary){
 	return that.dictionaryMap(
 	    dictionary,
 	    function(kv){
@@ -311,8 +311,8 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		];
 	    }
 	);
-    }
-    function terminator(dictionary){
+ }
+ function terminator(dictionary){
 	for(var key in dictionary)
 	    if(dictionary[key][0] in dictionary)
 		if(
@@ -321,18 +321,18 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		)
 		    return false;
 	return true;
-    }
+ }
 
-    while(!terminator(pathDictionary))
+ while(!terminator(pathDictionary))
 	pathDictionary = stepper(pathDictionary);
-    var paths = this.dictionaryMap(
+ var paths = this.dictionaryMap(
 	pathDictionary,
 	function(kv){
 	    var key = kv[0];
 	    var value = kv[1];
 	    return [key, value[1]];
 	}
-    );
+ );
 
  var constantStaticRouters = new ExactDictRouter(
   this.constantStaticRouterDict(
@@ -356,7 +356,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 	    "</FORM>"
 	].join("\n")
  );
-    var handleAppendPost = function handleAppendPost(req, res){
+ var handleAppendPost = function handleAppendPost(req, res){
 	var form = new FormStream(req);
 	var noString = true;
 	function stringBack(string){
@@ -391,13 +391,13 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		    return res.end("bad POST attempt");
 	    }
 	);
-    }
-    var handleAppendRequest = new MethodRoutingResponder(
+ }
+ var handleAppendRequest = new MethodRoutingResponder(
 	{
 	    "GET": handleAppendGet,
 	    POST: handleAppendPost
 	}
-    );
+ );
  var moreRouters = new ExactDictRouter(
 	this.dictIndirect(
 	    paths,
@@ -417,28 +417,28 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 }
 
 AdminStringServer.prototype.requestIsAdmin = function requestIsAdmin(req){
-    var headers = req.headers;
-    var cookie = headers.cookie;
-    if(!cookie) return false;
-    var crumbs = cookie.split(";");
-    var alist = crumbs.map(
+ var headers = req.headers;
+ var cookie = headers.cookie;
+ if(!cookie) return false;
+ var crumbs = cookie.split(";");
+ var alist = crumbs.map(
 	function(s){
 	    var result = s.split("=");
 	    var key = result.shift().trim();
 	    return [key, result.join("=")];
 	}
-    );
-    var dict = this.alistToDict(alist);
-    var token = dict.token;
-    return token in this.adminTokens && "active" == this.adminTokens[token];
+ );
+ var dict = this.alistToDict(alist);
+ var token = dict.token;
+ return token in this.adminTokens && "active" == this.adminTokens[token];
 }
 
 AdminStringServer.prototype.adminOnly = function adminOnly(responder){
  var result = function respond(req, res){
-	if(this.requestIsAdmin(req))
-	    return responder.apply(this, arguments);
-	res.statusCode = 403;
-	return res.end("not an admin");
+  if(this.requestIsAdmin(req))
+   return responder.apply(this, arguments);
+  res.statusCode = 403;
+  return res.end("not an admin");
  }.bind(this);
  result.responder = responder;
  return result;
@@ -609,7 +609,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   new UrlMatcher(
    function match(u){
     var p = matchStringUrlPrefix(u);
-    return "del" == p[1];
+    return "del" == p[1] || "delete" == p[1];
    }
   ),
   function delString(req, res){
