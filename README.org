@@ -41,6 +41,8 @@ Next, server.init(http, continuation)
 That creates a boring server. We need to add routes.
 
 *** Routes
+This documentation is out of date.
+
 The Server maintains a list of route functions as mutable state.
 A var server = new Server() has server.serve(q,s)
  which calls this.route(q, fn)
@@ -100,9 +102,12 @@ POST
 : /admin/index admin index
 : /admin/ admin index
 : /admin/index.html admin index
-: /admin/list GET listing
+: /admin/list/ GET listing
 : /admin/$num GET read $num-th element
 : /admin/$num DELETE remove $num-nth element, moving others down?
+:  not implementing this time around since I can't use it
+: /admin/$num/del POST same as /admin/$num DELETE
+:  because https://www.w3.org/Bugs/Public/show_bug.cgi?id=10671 is RESOLVED WONTFIX
 : /admin/$num/exec POST run it, returning the string representation of the immediate return
 :  unless it returns a promise? make that a next-time feature
 : /admin/$num/persist POST save it to a directory somewhere to load when the server starts

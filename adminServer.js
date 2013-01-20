@@ -3,6 +3,7 @@ var http = require("http");
 var https = require("https");
 var child_process = require("child_process");
 var crypto = require("crypto");
+var url = require("url");
 var formStream = require("form_stream")
  var FormStream = formStream.FormStream;
 var router = require("webserver_functors");
@@ -458,13 +459,13 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   "  <BR />",
   "  " + dictToAlist(
    {
-    "gconf/": "gconf",
+    gconf: "gconf",
     mouse: "mouse",
     list: "list"
    }
   ).map(
    function(kv){
-    return "<A HREF=\"" + kv[0] + "\">" + kv[1] + "</A>\n  <BR />";
+    return "<A HREF=\"" + kv[0] + "/\">" + kv[1] + "</A>\n  <BR />";
    }
   ).join("\n  "),
   " </BODY>",
@@ -546,40 +547,47 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  }
  function listStrings(req, res){
   var strs = this.strings;
-  res.writeHead(200, {"Content-Type": "text/html"})
+  res.writeHead(200, {"Content-Type": "text/html"});
   for(var i = 0; i < strs.length; i++)
-   res.write("<LI><A HREF=\"" + i + "\">" + i + "</A></LI>\n");
+   res.write(
+    [
+     "<LI><A HREF=\"../" + i + "\">" + i + "</A></LI>",
+     ""
+    ].join("\n"));
   res.end("listing");
  }
- var readString = new Router(
+ var stringDav = new Router(
   new UrlMatcher(
    function match(u){
-    var p = u.split("/");
+    var p = u.split("?")[0].split("/");
     if(3 != p.length) return false;
     if("admin" != p[1]) return false;
     return +p[2] == p[2];
    }
   ),
-  function showString(req, res){
-   var p = req.url.split("/");
-   var n = +p[2];
+  function davString(req, res){
+   var p = url.parse(req.url).pathname.split("/");
+   var n = +(p[2]);
    var strs = this.strings;
    if(!(n in strs))
     return (
      function(r){
-      r.writeHead(404);
+      r.statusCode = 404;
       r.end("index out of bounds");
      }
     )(res);
-   return res.end(strs[n]);
+   var str = strs[n];
+   return res.end(str);
   }.bind(this)
  );
  var routingDictionary = {
   "/admin/": handleAdminIndexRequest,
+  "/admin/index": handleAdminIndexRequest,
+  "/admin/index.html": handleAdminIndexRequest,
   "/admin/test": function(req, res){
    return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
   }.bind(this),
-  "/admin/list": this.adminOnly(listStrings.bind(this))
+  "/admin/list/": this.adminOnly(listStrings.bind(this))
  };
  routingDictionary[adminLoginUrl] = new MethodRoutingResponder(
   {
@@ -587,6 +595,13 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    "POST": handleAdminLoginPostRequest.bind(this)
   }
  );
+   function responderRequestTransform(transformRequest, responder){
+    var result = function(req, res){
+     return coerceToFunction(responder)(transformRequest(req), res);
+    }
+    result.responder = responder;
+    return result;
+   }
  var gconf = new Router(
   new UrlMatcher(
    function(u){
@@ -597,26 +612,18 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     return true;
    }
   ),
-  (
-   function responderRequestTransform(transformRequest, responder){
-    var result = function(req, res){
-     return coerceToFunction(responder)(transformRequest(req), res);
-    }
-    result.responder = responder;
-    return result;
-   }
-  )(
+  responderRequestTransform(
    function transformRequest(req){
-    var url = req.url;
-    var u = url.split("/");
+    var rurl = req.url;
+    var u = rurl.split("/");
      u.shift(); // ""
      u.shift(); // "admin"
      u.shift(); // "gconf"
      u.unshift("");
-    url = u.join("/");
+    rurl = u.join("/");
     var request = {
      __proto__: req,
-     url: url,
+     url: rurl,
      original_url: req.url
     };
     return request;
@@ -626,10 +633,10 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  );
  return [
   new ExactDictRouter(routingDictionary),
-  readString,
+  stringDav,
   this.adminRoute(
    new ExactRouter(
-    "/admin/mouse",
+    "/admin/mouse/",
     require("webmouse").responder
    )
   ),
