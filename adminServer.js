@@ -61,6 +61,10 @@ AdminStringServer.prototype.deleteString = function deleteString(index){
  delete strs[index];
  return result;
 }
+AdminStringServer.prototype.execString = function execString(index){
+ //here we go
+ return eval(this.strings[index]);
+}
 
 AdminStringServer.prototype.generateRandomHex = function generateRandomHex(length, callback, errorBack, noisy){
  if(!callback)
@@ -184,16 +188,16 @@ AdminStringServer.prototype.alistToDict = function alistToDict(alist, stacks){
  alist.map(
   stacks ?
    function(kv){
-		var k = kv[0];
-		var v = kv[1];
-		if(!(k in result)) result[k] = [];
-		result[k].push(v);
+    var k = kv[0];
+    var v = kv[1];
+    if(!(k in result)) result[k] = [];
+    result[k].push(v);
    } :
    function(kv){
-		var k = kv[0];
-		var v = kv[1];
-		if(k in result) return;
-		result[k] = v;
+    var k = kv[0];
+    var v = kv[1];
+    if(k in result) return;
+    result[k] = v;
    }
  );
  return result;
@@ -250,15 +254,15 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
   }
  ).map(
   function(xs){
-	    k = xs.shift();
-	    return [
+   k = xs.shift();
+   return [
 		k,
 		xs.join("=")
-	    ].map(
+   ].map(
 		function(s){
 		    return s.split("+").join(" ");
 		}
-	    ).map(decodeURIComponent);
+   ).map(decodeURIComponent);
   }
  );
 }
@@ -267,32 +271,32 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
  var appendUrl = "/append";
  var adminUrl = "/admin/";//TODO: make this point to HTTPS only
  var index = [
-	"<HTML>",
-	" <HEAD>",
-	" </HEAD>",
-	" <BODY>",
-	"  index",
-	"  <BR />",
-	"  <A HREF=\"" + appendUrl + "\">append</A>",
-	"  <BR />",
-	"  <A HREF=\"" + adminUrl + "\">admin</A>",
-	" </BODY>",
-	"</HTML>",
-	""
+  "<HTML>",
+  " <HEAD>",
+  " </HEAD>",
+  " <BODY>",
+  "  index",
+  "  <BR />",
+  "  <A HREF=\"" + appendUrl + "\">append</A>",
+  "  <BR />",
+  "  <A HREF=\"" + adminUrl + "\">admin</A>",
+  " </BODY>",
+  "</HTML>",
+  ""
  ].join("\n");
  var that = this;
 
  var pathDictionary = {
-	"empty": [null, ""],
-	"root": ["empty", ""],
-	"index": ["empty", "index"],
-	"indexhtml": ["empty", "index.html"],
-	"favicon": ["empty", "favicon.ico"],
-	"append": ["empty", "append"]
+  "empty": [null, ""],
+  "root": ["empty", ""],
+  "index": ["empty", "index"],
+  "indexhtml": ["empty", "index.html"],
+  "favicon": ["empty", "favicon.ico"],
+  "append": ["empty", "append"]
  };
 
  function stepper(dictionary){
-	return that.dictionaryMap(
+  return that.dictionaryMap(
 	    dictionary,
 	    function(kv){
 		var key = kv[0];
@@ -310,56 +314,56 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		    ]
 		];
 	    }
-	);
+  );
  }
  function terminator(dictionary){
-	for(var key in dictionary)
+  for(var key in dictionary)
 	    if(dictionary[key][0] in dictionary)
 		if(
 		    "error" != key ||
 			"error" != dictionary[key][0]
 		)
 		    return false;
-	return true;
+  return true;
  }
 
  while(!terminator(pathDictionary))
-	pathDictionary = stepper(pathDictionary);
+  pathDictionary = stepper(pathDictionary);
  var paths = this.dictionaryMap(
-	pathDictionary,
-	function(kv){
+  pathDictionary,
+  function(kv){
 	    var key = kv[0];
 	    var value = kv[1];
 	    return [key, value[1]];
-	}
+  }
  );
 
  var constantStaticRouters = new ExactDictRouter(
   this.constantStaticRouterDict(
-	    this.dictIndirect(
+   this.dictIndirect(
 		paths,
 		{
 		    root: index,
 		    index: index,
 		    indexhtml: index
 		}
-	    )
+   )
   )
  );
  var handleAppendGet = this.constantResponder(
-	[
+  [
 	    "<FORM METHOD=\"POST\">",
 	    " <TEXTAREA NAME=\"string\"></TEXTAREA>",
 	    //TODO make the name of that field a variable
 	    // such that elsewhere the form-processing code uses that same variable
 	    " <INPUT TYPE=\"SUBMIT\"></INPUT>",
 	    "</FORM>"
-	].join("\n")
+  ].join("\n")
  );
  var handleAppendPost = function handleAppendPost(req, res){
-	var form = new FormStream(req);
-	var noString = true;
-	function stringBack(string){
+  var form = new FormStream(req);
+  var noString = true;
+  function stringBack(string){
 	    index = that.appendString(string);
 	    res.writeHead(200, {"Content-type": "text/plain"});
 	    return res.end(
@@ -368,8 +372,8 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		    "\n" +
 		    string
 	    );
-	}
-	form.on(
+  }
+  form.on(
 	    "s_string",
 	    function(stream){
 		noString = false;
@@ -384,22 +388,22 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		    }
 		).resume();
 	    }
-	).on(
+  ).on(
 	    "end",
 	    function(){
 		if(noString)
 		    return res.end("bad POST attempt");
 	    }
-	);
+  );
  }
  var handleAppendRequest = new MethodRoutingResponder(
-	{
+  {
 	    "GET": handleAppendGet,
 	    POST: handleAppendPost
-	}
+  }
  );
  var moreRouters = new ExactDictRouter(
-	this.dictIndirect(
+  this.dictIndirect(
 	    paths,
 	    {
 		favicon: function handleFaviconRequest(req, res){
@@ -408,11 +412,11 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 		},
 		append: handleAppendRequest
 	    }
-	)
+  )
  );
  return [
-     constantStaticRouters,
-     moreRouters
+  constantStaticRouters,
+  moreRouters
  ]
 }
 
@@ -422,11 +426,11 @@ AdminStringServer.prototype.requestIsAdmin = function requestIsAdmin(req){
  if(!cookie) return false;
  var crumbs = cookie.split(";");
  var alist = crumbs.map(
-	function(s){
+  function(s){
 	    var result = s.split("=");
 	    var key = result.shift().trim();
 	    return [key, result.join("=")];
-	}
+  }
  );
  var dict = this.alistToDict(alist);
  var token = dict.token;
