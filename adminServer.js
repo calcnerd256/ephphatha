@@ -260,7 +260,7 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
     xs.join("=")
    ].map(
     function(s){
-		    return s.split("+").join(" ");
+     return s.split("+").join(" ");
     }
    ).map(decodeURIComponent);
   }
@@ -299,30 +299,30 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
   return that.dictionaryMap(
    dictionary,
    function(kv){
-		var key = kv[0];
-		var value = kv[1];
-		var parent = value[0];
-		if(parent == key)
+    var key = kv[0];
+    var value = kv[1];
+    var parent = value[0];
+    if(parent == key)
 		    return [key, ["error", "cycle"]];
-		if(!(parent in dictionary)) return kv;
-		par = dictionary[parent];
-		return [
+    if(!(parent in dictionary)) return kv;
+    par = dictionary[parent];
+    return [
 		    key,
 		    [
 			par[0],
 			par[1] + "/" + value[1]
 		    ]
-		];
+    ];
    }
   );
  }
  function terminator(dictionary){
   for(var key in dictionary)
    if(dictionary[key][0] in dictionary)
-		if(
+    if(
 		    "error" != key ||
 			"error" != dictionary[key][0]
-		)
+    )
 		    return false;
   return true;
  }
@@ -343,9 +343,9 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
    this.dictIndirect(
     paths,
     {
-		    root: index,
-		    index: index,
-		    indexhtml: index
+     root: index,
+     index: index,
+     indexhtml: index
     }
    )
   )
@@ -367,7 +367,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
    index = that.appendString(string);
    res.writeHead(200, {"Content-type": "text/plain"});
    return res.end(
-		"POST successful: " +
+    "POST successful: " +
 		    index +
 		    "\n" +
 		    string
@@ -376,22 +376,22 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
   form.on(
    "s_string",
    function(stream){
-		noString = false;
-		var buf = [];
-		stream.on(
+    noString = false;
+    var buf = [];
+    stream.on(
 		    "data",
 		    buf.push.bind(buf)
-		).on(
+    ).on(
 		    "end",
 		    function(){
 			return stringBack(buf.join(""));
 		    }
-		).resume();
+    ).resume();
    }
   ).on(
    "end",
    function(){
-		if(noString)
+    if(noString)
 		    return res.end("bad POST attempt");
    }
   );
@@ -406,11 +406,11 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
   this.dictIndirect(
    paths,
    {
-		favicon: function handleFaviconRequest(req, res){
+    favicon: function handleFaviconRequest(req, res){
 		    res.writeHead(404, "no favicon yet");
 		    res.end("go away");
-		},
-		append: handleAppendRequest
+    },
+    append: handleAppendRequest
    }
   )
  );
@@ -620,6 +620,19 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    }
   ),
   function delString(req, res){
+   if("GET" == req.method)
+    return (
+     function(r){
+      r.setHeader("Content-Type", "text/html");
+      return r;
+     }
+    )(res).end(
+     [
+      "<FORM METHOD=\"POST\">",
+      " <INPUT TYPE=\"SUBMIT\"></INPUT>",
+      "</FORM>"
+     ].join("\n")
+    );
    var p = matchStringUrlPrefix(req.url);
    str = this.deleteString(+p[0]);
    if(!str)
