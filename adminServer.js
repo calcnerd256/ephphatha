@@ -48,6 +48,19 @@ AdminStringServer.prototype.appendString = function appendString(str){
     if(this.strings[result] != str) return -1; //that should never happen
     return result;
 }
+AdminStringServer.prototype.deleteString = function deleteString(index){
+ var strs = this.strings;
+ if(strs.length - 1 == index)
+  return strs.pop();
+ var result = strs[index];
+ if(index)
+  if(!((index - 1) in strs))
+   if((index + 1) in strs)
+    strs[index - 1] = strs[index + 1]
+ if(!(index in strs)) return false;
+ delete strs[index];
+ return result;
+}
 
 AdminStringServer.prototype.generateRandomHex = function generateRandomHex(length, callback, errorBack, noisy){
     if(!callback)

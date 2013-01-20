@@ -112,6 +112,7 @@ POST
 :  unless it returns a promise? make that a next-time feature
 : /admin/$num/persist POST save it to a directory somewhere to load when the server starts
 :  make that a next-time feature
+: /admin/$num/save same as /admin/$num/persist because persist is an annoying way to say it
 : /admin/login GET login form
 : /admin/login POST generate session and set HTTPS-only cookie
 : /admin/mouse GET mouse control via AJAX
