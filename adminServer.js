@@ -309,8 +309,8 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     return [
      key,
      [
-			par[0],
-			par[1] + "/" + value[1]
+      par[0],
+      par[1] + "/" + value[1]
      ]
     ];
    }
@@ -321,7 +321,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
    if(dictionary[key][0] in dictionary)
     if(
      "error" != key ||
-			"error" != dictionary[key][0]
+      "error" != dictionary[key][0]
     )
      return false;
   return true;
@@ -384,7 +384,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     ).on(
      "end",
      function(){
-			return stringBack(buf.join(""));
+      return stringBack(buf.join(""));
      }
     ).resume();
    }
