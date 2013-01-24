@@ -27,3 +27,10 @@ this.server.init(
 );
 
 global.server = this.server;
+
+process.on(
+ "uncaughtException",
+ function(e){
+  console.warn(["unhandled exception", e, "please restart the server"]);
+ }.bind(this)
+);
