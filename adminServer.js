@@ -66,6 +66,35 @@ AdminStringServer.prototype.execString = function execString(index){
  return eval(this.strings[index]);
 }
 
+AdminStringServer.prototype.loadStrings = function loadStrings(dir, strback){
+ var fs = require("fs");
+ if(!dir)
+  dir = "persist";
+ if(!strback) strback = function(){};
+ var results = [];
+ fs.readdir(
+  dir,
+  function(err, files){
+   //assume no err
+   return files.map(
+    function(p, i){
+     results[i] = -1;
+     strback(i, 0);
+     return fs.readFile(
+      dir + "/" + p,
+      function(err, data){
+       //assume no err
+       results[i] = this.appendString(""+data);
+       return strback(i, 1);
+      }.bind(this)
+     );
+    }.bind(this)
+   );
+  }.bind(this)
+ );
+ return results;
+}
+
 AdminStringServer.prototype.generateRandomHex = function generateRandomHex(length, callback, errorBack, noisy){
  if(!callback)
   callback = noisy ?
