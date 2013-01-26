@@ -123,37 +123,38 @@ AdminStringServer.prototype.getUniqueValue = function getUniqueValue(oldValues, 
  var result;
  var count = 0;
  while(-1 != oldValues.indexOf(result = ""+hash(n))){
-  n = increment(n) + (increment(n) == n); // I refuse to run a tight loop!
+  n = increment(n) + (increment(n) == n); // I refuse to run an infinite loop!
   if(count++ > (oldValues.length + 1) * (oldValues.length + 1) * 10) // how dare it be quadratic?
-   return oldValues.join(".")+"_"; // guaranteed not to be in there by finity of oldValues.length
+   return oldValues.join(".")+"_"; // guaranteed not to be in there by finity of oldValues and its elements
  }
  return result;
 }
 
 
-AdminStringServer.prototype.loadStrings = function loadStrings(dir, strback, errback){
+AdminStringServer.prototype.loadStrings = function loadStrings(dir, callback, errback){
  if(!dir)
   dir = "persist";
  if(!strback) strback = function(){};
  if(!errback) errback = function(){};
- var results = [];
- fs.readdir(
+ return fs.readdir(
   dir,
   function(err, files){
    if(err) return errback(err);
-   return files.map(
-    function(p, i){
-     results[i] = -1;
-     strback(i, 0);
-     return fs.readFile(
-      dir + "/" + p,
-      function(err, data){
-       if(err) return errback(err);
-       results[i] = this.appendString(""+data);
-       return strback(i, 1);
-      }.bind(this)
-     );
-    }.bind(this)
+   return this.mapBack(
+    files.map(function(x){return dir + "/" + x}),
+    function(x, f){
+     return [
+      x,
+      fs.readFile(
+       x,
+       function(err, data){
+	if(err) return f([x, -1, err]);// TODO: redesign mapBack
+	return f([x, this.appendString(data)]);
+       }.bind(this)
+      )
+     ];
+    }.bind(this),
+    callback
    );
   }.bind(this)
  );
