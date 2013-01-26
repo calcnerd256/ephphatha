@@ -4,6 +4,7 @@ var https = require("https");
 var child_process = require("child_process");
 var crypto = require("crypto");
 var url = require("url");
+var fs = require("fs");
 var formStream = require("form_stream")
  var FormStream = formStream.FormStream;
 var router = require("webserver_functors");
@@ -36,18 +37,27 @@ function AdminStringServer(){
 
 AdminStringServer.prototype.generatePassword = function(callback){
  return this.generateRandomHex(8, callback);
-}
+};
 AdminStringServer.prototype.setPassword = function setPassword(newPass){
  this.password = newPass;
-}
+};
 
 
-AdminStringServer.prototype.appendString = function appendString(str){
- var result = this.strings.length;
+AdminStringServer.prototype.appendNewString = function appendNewString(str){
+ var result = this.strings.map(
+  function(s, i){
+   return this.strEq(i, str);
+  }.bind(this)
+ ).indexOf(true);
+ if(-1 != result) return result;
+ result = this.strings.length;
  this.strings.push(str);
- if(this.strings[result] != str) return -1; //that should never happen
+ if(!this.strEq(result, str)) //that should never happen
+  return -1;
  return result;
-}
+};
+AdminStringServer.prototype.appendString = AdminStringServer.prototype.appendNewString;
+
 AdminStringServer.prototype.deleteString = function deleteString(index){
  var strs = this.strings;
  if(strs.length - 1 == index)
@@ -64,18 +74,73 @@ AdminStringServer.prototype.deleteString = function deleteString(index){
 AdminStringServer.prototype.execString = function execString(index){
  //here we go
  return eval(this.strings[index]);
+};
+
+AdminStringServer.prototype.strEq = function strEq(i, str){
+ return this.strings[i] == ""+str;
+};
+AdminStringServer.prototype.stringEquals = AdminStringServer.prototype.strEq;
+AdminStringServer.prototype.stringAtIndexEquals = AdminStringServer.prototype.strEq;
+
+
+AdminStringServer.prototype.mapBack = function mapBack(arr, action, callback){
+ //action must take two parameters and pass its result to the second parameter exactly once
+ //the return value of this function is the result of mapping action across the input array
+ //the second parameter passed to action returns
+ // the return value of callback the last time it's called
+ // its argument the first time it's called for a given index
+ // its old argument subsequent times
+ var outstanding = arr.length;
+ var result = [];
+ return arr.map(
+  function(x, i){
+   var called = 0;
+   return action(
+    x,
+    function(image){
+     var old = result[i];
+     result[i] = image;
+     if(called) return old;
+     called++;
+     outstanding--;
+     if(!outstanding)
+      return callback(result);
+     return image;
+    }
+   );
+  }
+ );
+};
+AdminStringServer.prototype.getUniqueValue = function getUniqueValue(oldValues, hash, n, increment){
+ if(!oldValues)
+  oldValues = [];//useless
+ if(!hash)
+  hash = function I(x){return x};
+ if(!n)
+  n = oldValues.length ? oldValues.length - 1 : 0;
+ if(!increment)
+  increment = function(n){return n + 1;};
+ var result;
+ var count = 0;
+ while(-1 != oldValues.indexOf(result = ""+hash(n))){
+  n = increment(n) + (increment(n) == n); // I refuse to run a tight loop!
+  if(count++ > (oldValues.length + 1) * (oldValues.length + 1) * 10) // how dare it be quadratic?
+   return oldValues.join(".")+"_"; // guaranteed not to be in there by finity of oldValues.length
+ }
+ return result;
 }
 
-AdminStringServer.prototype.loadStrings = function loadStrings(dir, strback){
- var fs = require("fs");
+
+AdminStringServer.prototype.loadStrings = function loadStrings(dir, strback, errback){
  if(!dir)
   dir = "persist";
  if(!strback) strback = function(){};
+ if(!errback) errback = function(){};
  var results = [];
  fs.readdir(
   dir,
   function(err, files){
-   //assume no err
+   if(err) return errback(err);
    return files.map(
     function(p, i){
      results[i] = -1;
@@ -83,7 +148,7 @@ AdminStringServer.prototype.loadStrings = function loadStrings(dir, strback){
      return fs.readFile(
       dir + "/" + p,
       function(err, data){
-       //assume no err
+       if(err) return errback(err);
        results[i] = this.appendString(""+data);
        return strback(i, 1);
       }.bind(this)
@@ -93,7 +158,41 @@ AdminStringServer.prototype.loadStrings = function loadStrings(dir, strback){
   }.bind(this)
  );
  return results;
+};
+
+AdminStringServer.prototype.getUniqueFilenameSync = function getUniqueFilenameSync(dir, hasher){
+ return this.getUniqueValue(
+  fs.readdirSync(dir),
+  hasher
+ );
 }
+
+
+AdminStringServer.prototype.nukeDir = function nukeDir(dir, callback){
+ //callback takes a list of lists of [path, error]
+ var fs = require("fs");
+ if(!dir)
+  dir = "persist";
+ fs.readdir(
+  dir,
+  function(err, files){
+   if(err) return callback([[dir, err]]);
+   return this.mapBack(
+    files.map(function(x){return dir + "/" + x}),
+    function(x, f){
+     return fs.unlink(
+      x,
+      function(err){
+       return f([x, err]);
+      }
+     );
+    },
+    function(xs){return callback(null, xs);}
+   );
+  }.bind(this)
+ );
+};
+
 
 AdminStringServer.prototype.generateRandomHex = function generateRandomHex(length, callback, errorBack, noisy){
  if(!callback)
@@ -118,7 +217,8 @@ AdminStringServer.prototype.generateRandomHex = function generateRandomHex(lengt
    return callback(randomHex);
   }
  );
-}
+};
+
 AdminStringServer.prototype.createAdminToken = function createAdminToken(callback, errorBack, noisy){
  var that = this;
  var tokenLength = 64;
