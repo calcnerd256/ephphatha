@@ -134,7 +134,7 @@ AdminStringServer.prototype.getUniqueValue = function getUniqueValue(oldValues, 
 AdminStringServer.prototype.loadStrings = function loadStrings(dir, callback, errback){
  if(!dir)
   dir = "persist";
- if(!strback) strback = function(){};
+ if(!callback) callback = function(){};
  if(!errback) errback = function(){};
  return fs.readdir(
   dir,
@@ -149,7 +149,7 @@ AdminStringServer.prototype.loadStrings = function loadStrings(dir, callback, er
        x,
        function(err, data){
 	if(err) return f([x, -1, err]);// TODO: redesign mapBack
-	return f([x, this.appendString(data)]);
+	return f([x, this.appendString(""+data)]);
        }.bind(this)
       )
      ];
@@ -168,12 +168,35 @@ AdminStringServer.prototype.getUniqueFilenameSync = function getUniqueFilenameSy
  );
 }
 
+AdminStringServer.prototype.saveBufferSync = function saveBufferSync(buffer, dir){
+ if(!dir)
+  dir = "persist";
+ var filename = this.getUniqueFilenameSync(dir);
+ var fd = fs.openSync(dir + "/" + filename, "w", 0660);//want "wx", but it doesn't exist yet
+ fs.writeSync(fd, buffer);
+ fs.closeSync(fd);
+ return filename;
+}
+AdminStringServer.prototype.saveBuffer = AdminStringServer.prototype.saveBufferSync;
+
+AdminStringServer.prototype.saveString = function saveString(index, dir){
+ if(index in this.strings)
+  return this.saveBufferSync(this.strings[index], dir);
+}
+AdminStringServer.prototype.dumpAllStrings = function dumpAllStrings(dir){
+ return this.strings.map(
+  function(s,i){
+   return this.saveString(i, dir);
+  }.bind(this)
+ );
+}
 
 AdminStringServer.prototype.nukeDir = function nukeDir(dir, callback){
  //callback takes a list of lists of [path, error]
- var fs = require("fs");
  if(!dir)
   dir = "persist";
+ if(!callback)
+  callback = function(){};
  fs.readdir(
   dir,
   function(err, files){
@@ -193,6 +216,21 @@ AdminStringServer.prototype.nukeDir = function nukeDir(dir, callback){
   }.bind(this)
  );
 };
+AdminStringServer.prototype.replaceDir = function replaceDir(dir, callback){
+ if(!dir)
+  dir = "persist";
+ if(!callback)
+  callback = function(){};
+ this.nukeDir(
+  dir,
+  function(errors){
+   return callback(
+    this.dumpAllStrings(dir)
+   );
+  }.bind(this)
+ );
+}
+
 
 
 AdminStringServer.prototype.generateRandomHex = function generateRandomHex(length, callback, errorBack, noisy){
