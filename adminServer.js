@@ -840,6 +840,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    if(!(i in this.strings))
     res.statusCode = 404;
    str = ""+this.execString(i);
+   res.setHeader("Content-Type", "text/plain");
    return res.end(str);
   }.bind(this)
  );

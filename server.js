@@ -118,12 +118,19 @@ this.Server = function Server(){
  "unshiftRoute"
 ].map(
  function(key){
-  this.Server.prototype[key] = function(){
+  fn = function(){
    return this.routeListRouter[key].apply(
     this.routeListRouter,
     arguments
    );
   }
+  fn.toString = function toString(){
+   return this.that.routeListRouter[key].toString();
+  };
+  fn.key = key;
+  fn.that = this.Server.prototype; // not quite right :(
+  this.Server.prototype[key] = fn;
+  return fn;
  }.bind(this)
 );
 
