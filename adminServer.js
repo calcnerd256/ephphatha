@@ -18,6 +18,98 @@ var router = require("webserver_functors");
  var dictToAlist = router.dictToAlist;
  var MethodRoutingResponder = router.MethodRoutingResponder;
 
+//this should probably be its own file later
+function FormField(name){
+ this.name = name;
+}
+FormField.prototype.toHtml = function(){
+ return "<input name=\"" +
+  this.name + //TODO: escape
+  "\"></input>";
+};
+FormField.prototype.populate = function(stream, that, callback){
+ var key = this.name;
+ formStream.bufferChunks(
+  stream,
+  function(str){
+   that[key] = str;
+   return callback(key);
+  }
+ );
+}
+FormField.prototype.validate = function(that){return true;}
+
+function SimpleFormController(){
+ //TODO: populate fields and override process
+ this.fields = [];
+}
+SimpleFormController.prototype["public"] = false;
+SimpleFormController.prototype.getFields = function getFields(){
+ return this.fields;
+}
+SimpleFormController.prototype.toHtml = function(){
+ //interface: "HTML-able"
+ //an HTML-able has a .toHtml() that returns a string
+ //a form is HTML-able
+ return "<form method=POST>\n " +
+  this.getFields().map(
+   function(field){
+    return field.toHtml();
+   }
+  ).join("\n ") +
+  "\n <input type=submit></input>\n</form>";
+};
+SimpleFormController.prototype.populate = function(req, cb){
+ //this.fields is a list of implementations of the field interface
+ //a field has a name
+ //a form has a method .populate(request) that passes an object to the callback
+ var stream = new FormStream(req);
+ var fields = this.getFields();
+ var count = fields.length;
+ var result = {};
+ //do not put fields with names like "toString" on a non-admin form
+ fields.map(
+  function(field){
+   stream.on(
+    "s_" + field.name,
+    function(s){
+     //TODO: let the field do this
+     //return field.populate(s.resume(), result, function(){/*TODO: validate*/ /*call me once*/if(!--count)return cb(result)});
+     formStream.bufferChunks(
+      s,
+      function(str){
+       result[field.name] = str;
+      }
+     ).resume();
+    }
+   );
+  }
+ );
+ return stream.on("end", function(){return cb(result);});//simpler for now
+ //note: I'm supposed to return a promise, but instead I'm returning whatever resume() does
+};
+SimpleFormController.prototype.validate = function validate(ob){
+ //a form has a method .validate(object) that checks to see if the populated object meets the requirements of the form
+ // form.validate() returns an okay
+ return {
+  //interface: "okay"
+  //it's like a poor-man's error code, I guess
+  //an okay has a boolean field .ok
+  ok: true,
+  //an okay has an HTTP status code if its .ok is false
+  status: 200,
+  toString: function(){return "ok";}
+ };
+};
+SimpleFormController.prototype.process = function process(ob){
+ //a form has a method .process(object) that saves valid objects or otherwise acts upon them and returns an HTML-able
+ console.log(ob);
+ return {
+  toHtml: function(){return "got it";}
+ };
+};
+
+
 function AdminStringServer(){
  this.generatePassword(
   (
@@ -33,6 +125,9 @@ function AdminStringServer(){
  );
  this.strings = [];
  this.adminTokens = {};
+ this.publicStaticHtml = {};
+ this.routeState = {};//for testing
+ this.apiState = {};
 }
 
 AdminStringServer.prototype.generatePassword = function(callback){
@@ -41,6 +136,55 @@ AdminStringServer.prototype.generatePassword = function(callback){
 AdminStringServer.prototype.setPassword = function setPassword(newPass){
  this.password = newPass;
 };
+
+
+
+//interface: "HTML-able"
+//an HTML-able has a .toHtml() that returns a string
+//interface: "okay"
+//it's like a poor-man's error code, I guess
+//an okay has a boolean field .ok
+//an okay has an HTTP status code if its .ok is false
+//interface: "form"
+//a form is HTML-able
+//a form has a method .populate(request, popback) that passes an object to the callback
+//a form has a method .validate(object) that checks to see if the populated object meets the requirements of the form
+// form.validate() returns an okay
+//a form has a boolean "public" for letting non-admins use it
+//a form has a method .process(object) that saves valid objects or otherwise acts upon them and returns an HTML-able
+// TODO redesign all the above
+AdminStringServer.prototype.formToResponder = function formToResponder(form){
+ var result = function handleForm(req, res){
+  var responder = new MethodRoutingResponder(
+   {
+    "GET": function(q, s){
+     s.setHeader("Content-Type", "text/html");
+     s.end(form.toHtml());
+    },
+    "POST": function(q, s){
+     var promise = form.populate(
+      q,
+      function(ob){
+       var ok = form.validate(ob);//TODO: CPS
+       if(ok.ok){
+        s.setHeader("Content-Type", "text/html");
+        var result = form.process(ob);
+        return s.end(result.toHtml());
+       }
+       s.statusCode = ok.status;
+       return s.end(""+ok);
+      }
+     );
+     return promise;
+    }
+   }
+  );
+  if(!form["public"]) responder = this.adminOnly(responder)
+  return responder(req, res);
+ }.bind(this);
+ result.form = form;
+ return result;
+}
 
 
 AdminStringServer.prototype.appendNewString = function appendNewString(str){
@@ -895,6 +1039,40 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    require("web_gconf").responder
   )
  );
+ var stateRouter = new Router(
+  new UrlMatcher(
+   function(u){
+    return u in this.routeState;
+   }.bind(this)
+  ),
+  function(req, res){
+   return this.routeState[req.url](req, res);
+  }.bind(this)
+ );
+ var publicStaticHtmlRouter = new Router(
+  new UrlMatcher(
+   function(u){
+    return u in this.publicStaticHtml
+   }.bind(this)
+  ),
+  function(req, res){
+   result = this.publicStaticHtml[req.url];
+   res.setHeader("Content-Type", "text/html");
+   return res.end(result);
+  }.bind(this)
+ );
+ var apiStateRouter = new Router(
+  new UrlMatcher(
+   function(u){
+    return u in this.apiState
+   }.bind(this)
+  ),
+  function(req, res){
+   return this.formToResponder(
+    this.apiState[req.url]
+   )(req, res);
+  }.bind(this)
+ );
  return [
   new ExactDictRouter(routingDictionary),
   this.adminRoute(stringDav),
@@ -907,7 +1085,10 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    )
   ),
   this.adminRoute(gconf),
-  new RouterListRouter(this.getHttpRouterList())
+  new RouterListRouter(this.getHttpRouterList()),
+  stateRouter,
+  publicStaticHtmlRouter,
+  apiStateRouter
  ];
 }
 
