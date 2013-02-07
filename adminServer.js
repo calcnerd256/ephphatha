@@ -180,7 +180,7 @@ AdminStringServer.prototype.formToResponder = function formToResponder(form){
    }
   );
   if(!form["public"]) responder = this.adminOnly(responder)
-  return responder(req, res);
+  return responder.call(this, req, res);
  }.bind(this);
  result.form = form;
  return result;
