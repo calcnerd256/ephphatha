@@ -1,3 +1,4 @@
+var util = require("util");
 var Server = require("./server");
 var http = require("http");
 var https = require("https");
@@ -38,6 +39,16 @@ FormField.prototype.populate = function(stream, that, callback){
  );
 }
 FormField.prototype.validate = function(that){return true;}
+
+function TextAreaField(){
+ FormField.apply(this, arguments);
+}
+TextAreaField.prototype.toHtml = function toHtml(){
+ return "<textarea name=\"" +
+  this.name + //TODO escape name
+  "\"></textarea>"; // TODO support initial value
+}
+util.inherits(TextAreaField, FormField);
 
 function SimpleFormController(){
  //TODO: populate fields and override process
@@ -226,6 +237,26 @@ AdminStringServer.prototype.strEq = function strEq(i, str){
 AdminStringServer.prototype.stringEquals = AdminStringServer.prototype.strEq;
 AdminStringServer.prototype.stringAtIndexEquals = AdminStringServer.prototype.strEq;
 
+AdminStringServer.prototype.storeExecString = function(str){
+ var i = this.appendNewString(str);
+ return [i, this.execString(i)];
+}
+
+AdminStringServer.prototype.storeAt = function(path, expr){
+ var target = this;
+ var last = path.pop();
+ for(var i = 0; i < path.length; i++){
+  var k = path[i];
+  if(!(k in target)) target[k] = {};
+  target = target[k];
+ }
+ return (
+  function(p){
+   target[last] = p[1];
+   return p[0];
+  }
+ )(this.storeExecString(expr));
+}
 
 AdminStringServer.prototype.mapBack = function mapBack(arr, action, callback){
  //action must take two parameters and pass its result to the second parameter exactly once
@@ -887,6 +918,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
      " </FORM>",
      " <FORM METHOD=\"POST\" ACTION=\"../" + i + "/exec\">",
      "  <INPUT TYPE=\"submit\" VALUE=\"eval\"></INPUT>",
+     "  <IFRAME SRC=\"../" + i + "\"></IFRAME>",
      " </FORM>",
      "</LI>",
      ""
