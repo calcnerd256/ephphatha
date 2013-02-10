@@ -43,12 +43,12 @@ FormField.prototype.validate = function(that){return true;}
 function TextAreaField(){
  FormField.apply(this, arguments);
 }
+util.inherits(TextAreaField, FormField);
 TextAreaField.prototype.toHtml = function toHtml(){
  return "<textarea name=\"" +
   this.name + //TODO escape name
   "\"></textarea>"; // TODO support initial value
 }
-util.inherits(TextAreaField, FormField);
 
 function SimpleFormController(){
  //TODO: populate fields and override process
