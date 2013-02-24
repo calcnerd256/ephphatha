@@ -946,6 +946,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
      }
     )(res);
    var str = strs[n];
+   res.setHeader("Content-Type", "text/plain");
    return res.end(str);
   }.bind(this)
  );
