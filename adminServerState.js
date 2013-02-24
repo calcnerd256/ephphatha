@@ -1,15 +1,5 @@
 function init(){
 
-
-function g(h){
- var quine = h+"\ng.bind(this)(g);\n//quine";
- this.strings = [quine];
- this.loadStrings();
-}
-g.bind(this)(g);
-//quine
-
-
 this.storeAt(
  ["apiState","/admin/dumbWrite/"],
  [
@@ -324,6 +314,16 @@ this.storeAt(
   ")"
  ].join("\n")
 );
+
+function g(h){
+ var quine = h+"\ng.bind(this)(g);\n//quine\n";
+ this.strings = [quine];
+ this.loadStrings();
+}
+g.bind(this)(g);
+//quine
+
+
 
 }
 
