@@ -480,9 +480,16 @@ this.fluentKeyCall = fluentKeyCall;
 
 AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
  var outstanding = 2;
+ var calledTimes = 0;
+ var that = this;
+ function onceBack(){
+  if(calledTimes++) return;
+  require("./adminServerState").init.apply(that, arguments);
+  return callback.apply(this, arguments);
+ }
  function eachBack(){
   if(!--outstanding)
-   return callback.apply(this, arguments);
+   return onceBack.apply(this, arguments);
  }
  var httpServer = fluentKeyCall(
   this.getServerPerProtocol("HTTP"),
