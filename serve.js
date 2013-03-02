@@ -1,21 +1,22 @@
-/*
-this.server = new (require("./server").Server)();
-var port = 15213;
-if(+(process.argv[2]) < 65536)
- port = process.argv[2];
-this.server.setPort(port);
-this.server.init(
- require("http").createServer,
- function(){}
-);
-*/
-
 var repl = require("repl");
 var fs = require("fs");
 var adminServer = require("./adminServer");
+
+var port = 15213;
+var sslPort = 15214;
+
+if("--port" == process.argv[2])
+ if(+process.argv[3] == process.argv[3])
+  sslPort = 1 + (port = +process.argv[3]);
+
+if("--sslPort" == process.argv[4])
+ if(+process.argv[5] == process.argv[5])
+  sslPort = +process.argv[5];
+
 this.server = new adminServer.AdminStringServer();
 this.server.init(
-    15213, 15214,
+    port,
+    sslPort,
     {
 	key: fs.readFileSync("./certs/ephphatha.key"),
 	cert: fs.readFileSync("./certs/ephphatha.cert")
@@ -31,6 +32,12 @@ global.server = this.server;
 process.on(
  "uncaughtException",
  function(e){
-  console.warn(["unhandled exception", e, "please restart the server"]);
+  console.warn(
+   [
+    "unhandled exception",
+    e,
+    "please restart the server"
+   ]
+  );
  }.bind(this)
 );
