@@ -973,6 +973,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   ),
   function delString(req, res){
    if("GET" == req.method)
+    //why is this not a methodRouting responder?
     return (
      function(r){
       r.setHeader("Content-Type", "text/html");
@@ -994,6 +995,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
       return r;
      }
     )(res).end("no such string" + p[0]);
+   res.setHeader("Content-Type", "text/plain");
    return res.end(str);
   }.bind(this)
  );
