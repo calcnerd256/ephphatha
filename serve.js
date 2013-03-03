@@ -27,12 +27,12 @@ this.server.init(
  port,
  sslPort,
  {
-	key: fs.readFileSync("./certs/ephphatha.key"),
-	cert: fs.readFileSync("./certs/ephphatha.cert")
+  key: fs.readFileSync("./certs/ephphatha.key"),
+  cert: fs.readFileSync("./certs/ephphatha.cert")
  },
  function(){
-	console.log(arguments);
-	repl.start(undefined, undefined, undefined, true);
+  console.log(arguments);
+  repl.start(undefined, undefined, undefined, true);
  }
 );
 
