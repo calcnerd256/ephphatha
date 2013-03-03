@@ -6,7 +6,7 @@ var child_process = require("child_process");
 var crypto = require("crypto");
 var url = require("url");
 var fs = require("fs");
-var formStream = require("form_stream")
+var formStream = require("form_stream");
  var FormStream = formStream.FormStream;
 var router = require("webserver_functors");
  var coerceToFunction = router.coerceToFunction;
@@ -18,6 +18,7 @@ var router = require("webserver_functors");
  var UrlExactMatcher = router.UrlExactMatcher;
  var dictToAlist = router.dictToAlist;
  var MethodRoutingResponder = router.MethodRoutingResponder;
+ var DictionaryRouter = router.DictionaryRouter;
 
 //this should probably be its own file later
 function FormField(name){
@@ -121,6 +122,9 @@ SimpleFormController.prototype.process = function process(ob){
 };
 
 
+
+
+
 function AdminStringServer(){
  this.generatePassword(
   (
@@ -139,6 +143,7 @@ function AdminStringServer(){
  this.publicStaticHtml = {};
  this.routeState = {};//for testing
  this.apiState = {};
+ this.routerState = {};//replace everything with this
 }
 
 AdminStringServer.prototype.generatePassword = function(callback){
@@ -148,6 +153,21 @@ AdminStringServer.prototype.setPassword = function setPassword(newPass){
  this.password = newPass;
 };
 
+
+
+AdminStringServer.prototype.getRouterKeys = function getRouterKeys(){
+ // TODO get these in some order
+ return Object.keys(this.routerState);
+}
+AdminStringServer.prototype.getStateRouter = function getStateRouter(req){
+ return new RouterListRouter(
+  this.getRouterKeys().map(
+   function(k){
+    return this.routerState[k];
+   }.bind(this)
+  )
+ );
+}
 
 
 //interface: "HTML-able"
@@ -1126,6 +1146,9 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     require("webmouse").responder
    )
   ),
+  function(req){
+   return this.getStateRouter().route(req);
+  }.bind(this),
   this.adminRoute(gconf),
   new RouterListRouter(this.getHttpRouterList()),
   stateRouter,
