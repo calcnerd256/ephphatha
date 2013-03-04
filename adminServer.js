@@ -124,6 +124,31 @@ SimpleFormController.prototype.process = function process(ob){
 
 
 
+function DictRouterList(dict){
+ this.dict = dict;
+}
+
+DictRouterList.prototype.getRouterKeys = function getRouterKeys(){
+ // TODO get these in some order
+ return Object.keys(this.dict);
+}
+DictRouterList.prototype.getStateRouter = function getStateRouter(req){
+ return new RouterListRouter(
+  this.getRouterKeys().map(
+   function(k){
+    return this.dict[k];
+   }.bind(this)
+  )
+ );
+}
+DictRouterList.prototype.route = function route(req){
+ return this.getStateRouter().route(req);
+}
+DictRouterList.prototype.toFunction = function toFunction(){
+ return this.route.bind(this);
+}
+
+
 
 function AdminStringServer(){
  this.generatePassword(
@@ -143,7 +168,7 @@ function AdminStringServer(){
  this.publicStaticHtml = {};
  this.routeState = {};//for testing
  this.apiState = {};
- this.routerState = {};//replace everything with this
+ this.routerState = new DictRouterList({});//replace everything with this
 }
 
 AdminStringServer.prototype.generatePassword = function(callback){
@@ -155,19 +180,6 @@ AdminStringServer.prototype.setPassword = function setPassword(newPass){
 
 
 
-AdminStringServer.prototype.getRouterKeys = function getRouterKeys(){
- // TODO get these in some order
- return Object.keys(this.routerState);
-}
-AdminStringServer.prototype.getStateRouter = function getStateRouter(req){
- return new RouterListRouter(
-  this.getRouterKeys().map(
-   function(k){
-    return this.routerState[k];
-   }.bind(this)
-  )
- );
-}
 
 
 //interface: "HTML-able"
@@ -1146,9 +1158,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     require("webmouse").responder
    )
   ),
-  function(req){
-   return this.getStateRouter().route(req);
-  }.bind(this),
+  this.routerState,
   this.adminRoute(gconf),
   new RouterListRouter(this.getHttpRouterList()),
   stateRouter,
