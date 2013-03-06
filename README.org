@@ -128,3 +128,6 @@ visit https://localhost:15214/
  see links
  follow links
 
+** license
+I want this to be Public Domain, but I think that means I can only accept Public-Domain submissions.
+So if you send me a pull request, I'm going to assume that you intend for your patch to belong to the Public Domain.
