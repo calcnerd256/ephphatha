@@ -844,64 +844,143 @@ AdminStringServer.prototype.adminRoute = function adminRoute(router){
  return result;
 }
 
-AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
- var that = this;
- var adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
- var adminIndexSource = [
+AdminStringServer.prototype.adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
+
+AdminStringServer.prototype.getAdminIndexSource = function getAdminIndexSource(links){
+ return [
   "<HTML>",
   " <HEAD>",
   " </HEAD>",
   " <BODY>",
   "  admin",
   "  <BR />",
-  "  <A HREF=\"" + adminLoginUrl + "\">log in</A>",
-  "  <BR />",
-  "  " + dictToAlist(
-   {
-    gconf: "gconf",
-    mouse: "mouse",
-    list: "list"
-   }
-  ).map(
+  "  " + dictToAlist(links).map(
    function(kv){
-    return "<A HREF=\"" + kv[0] + "/\">" + kv[1] + "</A>\n  <BR />";
+    return "<A HREF=\"" + kv[0] + "\">" + kv[1] + "</A>\n  <BR />";
    }
   ).join("\n  "),
   " </BODY>",
   "</HTML>",
   ""
  ].join("\n");
+}
+
+
+ function tagToXml(t, kids, atrs, expand, noindent){
+  var oneLiner = !(
+   kids && kids.length &&
+   (
+    kids.length > 1 ||
+    kids[0].split("\n").length > 1 ||
+    "<" == kids[0][0]
+   )
+  );
+  var closeTag = "</" + t + ">";
+  return "<" + t +
+   (
+    atrs ?
+    " " + (
+     function(d){
+      return Object.keys(d).map(
+       function(k){return [k, d[k]];}
+      );
+     }
+    )(atrs).map(
+     function(atr){
+      return atr[0] +
+       "=\"" +
+       atr[1].split("\"").join("&quot;") +
+       "\"";
+     }
+    ).join(" ") :
+    ""
+   ) +
+   (
+    (kids && kids.length) || expand ?
+    ">" +
+    (oneLiner ? "" : ("\n" + (noindent ? "" : " "))) +
+     kids.join("\n").split("\n").join(
+      "\n" + (noindent ? "" : " ")
+     ) +
+     (oneLiner ? "" : "\n") +
+     closeTag :
+    "/>"
+   );
+ }
+
+
+AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
+ var that = this;
+ var adminLoginUrl = this.adminLoginUrl;
+ var links = {
+  "/admin/gconf/": "gconf",
+  "/admin/mouse/": "mouse",
+  "/admin/list/": "list",
+  "/admin/dashboard.html": "dashboard"
+ }
+ links[this.adminLoginUrl] = "log in";
+ var adminIndexSource = this.getAdminIndexSource(links);
  var passwordFieldName = "password";
  var inputs = [
-  {"name": passwordFieldName, "type": "password"}
+  {"NAME": passwordFieldName, "TYPE": "password"}
  ];
- var adminLoginSource = [
-  "<HTML>",
-  " <HEAD>",
-  " </HEAD>",
-  " <BODY>",
-  "  log in",
-  "  <FORM METHOD=\"POST\">",
-  "   " + inputs.map(
-   function(inp){
-    return "<INPUT " +
-     dictToAlist(inp).map(
-      function(pair){
-       return pair[0] +
-	"=\"" +
-	escape(pair[1]) +
-	"\"";
-      }
-     ).join(" ") +
-     "></INPUT>";
-   }.bind(this)
-  ).join("   \n"),
-  "   <INPUT TYPE=\"submit\"></INPUT>",
-  "  </FORM>",
-  " </BODY>",
-  "</HTML>",
-  ""
- ].join("\n");
+ var h = tagToXml;
+ var tagToString = function(){
+  if("tag" == this.type)
+   return tagToXml(
+    this.tag,
+    this.children,
+    this.attributes,
+    this.expand
+   );
+  if("raw" == this.type)
+   return this.raw;
+ }
+ var adminLoginSource = {
+  "type": "tag",
+  "tag": "HTML",
+  "children": [
+   {
+    type: "tag",
+    tag: "HEAD",
+    children: [],
+    expand: true,
+    toString: tagToString
+   },
+   {
+    type: "tag",
+    tag: "BODY",
+    children: [
+     {type: "raw", raw: "log in", toString: tagToString},
+     {
+      type: "tag",
+      tag: "FORM",
+      children: [].concat(
+       inputs,
+       [
+        {"TYPE": "submit"}
+       ]
+      ).map(
+       function(inp){
+        return {
+         type: "tag",
+         tag: "INPUT",
+         children: [],
+         attributes: inp,
+         expand: true,
+         toString: tagToString
+        };
+       }.bind(this)
+      ),
+      attributes: {"METHOD": "POST"},
+      toString: tagToString
+     }
+    ],
+    toString: tagToString
+   }
+  ],
+  toString: tagToString
+ }.toString()
  var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
  var handleAdminLoginGetRequest = this.constantResponder(adminLoginSource);
  function handleAdminLoginPostRequest(req, res){
