@@ -867,18 +867,21 @@ AdminStringServer.prototype.getAdminIndexSource = function getAdminIndexSource(l
 
 
  function tagToXml(t, kids, atrs, expand, noindent){
-  var oneLiner = !(
-   kids && kids.length &&
-   (
-    kids.length > 1 ||
-    kids[0].split("\n").length > 1 ||
-    "<" == kids[0][0]
-   )
-  );
+  var oneLiner = false;
+  if(!kids)
+   oneLiner = true;
+  else
+   if(!kids.length)
+    oneLiner = true;
+   else
+    if(kids.length < 2)
+     if(kids[0].split("\n").length <= 2)
+      oneLiner = ("<" != kids[0][0]);
+
   var closeTag = "</" + t + ">";
   return "<" + t +
    (
-    atrs ?
+    atrs && Object.keys(atrs).length ?
     " " + (
      function(d){
       return Object.keys(d).map(
@@ -919,6 +922,36 @@ AdminStringServer.prototype.getAdminIndexSource = function getAdminIndexSource(l
    return this.raw;
  }
 
+  AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
+   var children = [];
+   var tag = x[0];//what if x is empty? error
+   if(!x.length) return {type: "raw", raw: "", toString: tagToString};
+   if("string" != typeof x[0])
+    return x[0];//assume only one element
+   if("string" == typeof x){
+    tag = x.substring(1);
+    if("r" == x.charAt(0))
+     return {type: "raw", raw: tag, toString: tagToString};
+   }
+   else
+    for(var i = 1; i < x.length; i++)
+     children.push(f(f, x[i]));
+   var components = tag.split(",");//.map(function(s){return s.})
+   var attributes = {};
+   if(components.length > 1)
+    if(components[1].length)
+     attributes = this.alistToDict(
+      components[1].split(";").map(function(s){return s.split("=");})
+     );
+   return {
+    type: "tag",
+    tag: components[0],
+    children: children,
+    attributes: attributes,
+    expand: components[2] == "x",
+    toString: tagToString
+   };
+  }
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  var that = this;
@@ -935,52 +968,8 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  var inputs = [
   {"NAME": passwordFieldName, "TYPE": "password"}
  ];
- var adminLoginSource = (
-  function(f, x){
-   return f(f, x);
-  }
- )(
-  function(f, x){
-   //operate on string or list
-   //if list, car string is tag, cdr is children
-   //if string and is tag, act as if list of one element
-   var children = [];
-   var tag = x[0];//what if x is empty? error
-   if(!x.length) return {type: "raw", raw: "", toString: tagToString};
-   if("string" != typeof x[0])
-    return x[0];//assume only one element
-   if("string" == typeof x){
-    tag = x.substring(1);
-    if("r" == x.charAt(0))
-     return {type: "raw", raw: tag, toString: tagToString};
-    //else assume t
-   }
-   else
-   //assume it's an array
-   //car is tag
-   //cdr are children
-    for(var i = 1; i < x.length; i++)
-     children.push(f(f, x[i]));
-   //return {type: "raw", raw: "TODO", toString: tagToString};
-   //a tag is the tag name optionally followed by things separated by commas
-   //the things are attributes and flags
-   //commas in the things are escaped?
-   var components = tag.split(",");//.map(function(s){return s.})
-   var attributes = {};
-   if(components.length > 1)
-    if(components[1].length)
-     attributes = this.alistToDict(
-      components[1].split(";").map(function(s){return s.split("=");})
-     );
-   return {
-    type: "tag",
-    tag: components[0],
-    children: children,
-    attributes: attributes,
-    expand: components[2] == "x",
-    toString: tagToString
-   };
-  }.bind(this),
+ var adminLoginSource = this.tagShorthand(
+  this.tagShorthand.bind(this),
   [
    "HTML",
    "tHEAD,,x",
