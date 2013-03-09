@@ -907,6 +907,17 @@ AdminStringServer.prototype.getAdminIndexSource = function getAdminIndexSource(l
     "/>"
    );
  }
+ var tagToString = function(){
+  if("tag" == this.type)
+   return tagToXml(
+    this.tag,
+    this.children,
+    this.attributes,
+    this.expand
+   );
+  if("raw" == this.type)
+   return this.raw;
+ }
 
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
@@ -924,63 +935,81 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  var inputs = [
   {"NAME": passwordFieldName, "TYPE": "password"}
  ];
- var h = tagToXml;
- var tagToString = function(){
-  if("tag" == this.type)
-   return tagToXml(
-    this.tag,
-    this.children,
-    this.attributes,
-    this.expand
-   );
-  if("raw" == this.type)
-   return this.raw;
- }
- var adminLoginSource = {
-  "type": "tag",
-  "tag": "HTML",
-  "children": [
-   {
+ var adminLoginSource = (
+  function(f, x){
+   return f(f, x);
+  }
+ )(
+  function(f, x){
+   //operate on string or list
+   //if list, car string is tag, cdr is children
+   //if string and is tag, act as if list of one element
+   var children = [];
+   var tag = x[0];//what if x is empty? error
+   if(!x.length) return {type: "raw", raw: "", toString: tagToString};
+   if("string" != typeof x[0])
+    return x[0];//assume only one element
+   if("string" == typeof x){
+    tag = x.substring(1);
+    if("r" == x.charAt(0))
+     return {type: "raw", raw: tag, toString: tagToString};
+    //else assume t
+   }
+   else
+   //assume it's an array
+   //car is tag
+   //cdr are children
+    for(var i = 1; i < x.length; i++)
+     children.push(f(f, x[i]));
+   //return {type: "raw", raw: "TODO", toString: tagToString};
+   //a tag is the tag name optionally followed by things separated by commas
+   //the things are attributes and flags
+   //commas in the things are escaped?
+   var components = tag.split(",");//.map(function(s){return s.})
+   var attributes = {};
+   if(components.length > 1)
+    if(components[1].length)
+     attributes = this.alistToDict(
+      components[1].split(";").map(function(s){return s.split("=");})
+     );
+   return {
     type: "tag",
-    tag: "HEAD",
-    children: [],
-    expand: true,
+    tag: components[0],
+    children: children,
+    attributes: attributes,
+    expand: components[2] == "x",
     toString: tagToString
-   },
-   {
-    type: "tag",
-    tag: "BODY",
-    children: [
-     {type: "raw", raw: "log in", toString: tagToString},
-     {
-      type: "tag",
-      tag: "FORM",
-      children: [].concat(
-       inputs,
-       [
-        {"TYPE": "submit"}
-       ]
-      ).map(
-       function(inp){
-        return {
+   };
+  }.bind(this),
+  [
+   "HTML",
+   "tHEAD,,x",
+   [
+    "BODY",
+    "rlog in",
+    ["FORM,METHOD=POST"].concat(
+     inputs.concat(
+      [
+       {"TYPE": "submit"}
+      ]
+     ).map(
+      function(inp){
+       return [
+        {
          type: "tag",
          tag: "INPUT",
          children: [],
          attributes: inp,
          expand: true,
          toString: tagToString
-        };
-       }.bind(this)
-      ),
-      attributes: {"METHOD": "POST"},
-      toString: tagToString
-     }
-    ],
-    toString: tagToString
-   }
-  ],
-  toString: tagToString
- }.toString()
+        }
+       ];
+      }
+     )
+    )
+   ]
+  ]
+ ).toString();
  var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
  var handleAdminLoginGetRequest = this.constantResponder(adminLoginSource);
  function handleAdminLoginPostRequest(req, res){
