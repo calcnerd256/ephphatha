@@ -98,7 +98,22 @@ AdminStringServer.prototype.formToResponder = function formToResponder(form){
     }
    }
   );
-  if(!form["public"]) responder = this.adminOnly(responder)
+  if(!form["public"]){
+   responder = (
+    "adminOnly" in this &&
+    (
+     "function" == typeof this.adminOnly ||
+      "object" == typeof this.adminOnly
+    ) &&
+    "bind" in this.adminOnly &&
+    "function" == typeof this.adminOnly.bind
+   ) ?
+    this.adminOnly.bind(this)(responder) :
+    function(q,s){
+     s.statusCode = 500;
+     s.end("nonpublic form but failed to restrict it correctly; erring on the side of caution");
+    };
+  }
   return responder.call(this, req, res);
  }.bind(this);
  result.form = form;
