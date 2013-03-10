@@ -1,6 +1,10 @@
 var util = require("util");
 var formStream = require("form_stream");
  var FormStream = formStream.FormStream;
+var routers = require("./routers");
+ var router = routers.router;
+ var MethodRoutingResponder = router.MethodRoutingResponder;
+
 
 function FormField(name){
  this.name = name;
@@ -105,7 +109,72 @@ SimpleFormController.prototype.process = function process(ob){
 };
 
 
+//interface: "HTML-able"
+//an HTML-able has a .toHtml() that returns a string
+//interface: "okay"
+//it's like a poor-man's error code, I guess
+//an okay has a boolean field .ok
+//an okay has an HTTP status code if its .ok is false
+//interface: "form"
+//a form is HTML-able
+//a form has a method .populate(request, popback) that passes an object to the callback
+//a form has a method .validate(object) that checks to see if the populated object meets the requirements of the form
+// form.validate() returns an okay
+//a form has a boolean "public" for letting non-admins use it
+//a form has a method .process(object) that saves valid objects or otherwise acts upon them and returns an HTML-able
+// TODO redesign all the above
+function formToResponder(form){
+ var result = function handleForm(req, res){
+  var responder = new MethodRoutingResponder(
+   {
+    "GET": function(q, s){
+     s.setHeader("Content-Type", "text/html");
+     s.end(form.toHtml());
+    },
+    "POST": function(q, s){
+     var promise = form.populate(
+      q,
+      function(ob){
+       var ok = form.validate(ob);//TODO: CPS
+       if(ok.ok){
+        s.setHeader("Content-Type", "text/html");
+        var result = form.process(ob);
+        return s.end(result.toHtml());
+       }
+       s.statusCode = ok.status;
+       return s.end(""+ok);
+      }
+     );
+     return promise;
+    }
+   }
+  );
+  if(!form["public"]){
+   responder = (
+    "adminOnly" in this &&
+    (
+     "function" == typeof this.adminOnly ||
+      "object" == typeof this.adminOnly
+    ) &&
+    "bind" in this.adminOnly &&
+    "function" == typeof this.adminOnly.bind
+   ) ?
+    this.adminOnly.bind(this)(responder) :
+    function(q,s){
+     s.statusCode = 500;
+     s.end("nonpublic form but failed to restrict it correctly; erring on the side of caution");
+    };
+  }
+  responder.form = form; // love
+  return responder.call(this, req, res);
+ }.bind(this);
+ result.form = form;
+ return result;
+}
+
+
 
 this.FormField = FormField;
 this.TextAreaField = TextAreaField;
 this.SimpleFormController = SimpleFormController;
+this.formToResponder = formToResponder;
