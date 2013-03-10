@@ -866,7 +866,7 @@ AdminStringServer.prototype.getAdminIndexSource = function getAdminIndexSource(l
 }
 
 
- function tagToXml(t, kids, atrs, expand, noindent){
+function tagToXml(t, kids, atrs, expand, noindent){
   var oneLiner = false;
   if(!kids)
    oneLiner = true;
@@ -909,8 +909,8 @@ AdminStringServer.prototype.getAdminIndexSource = function getAdminIndexSource(l
      closeTag :
     "/>"
    );
- }
- var tagToString = function(){
+}
+var tagToString = function(){
   if("tag" == this.type)
    return tagToXml(
     this.tag,
@@ -920,38 +920,37 @@ AdminStringServer.prototype.getAdminIndexSource = function getAdminIndexSource(l
    );
   if("raw" == this.type)
    return this.raw;
- }
+}
 
-  AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
+AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
    var children = [];
    var tag = x[0];//what if x is empty? error
    if(!x.length) return {type: "raw", raw: "", toString: tagToString};
    if("string" != typeof x[0])
     return x[0];//assume only one element
+   var attributes = {};
    if("string" == typeof x){
     tag = x.substring(1);
     if("r" == x.charAt(0))
      return {type: "raw", raw: tag, toString: tagToString};
    }
    else
-    for(var i = 1; i < x.length; i++)
-     children.push(f(f, x[i]));
+    if(x.length > 1){
+     attributes = x[1];
+     if(x.length > 2)
+      for(var i = 2; i < x.length; i++)
+       children.push(f(f, x[i]));
+    }
    var components = tag.split(",");//.map(function(s){return s.})
-   var attributes = {};
-   if(components.length > 1)
-    if(components[1].length)
-     attributes = this.alistToDict(
-      components[1].split(";").map(function(s){return s.split("=");})
-     );
    return {
     type: "tag",
     tag: components[0],
     children: children,
     attributes: attributes,
-    expand: components[2] == "x",
+    expand: components[1] == "x",
     toString: tagToString
    };
-  }
+}
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  var that = this;
@@ -971,29 +970,14 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  var adminLoginSource = this.tagShorthand(
   this.tagShorthand.bind(this),
   [
-   "HTML",
-   "tHEAD,,x",
+   "HTML", {},
+   "tHEAD,x",
    [
-    "BODY",
+    "BODY", {},
     "rlog in",
-    ["FORM,METHOD=POST"].concat(
-     inputs.concat(
-      [
-       {"TYPE": "submit"}
-      ]
-     ).map(
-      function(inp){
-       return [
-        {
-         type: "tag",
-         tag: "INPUT",
-         children: [],
-         attributes: inp,
-         expand: true,
-         toString: tagToString
-        }
-       ];
-      }
+    ["FORM", {METHOD:"POST"}].concat(
+     inputs.concat([{"TYPE": "submit"}]).map(
+      function(inp){return ["INPUT,x", inp];}
      )
     )
    ]
