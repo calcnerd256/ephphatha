@@ -956,7 +956,7 @@ AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
  return result;
 }
 
-AdminStringServer.prototype.getAdminLoginRouter = function(){
+AdminStringServer.prototype.getAdminLoginResponder = function(){
  var passwordFieldName = "password";
  var inputs = [
   {"NAME": passwordFieldName, "TYPE": "password"}
@@ -1019,13 +1019,13 @@ AdminStringServer.prototype.getAdminLoginRouter = function(){
   );
  }
 
- var adminLoginRouter = new MethodRoutingResponder(
+ var adminLoginResponder = new MethodRoutingResponder(
   {
    "GET": handleAdminLoginGetRequest,
    "POST": handleAdminLoginPostRequest.bind(this)
   }
  );
- return adminLoginRouter;
+ return adminLoginResponder;
 }
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
@@ -1040,7 +1040,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  links[this.adminLoginUrl] = "log in";
  var adminIndexSource = this.getAdminIndexSource(links);
 
- var adminLoginRouter = this.getAdminLoginRouter();
  var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
 
  function listStrings(req, res){
@@ -1177,13 +1176,13 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   }.bind(this),
   "/admin/list/": this.adminOnly(listStrings.bind(this))
  };
- routingDictionary[adminLoginUrl] = adminLoginRouter;
+ routingDictionary[adminLoginUrl] = this.getAdminLoginResponder();
  function responderRequestTransform(transformRequest, responder){
-    var result = function(req, res){
-     return coerceToFunction(responder)(transformRequest(req), res);
-    }
-    result.responder = responder;
-    return result;
+  var result = function(req, res){
+   return coerceToFunction(responder)(transformRequest(req), res);
+  }
+  result.responder = responder;
+  return result;
  }
  var gconf = new Router(
   new UrlMatcher(
