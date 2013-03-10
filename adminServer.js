@@ -952,17 +952,7 @@ AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
  };
 }
 
-AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
- var that = this;
- var adminLoginUrl = this.adminLoginUrl;
- var links = {
-  "/admin/gconf/": "gconf",
-  "/admin/mouse/": "mouse",
-  "/admin/list/": "list",
-  "/admin/dashboard.html": "dashboard"
- }
- links[this.adminLoginUrl] = "log in";
- var adminIndexSource = this.getAdminIndexSource(links);
+AdminStringServer.prototype.getAdminLoginRouter = function(){
  var passwordFieldName = "password";
  var inputs = [
   {"NAME": passwordFieldName, "TYPE": "password"}
@@ -983,7 +973,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    ]
   ]
  ).toString();
- var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
  var handleAdminLoginGetRequest = this.constantResponder(adminLoginSource);
  function handleAdminLoginPostRequest(req, res){
   var form = new FormStream(req);
@@ -1025,6 +1014,33 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    }
   );
  }
+
+ var adminLoginRouter = new MethodRoutingResponder(
+  {
+   "GET": handleAdminLoginGetRequest,
+   "POST": handleAdminLoginPostRequest.bind(this)
+  }
+ );
+ return adminLoginRouter;
+}
+
+AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
+ var that = this;
+ var adminLoginUrl = this.adminLoginUrl;
+ var links = {
+  "/admin/gconf/": "gconf",
+  "/admin/mouse/": "mouse",
+  "/admin/list/": "list",
+  "/admin/dashboard.html": "dashboard"
+ }
+ links[this.adminLoginUrl] = "log in";
+ var adminIndexSource = this.getAdminIndexSource(links);
+
+ var adminLoginRouter = this.getAdminLoginRouter();
+
+
+ var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
+
  function listStrings(req, res){
   var strs = this.strings;
   res.writeHead(200, {"Content-Type": "text/html"});
@@ -1152,12 +1168,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   }.bind(this),
   "/admin/list/": this.adminOnly(listStrings.bind(this))
  };
- routingDictionary[adminLoginUrl] = new MethodRoutingResponder(
-  {
-   "GET": handleAdminLoginGetRequest,
-   "POST": handleAdminLoginPostRequest.bind(this)
-  }
- );
+ routingDictionary[adminLoginUrl] = adminLoginRouter;
  function responderRequestTransform(transformRequest, responder){
     var result = function(req, res){
      return coerceToFunction(responder)(transformRequest(req), res);
