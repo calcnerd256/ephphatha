@@ -1038,9 +1038,10 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   "/admin/dashboard.html": "dashboard"
  }
  links[this.adminLoginUrl] = "log in";
- var adminIndexSource = this.getAdminIndexSource(links);
 
- var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
+ var handleAdminIndexRequest = this.constantResponder(
+  this.getAdminIndexSource(links)
+ );
 
  function listStrings(req, res){
   var strs = this.strings;
@@ -1069,6 +1070,17 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    );
   res.end("listing");
  }
+
+ var routingDictionary = {
+  "/admin/": handleAdminIndexRequest,
+  "/admin/index": handleAdminIndexRequest,
+  "/admin/index.html": handleAdminIndexRequest,
+  "/admin/list/": this.adminOnly(listStrings.bind(this))
+ };
+ routingDictionary[adminLoginUrl] = this.getAdminLoginResponder();
+
+
+
  var stringDav = new Router(
   new UrlMatcher(
    function match(u){
@@ -1167,16 +1179,9 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    return res.end(str);
   }.bind(this)
  );
- var routingDictionary = {
-  "/admin/": handleAdminIndexRequest,
-  "/admin/index": handleAdminIndexRequest,
-  "/admin/index.html": handleAdminIndexRequest,
-  "/admin/test": function(req, res){
-   return res.end(this.requestIsAdmin(req) ? "ok" : "nope");
-  }.bind(this),
-  "/admin/list/": this.adminOnly(listStrings.bind(this))
- };
- routingDictionary[adminLoginUrl] = this.getAdminLoginResponder();
+
+
+
  function responderRequestTransform(transformRequest, responder){
   var result = function(req, res){
    return coerceToFunction(responder)(transformRequest(req), res);
@@ -1247,24 +1252,25 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    )(req, res);
   }.bind(this)
  );
- return [
-  new ExactDictRouter(routingDictionary),
-  this.adminRoute(stringDav),
-  this.adminRoute(stringDel),
-  this.adminRoute(stringExec),
-  this.adminRoute(
+ var result = {
+  rd: new ExactDictRouter(routingDictionary),//takes exact paths to responder functions
+  sda: this.adminRoute(stringDav),//make this part of strings?
+  sde: this.adminRoute(stringDel),//make this part of strings?
+  se: this.adminRoute(stringExec),//make this part of strings?
+  mouse: this.adminRoute(//put this in routingDictionary?
    new ExactRouter(
     "/admin/mouse/",
     require("webmouse").responder
    )
   ),
-  this.routerState,
-  this.adminRoute(gconf),
-  new RouterListRouter(this.getHttpRouterList()),
-  stateRouter,
-  publicStaticHtmlRouter,
-  apiStateRouter
- ];
+  rs: this.routerState,//where's this come from?
+  gconf: this.adminRoute(gconf),
+  http: new RouterListRouter(this.getHttpRouterList()),//let every HTTP route handle HTTPS requests, too
+  sr: stateRouter,//what's this again?
+  html: publicStaticHtmlRouter,//look into this
+  api: apiStateRouter//and that one
+ };
+ return Object.keys(result).map(function (k){return result[k];});
 }
 
 this.AdminStringServer = AdminStringServer;
