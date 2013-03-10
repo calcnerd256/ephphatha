@@ -867,10 +867,10 @@ AdminStringServer.prototype.getAdminIndexSource = function getAdminIndexSource(l
 
 
 function tagToXml(t, kids, atrs, expand, noindent){
-  var oneLiner = false;
-  if(!kids)
+ var oneLiner = false;
+ if(!kids)
    oneLiner = true;
-  else
+ else
    if(!kids.length)
     oneLiner = true;
    else
@@ -878,8 +878,8 @@ function tagToXml(t, kids, atrs, expand, noindent){
      if(kids[0].split("\n").length <= 2)
       oneLiner = ("<" != kids[0][0]);
 
-  var closeTag = "</" + t + ">";
-  return "<" + t +
+ var closeTag = "</" + t + ">";
+ return "<" + t +
    (
     atrs && Object.keys(atrs).length ?
     " " + (
@@ -911,45 +911,45 @@ function tagToXml(t, kids, atrs, expand, noindent){
    );
 }
 var tagToString = function(){
-  if("tag" == this.type)
-   return tagToXml(
-    this.tag,
-    this.children,
-    this.attributes,
-    this.expand
-   );
-  if("raw" == this.type)
-   return this.raw;
+ if("tag" == this.type)
+  return tagToXml(
+   this.tag,
+   this.children,
+   this.attributes,
+   this.expand
+  );
+ if("raw" == this.type)
+  return this.raw;
 }
 
 AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
-   var children = [];
-   var tag = x[0];//what if x is empty? error
-   if(!x.length) return {type: "raw", raw: "", toString: tagToString};
-   if("string" != typeof x[0])
-    return x[0];//assume only one element
-   var attributes = {};
-   if("string" == typeof x){
-    tag = x.substring(1);
-    if("r" == x.charAt(0))
-     return {type: "raw", raw: tag, toString: tagToString};
-   }
-   else
-    if(x.length > 1){
-     attributes = x[1];
-     if(x.length > 2)
-      for(var i = 2; i < x.length; i++)
-       children.push(f(f, x[i]));
-    }
-   var components = tag.split(",");//.map(function(s){return s.})
-   return {
-    type: "tag",
-    tag: components[0],
-    children: children,
-    attributes: attributes,
-    expand: components[1] == "x",
-    toString: tagToString
-   };
+ var children = [];
+ var tag = x[0];//what if x is empty? error
+ if(!x.length) return {type: "raw", raw: "", toString: tagToString};
+ if("string" != typeof x[0])
+  return x[0];//assume only one element
+ var attributes = {};
+ if("string" == typeof x){
+  tag = x.substring(1);
+  if("r" == x.charAt(0))
+   return {type: "raw", raw: tag, toString: tagToString};
+ }
+ else
+  if(x.length > 1){
+   attributes = x[1];
+   if(x.length > 2)
+    for(var i = 2; i < x.length; i++)
+     children.push(f(f, x[i]));
+  }
+ var components = tag.split(",");//.map(function(s){return s.})
+ return {
+  type: "tag",
+  tag: components[0],
+  children: children,
+  attributes: attributes,
+  expand: components[1] == "x",
+  toString: tagToString
+ };
 }
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
