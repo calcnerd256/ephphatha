@@ -875,7 +875,7 @@ function tagToXml(t, kids, atrs, expand, noindent){
     oneLiner = true;
    else
     if(kids.length < 2)
-     if(kids[0].split("\n").length <= 2)
+     if((""+kids[0]).split("\n").length <= 2)
       oneLiner = ("<" != kids[0][0]);
 
  var closeTag = "</" + t + ">";
@@ -919,7 +919,7 @@ var tagToString = function(){
    this.expand
   );
  if("raw" == this.type)
-  return this.raw;
+  return "" + this.raw;
 }
 
 AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
@@ -942,7 +942,7 @@ AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
      children.push(f(f, x[i]));
   }
  var components = tag.split(",");//.map(function(s){return s.})
- return {
+ var result = {
   type: "tag",
   tag: components[0],
   children: children,
@@ -950,6 +950,7 @@ AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
   expand: components[1] == "x",
   toString: tagToString
  };
+ return result;
 }
 
 AdminStringServer.prototype.getAdminLoginRouter = function(){
@@ -1037,8 +1038,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  var adminIndexSource = this.getAdminIndexSource(links);
 
  var adminLoginRouter = this.getAdminLoginRouter();
-
-
  var handleAdminIndexRequest = this.constantResponder(adminIndexSource);
 
  function listStrings(req, res){
@@ -1046,19 +1045,26 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   res.writeHead(200, {"Content-Type": "text/html"});
   for(var i = 0; i < strs.length; i++)
    res.write(
-    [
-     "<LI>",
-     " <A HREF=\"../" + i + "\">" + i + "</A>",
-     " <FORM METHOD=\"POST\" ACTION=\"../" + i + "/del\">",
-     "  <INPUT TYPE=\"submit\" VALUE=\"delete\"></INPUT>",
-     " </FORM>",
-     " <FORM METHOD=\"POST\" ACTION=\"../" + i + "/exec\">",
-     "  <INPUT TYPE=\"submit\" VALUE=\"eval\"></INPUT>",
-     "  <IFRAME SRC=\"../" + i + "\"></IFRAME>",
-     " </FORM>",
-     "</LI>",
-     ""
-    ].join("\n"));
+    this.tagShorthand(
+     this.tagShorthand.bind(this),
+     [
+      "LI", {},
+      [
+       "A", {HREF: "../" + i},
+       "r" + i
+      ],
+      [
+       "FORM", {METHOD: "POST", ACTION: "../" + i + "/del"},
+        ["INPUT,x", {TYPE: "submit", VALUE: "delete"}]
+      ],
+      [
+       "FORM", {METHOD: "POST", ACTION: "../" + i + "/exec"},
+       ["INPUT,x", {TYPE: "submit", VALUE: "eval"}]
+      ],
+      ["IFRAME,x", {SRC: "../" + i}],
+     ]
+    ).toString() + "\n"
+   );
   res.end("listing");
  }
  var stringDav = new Router(

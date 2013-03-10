@@ -45,7 +45,8 @@ process.on(
    [
     "unhandled exception",
     e,
-    "please restart the server"
+    "please restart the server",
+    e.stack
    ]
   );
  }.bind(this)

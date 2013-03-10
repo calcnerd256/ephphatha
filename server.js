@@ -150,7 +150,7 @@ this.Server.prototype.serve = function serve(req, res){
  );
  }
  catch(e){
-  console.warn(["request failed", e]);
+  console.warn(["request failed", e, e.stack]);
   res.statusCode = 500;
   res.end("failed to serve request");
  }
