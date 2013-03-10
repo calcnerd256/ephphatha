@@ -8,7 +8,8 @@ var url = require("url");
 var fs = require("fs");
 var formStream = require("form_stream");
  var FormStream = formStream.FormStream;
-var router = require("webserver_functors");
+var routers = require("./routers");
+ var router = routers.router;
  var coerceToFunction = router.coerceToFunction;
  var Router = router.Router;
  var ExactRouter = router.ExactRouter;
@@ -19,36 +20,13 @@ var router = require("webserver_functors");
  var dictToAlist = router.dictToAlist;
  var MethodRoutingResponder = router.MethodRoutingResponder;
  var DictionaryRouter = router.DictionaryRouter;
+ var DictRouterList = routers.DictRouterList;
 var formController = require("./formController");
  var FormField = formController.FormField;
  var TextAreaField = formController.TextAreaField;
  var SimpleFormController = formController.SimpleFormController;
 
-
-function DictRouterList(dict){
- this.dict = dict;
-}
-
-DictRouterList.prototype.getRouterKeys = function getRouterKeys(){
- // TODO get these in some order
- return Object.keys(this.dict);
-}
-DictRouterList.prototype.getStateRouter = function getStateRouter(req){
- return new RouterListRouter(
-  this.getRouterKeys().map(
-   function(k){
-    return this.dict[k];
-   }.bind(this)
-  )
- );
-}
-DictRouterList.prototype.route = function route(req){
- return this.getStateRouter().route(req);
-}
-DictRouterList.prototype.toFunction = function toFunction(){
- return this.route.bind(this);
-}
-
+//TODO decouple admin from strings and server
 
 
 function AdminStringServer(){
@@ -78,9 +56,6 @@ AdminStringServer.prototype.generatePassword = function(callback){
 AdminStringServer.prototype.setPassword = function setPassword(newPass){
  this.password = newPass;
 };
-
-
-
 
 
 //interface: "HTML-able"
