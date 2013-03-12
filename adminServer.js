@@ -333,27 +333,7 @@ AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol
  return server;
 }
 
-
-AdminStringServer.prototype.alistToDict = function alistToDict(alist, stacks){
- var result = {};
- alist.map(
-  stacks ?
-   function(kv){
-    var k = kv[0];
-    var v = kv[1];
-    if(!(k in result)) result[k] = [];
-    result[k].push(v);
-   } :
-   function(kv){
-    var k = kv[0];
-    var v = kv[1];
-    if(k in result) return;
-    result[k] = v;
-   }
- );
- return result;
-}
-
+AdminStringServer.prototype.alistToDict = Admin.prototype.alistToDict;
 
 AdminStringServer.prototype.dictToExactRouterListRouter = function dictToExactRouterList(dictionary){
  return new ExactDictRouter(dictionary);
@@ -571,26 +551,10 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
  ]
 }
 
-AdminStringServer.prototype.requestIsAdmin = function requestIsAdmin(req){
- var headers = req.headers;
- var cookie = headers.cookie;
- if(!cookie) return false;
- var crumbs = cookie.split(";");
- var alist = crumbs.map(
-  function(s){
-   var result = s.split("=");
-   var key = result.shift().trim();
-   return [key, result.join("=")];
-  }
- );
- var dict = this.alistToDict(alist);
- var token = dict.token;
- return token in this.admin.adminTokens && "active" == this.admin.adminTokens[token];
-}
 
 AdminStringServer.prototype.adminOnly = function adminOnly(responder){
  var result = function respond(req, res){
-  if(this.requestIsAdmin(req))
+  if(this.admin.requestIsAdmin(req))
    return responder.apply(this, arguments);
   res.statusCode = 403;
   return res.end("not an admin");
@@ -601,7 +565,7 @@ AdminStringServer.prototype.adminOnly = function adminOnly(responder){
 AdminStringServer.prototype.adminRoute = function adminRoute(router){
  var result = function route(req){
   var responder = coerceToFunction(router)(req);
-  if(this.requestIsAdmin(req))
+  if(this.admin.requestIsAdmin(req))
    return responder;
   return responder &&
    function respond(req, res){

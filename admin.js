@@ -72,5 +72,45 @@ Admin.prototype.expireAdminTokens = function expireAdminTokens(){
  this.adminTokens = {};
 }
 
+Admin.prototype.alistToDict = function alistToDict(alist, stacks){
+ var result = {};
+ alist.map(
+  stacks ?
+   function(kv){
+    var k = kv[0];
+    var v = kv[1];
+    if(!(k in result)) result[k] = [];
+    result[k].push(v);
+   } :
+   function(kv){
+    var k = kv[0];
+    var v = kv[1];
+    if(k in result) return;
+    result[k] = v;
+   }
+ );
+ return result;
+}
+
+
+
+Admin.prototype.requestIsAdmin = function requestIsAdmin(req){
+ var headers = req.headers;
+ var cookie = headers.cookie;
+ if(!cookie) return false;
+ var crumbs = cookie.split(";");
+ var alist = crumbs.map(
+  function(s){
+   var result = s.split("=");
+   var key = result.shift().trim();
+   return [key, result.join("=")];
+  }
+ );
+ var dict = this.alistToDict(alist);
+ var token = dict.token;
+ return token in this.adminTokens && "active" == this.adminTokens[token];
+}
+
+
 
 this.Admin = Admin;
