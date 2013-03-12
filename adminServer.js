@@ -33,18 +33,6 @@ var admin = require("./admin");
 
 function AdminStringServer(){
  this.admin = new Admin();
- this.admin.generatePassword(
-  (
-   function setAndWarn(password){
-    this.setPassword(password);
-    console.warn(
-     "Admin password is \"" +
-      this.password +
-      "\". Please change it immediately."
-    );
-   }
-  ).bind(this.admin)
- );
  this.strings = [];
  this.adminTokens = {};
  this.publicStaticHtml = {};

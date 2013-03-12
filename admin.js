@@ -2,6 +2,18 @@ var crypto = require("crypto");
 
 function Admin(){
  this.adminTokens = {};
+ this.generatePassword(
+  (
+   function setAndWarn(password){
+    this.setPassword(password);
+    console.warn(
+     "Admin password is \"" +
+      this.password +
+      "\". Please change it immediately."
+    );
+   }
+  ).bind(this)
+ );
 }
 
 Admin.prototype.generateRandomHex = function generateRandomHex(length, callback, errorback, noisy){
