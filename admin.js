@@ -52,4 +52,25 @@ Admin.prototype.setPassword = function setPassword(password){
  return result;
 }
 
+
+Admin.prototype.createAdminToken = function createAdminToken(callback, errorBack, noisy){
+ var tokenLength = 64;
+ return this.generateRandomHex(
+  tokenLength,
+  function(token){
+   if(token in this.adminTokens && "active" == this.adminTokens[token])
+    return errorBack("collision");
+   this.adminTokens[token] = "active";
+   return callback(token);
+  }.bind(this),
+  errorBack,
+  noisy
+ );
+}
+
+Admin.prototype.expireAdminTokens = function expireAdminTokens(){
+ this.adminTokens = {};
+}
+
+
 this.Admin = Admin;

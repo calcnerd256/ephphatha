@@ -34,7 +34,6 @@ var admin = require("./admin");
 function AdminStringServer(){
  this.admin = new Admin();
  this.strings = [];
- this.adminTokens = {};
  this.publicStaticHtml = {};
  this.routeState = {};//for testing
  this.apiState = {};
@@ -254,26 +253,6 @@ AdminStringServer.prototype.replaceDir = function replaceDir(dir, callback){
  );
 }
 
-
-AdminStringServer.prototype.createAdminToken = function createAdminToken(callback, errorBack, noisy){
- var that = this;
- var tokenLength = 64;
- return this.admin.generateRandomHex(
-  tokenLength,
-  function(token){
-   if(token in that.adminTokens && "active" == that.adminTokens[token])
-    return errorBack("collision");
-   that.adminTokens[token] = "active";
-   return callback(token);
-  },
-  errorBack,
-  noisy
- );
-}
-
-AdminStringServer.prototype.expireAdminTokens = function expireAdminTokens(){
- this.adminTokens = {};
-}
 
 function callOnce(fn, noisy){
  return function vapor(){
@@ -606,7 +585,7 @@ AdminStringServer.prototype.requestIsAdmin = function requestIsAdmin(req){
  );
  var dict = this.alistToDict(alist);
  var token = dict.token;
- return token in this.adminTokens && "active" == this.adminTokens[token];
+ return token in this.admin.adminTokens && "active" == this.admin.adminTokens[token];
 }
 
 AdminStringServer.prototype.adminOnly = function adminOnly(responder){
@@ -779,7 +758,7 @@ AdminStringServer.prototype.getAdminLoginResponder = function(){
      s,
      function(password){
       if(password == this.admin.password)
-       return this.createAdminToken(
+       return this.admin.createAdminToken(
 	function(token){
 	 var cookie = [
 	  "token=" + token,
