@@ -25,11 +25,14 @@ var formController = require("./formController");
  var FormField = formController.FormField;
  var TextAreaField = formController.TextAreaField;
  var SimpleFormController = formController.SimpleFormController;
+var admin = require("./admin");
+ var Admin = admin.Admin;
 
 //TODO decouple admin from strings and server
 
 
 function AdminStringServer(){
+ this.admin = new Admin();
  this.generatePassword(
   (
    function setAndWarn(password){
@@ -51,7 +54,7 @@ function AdminStringServer(){
 }
 
 AdminStringServer.prototype.generatePassword = function(callback){
- return this.generateRandomHex(8, callback);
+ return this.admin.generateRandomHex(8, callback);
 };
 AdminStringServer.prototype.setPassword = function setPassword(newPass){
  this.password = newPass;
@@ -270,35 +273,14 @@ AdminStringServer.prototype.replaceDir = function replaceDir(dir, callback){
 
 
 
-AdminStringServer.prototype.generateRandomHex = function generateRandomHex(length, callback, errorBack, noisy){
- if(!callback)
-  callback = noisy ?
-  function(){throw arguments;} :
- console.log.bind(console);
- if("function" != typeof errorBack)
-  errorBack = noisy ?
-  function(e){throw e;} :
- function(){return callback();};
- function toHex(b){return b.toString(16);}
- function pad(str){
-  while(str.length < 2)
-   str = "0" + str;
-  return str;
- }
- return crypto.randomBytes(
-  length / 2,
-  function(e, buf){
-   if(e) return errorBack(e);
-   var randomHex = [].map.call(buf, toHex).map(pad).join("");
-   return callback(randomHex);
-  }
- );
-};
+//AdminStringServer.prototype.generateRandomHex = function generateRandomHex(length, callback, errorBack, noisy){
+// return this.admin.generateRandomHex(length, callback, errorBack, noisy);
+//};
 
 AdminStringServer.prototype.createAdminToken = function createAdminToken(callback, errorBack, noisy){
  var that = this;
  var tokenLength = 64;
- return this.generateRandomHex(
+ return this.admin.generateRandomHex(
   tokenLength,
   function(token){
    if(token in that.adminTokens && "active" == that.adminTokens[token])
