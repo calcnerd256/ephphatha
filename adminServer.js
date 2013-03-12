@@ -33,17 +33,17 @@ var admin = require("./admin");
 
 function AdminStringServer(){
  this.admin = new Admin();
- this.generatePassword(
+ this.admin.generatePassword(
   (
    function setAndWarn(password){
-    this.admin.setPassword(password);
+    this.setPassword(password);
     console.warn(
      "Admin password is \"" +
-      this.admin.password +
+      this.password +
       "\". Please change it immediately."
     );
    }
-  ).bind(this)
+  ).bind(this.admin)
  );
  this.strings = [];
  this.adminTokens = {};
@@ -53,9 +53,6 @@ function AdminStringServer(){
  this.routerState = new DictRouterList({});//replace everything with this
 }
 
-AdminStringServer.prototype.generatePassword = function(callback){
- return this.admin.generateRandomHex(8, callback);
-};
 
 
 AdminStringServer.prototype.formToResponder = formController.formToResponder;

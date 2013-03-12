@@ -29,6 +29,11 @@ Admin.prototype.generateRandomHex = function generateRandomHex(length, callback,
  );
 }
 
+Admin.prototype.generatePassword = function(callback){
+ return this.generateRandomHex(8, callback);
+};
+
+
 Admin.prototype.setPassword = function setPassword(password){
  var result = this.password;
  this.password = password;
