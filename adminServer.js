@@ -36,10 +36,10 @@ function AdminStringServer(){
  this.generatePassword(
   (
    function setAndWarn(password){
-    this.setPassword(password);
+    this.admin.setPassword(password);
     console.warn(
      "Admin password is \"" +
-      this.password +
+      this.admin.password +
       "\". Please change it immediately."
     );
    }
@@ -56,9 +56,7 @@ function AdminStringServer(){
 AdminStringServer.prototype.generatePassword = function(callback){
  return this.admin.generateRandomHex(8, callback);
 };
-AdminStringServer.prototype.setPassword = function setPassword(newPass){
- this.password = newPass;
-};
+
 
 AdminStringServer.prototype.formToResponder = formController.formToResponder;
 
@@ -271,11 +269,6 @@ AdminStringServer.prototype.replaceDir = function replaceDir(dir, callback){
  );
 }
 
-
-
-//AdminStringServer.prototype.generateRandomHex = function generateRandomHex(length, callback, errorBack, noisy){
-// return this.admin.generateRandomHex(length, callback, errorBack, noisy);
-//};
 
 AdminStringServer.prototype.createAdminToken = function createAdminToken(callback, errorBack, noisy){
  var that = this;
@@ -800,7 +793,7 @@ AdminStringServer.prototype.getAdminLoginResponder = function(){
     formStream.bufferChunks(
      s,
      function(password){
-      if(password == this.password)
+      if(password == this.admin.password)
        return this.createAdminToken(
 	function(token){
 	 var cookie = [

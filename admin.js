@@ -1,7 +1,7 @@
 var crypto = require("crypto");
 
 function Admin(){
-
+ this.adminTokens = {};
 }
 
 Admin.prototype.generateRandomHex = function generateRandomHex(length, callback, errorback, noisy){
@@ -27,6 +27,12 @@ Admin.prototype.generateRandomHex = function generateRandomHex(length, callback,
    return callback(randomHex);
   }
  );
+}
+
+Admin.prototype.setPassword = function setPassword(password){
+ var result = this.password;
+ this.password = password;
+ return result;
 }
 
 this.Admin = Admin;
