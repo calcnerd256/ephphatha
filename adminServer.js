@@ -33,7 +33,7 @@ var admin = require("./admin");
 
 function AdminStringServer(){
  this.admin = new Admin();
- this.strings = [];
+ this.stringManager = new StringManager();
  this.publicStaticHtml = {};
  this.routeState = {};//for testing
  this.apiState = {};
@@ -44,16 +44,19 @@ function AdminStringServer(){
 
 AdminStringServer.prototype.formToResponder = formController.formToResponder;
 
+function StringManager(){
+ this.strings = [];
+}
 
 AdminStringServer.prototype.appendNewString = function appendNewString(str){
- var result = this.strings.map(
+ var result = this.stringManager.strings.map(
   function(s, i){
    return this.strEq(i, str);
   }.bind(this)
  ).indexOf(true);
  if(-1 != result) return result;
- result = this.strings.length;
- this.strings.push(str);
+ result = this.stringManager.strings.length;
+ this.stringManager.strings.push(str);
  if(!this.strEq(result, str)) //that should never happen
   return -1;
  return result;
@@ -61,7 +64,7 @@ AdminStringServer.prototype.appendNewString = function appendNewString(str){
 AdminStringServer.prototype.appendString = AdminStringServer.prototype.appendNewString;
 
 AdminStringServer.prototype.deleteString = function deleteString(index){
- var strs = this.strings;
+ var strs = this.stringManager.strings;
  if(strs.length - 1 == index)
   return strs.pop();
  var result = strs[index];
@@ -209,15 +212,15 @@ AdminStringServer.prototype.saveBufferSync = function saveBufferSync(buffer, dir
 AdminStringServer.prototype.saveBuffer = AdminStringServer.prototype.saveBufferSync;
 
 AdminStringServer.prototype.getStringAt = function getStringAt(index){
- return this.strings[index];
+ return this.stringManager.strings[index];
 }
 
 AdminStringServer.prototype.saveString = function saveString(index, dir){
- if(index in this.strings)
+ if(index in this.stringManager.strings)
   return this.saveBufferSync(this.getStringAt[index], dir);
 }
 AdminStringServer.prototype.dumpAllStrings = function dumpAllStrings(dir){
- return this.strings.map(
+ return this.stringManager.strings.map(
   function(s,i){
    return this.saveString(i, dir);
   }.bind(this)
@@ -788,7 +791,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  );
 
  function listStrings(req, res){
-  var strs = this.strings;
+  var strs = this.stringManager.strings;
   res.writeHead(200, {"Content-Type": "text/html"});
   for(var i = 0; i < strs.length; i++)
    res.write(
@@ -837,7 +840,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   function davString(req, res){
    var p = url.parse(req.url).pathname.split("/");
    var n = +(p[2]);
-   var strs = this.strings;
+   var strs = this.stringManager.strings;
    if(!(n in strs))
     return (
      function(r){
@@ -916,7 +919,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     );
    var p = matchStringUrlPrefix(req.url);
    var i = +p[0];
-   if(!(i in this.strings))
+   if(!(i in this.stringManager.strings))
     res.statusCode = 404;
    str = ""+this.execString(i);
    res.setHeader("Content-Type", "text/plain");
