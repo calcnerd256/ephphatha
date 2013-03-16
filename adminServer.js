@@ -74,6 +74,7 @@ AdminStringServer.prototype.storeExecString = function(str){
 }
 
 
+
 // string persistence
 
 AdminStringServer.prototype.storeAt = function(path, expr){
@@ -189,13 +190,10 @@ AdminStringServer.prototype.saveBufferSync = function saveBufferSync(buffer, dir
 }
 AdminStringServer.prototype.saveBuffer = AdminStringServer.prototype.saveBufferSync;
 
-AdminStringServer.prototype.getStringAt = function getStringAt(index){
- return this.stringManager.getStringAt(index);
-}
 
 AdminStringServer.prototype.saveString = function saveString(index, dir){
  if(index in this.stringManager.strings)
-  return this.saveBufferSync(this.getStringAt(index), dir);
+  return this.saveBufferSync(this.stringManager.getStringAt(index), dir);
 }
 AdminStringServer.prototype.dumpAllStrings = function dumpAllStrings(dir){
  return this.stringManager.strings.map(
