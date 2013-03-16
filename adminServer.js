@@ -27,8 +27,8 @@ var formController = require("./formController");
  var SimpleFormController = formController.SimpleFormController;
 var admin = require("./admin");
  var Admin = admin.Admin;
-
-//TODO decouple admin from strings and server
+var stringManager = require("./stringState");
+ var StringManager = stringManager.StringManager;
 
 
 function AdminStringServer(){
@@ -46,49 +46,17 @@ AdminStringServer.prototype.setPassword = function setPassword(password){
 
 AdminStringServer.prototype.formToResponder = formController.formToResponder;
 
-function StringManager(){
- this.strings = [];
-}
-
 AdminStringServer.prototype.appendNewString = function appendNewString(str){
  return this.stringManager.appendNewString(str);
 };
-StringManager.prototype.appendNewString = function appendNewString(str){
- var result = this.strings.map(
-  function(s, i){
-   return this.strEq(i, str);
-  }.bind(this)
- ).indexOf(true);
- if(-1 != result) return result;
- result = this.strings.length;
- this.strings.push(str);
- if(!this.strEq(result, str)) //that should never happen
-  return -1;
- return result;
-};
 AdminStringServer.prototype.appendString = AdminStringServer.prototype.appendNewString;
 
-//AdminStringServer.prototype.deleteString = function deleteString(index){
- //return this.stringManager.deleteString(index);
-//};
-StringManager.prototype.deleteString = function deleteString(index){
- var strs = this.strings;
- if(strs.length - 1 == index)
-  return strs.pop();
- var result = strs[index];
- if(index)
-  if(!((index - 1) in strs))
-   if((index + 1) in strs)
-    strs[index - 1] = strs[index + 1]
- if(!(index in strs)) return false;
- delete strs[index];
- return result;
-}
 function execStrClosed(str){
  //captures the scope in which this function was defined
  return eval(str);
 }
 AdminStringServer.prototype.execStrClosed = execStrClosed;
+
 AdminStringServer.prototype.execString = function execString(index){
  //here we go
  return this.execStrClosed(this.stringManager.getStringAt(index));
@@ -97,9 +65,6 @@ AdminStringServer.prototype.execString = function execString(index){
 AdminStringServer.prototype.strEq = function strEq(i, str){
  return this.stringManager.strEq(i, str);
 }
-StringManager.prototype.strEq = function strEq(i, str){
- return this.getStringAt(i) == ""+str;
-};
 AdminStringServer.prototype.stringEquals = AdminStringServer.prototype.strEq;
 AdminStringServer.prototype.stringAtIndexEquals = AdminStringServer.prototype.strEq;
 
@@ -224,9 +189,6 @@ AdminStringServer.prototype.saveBuffer = AdminStringServer.prototype.saveBufferS
 
 AdminStringServer.prototype.getStringAt = function getStringAt(index){
  return this.stringManager.getStringAt(index);
-}
-StringManager.prototype.getStringAt = function getStringAt(index){
- return this.strings[index];
 }
 
 AdminStringServer.prototype.saveString = function saveString(index, dir){
