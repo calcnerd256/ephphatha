@@ -74,6 +74,8 @@ AdminStringServer.prototype.storeExecString = function(str){
 }
 
 
+// string persistence
+
 AdminStringServer.prototype.storeAt = function(path, expr){
  var target = this;
  var last = path.pop();
@@ -242,6 +244,7 @@ AdminStringServer.prototype.replaceDir = function replaceDir(dir, callback){
   }.bind(this)
  );
 }
+
 
 
 function callOnce(fn, noisy){
