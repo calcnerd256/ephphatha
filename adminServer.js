@@ -40,7 +40,9 @@ function AdminStringServer(){
  this.routerState = new DictRouterList({});//replace everything with this
 }
 
-
+AdminStringServer.prototype.setPassword = function setPassword(password){
+ return this.admin.setPassword(password);
+}
 
 AdminStringServer.prototype.formToResponder = formController.formToResponder;
 
@@ -49,22 +51,28 @@ function StringManager(){
 }
 
 AdminStringServer.prototype.appendNewString = function appendNewString(str){
- var result = this.stringManager.strings.map(
+ return this.stringManager.appendNewString(str);
+};
+StringManager.prototype.appendNewString = function appendNewString(str){
+ var result = this.strings.map(
   function(s, i){
    return this.strEq(i, str);
   }.bind(this)
  ).indexOf(true);
  if(-1 != result) return result;
- result = this.stringManager.strings.length;
- this.stringManager.strings.push(str);
+ result = this.strings.length;
+ this.strings.push(str);
  if(!this.strEq(result, str)) //that should never happen
   return -1;
  return result;
 };
 AdminStringServer.prototype.appendString = AdminStringServer.prototype.appendNewString;
 
-AdminStringServer.prototype.deleteString = function deleteString(index){
- var strs = this.stringManager.strings;
+//AdminStringServer.prototype.deleteString = function deleteString(index){
+ //return this.stringManager.deleteString(index);
+//};
+StringManager.prototype.deleteString = function deleteString(index){
+ var strs = this.strings;
  if(strs.length - 1 == index)
   return strs.pop();
  var result = strs[index];
@@ -83,17 +91,20 @@ function execStrClosed(str){
 AdminStringServer.prototype.execStrClosed = execStrClosed;
 AdminStringServer.prototype.execString = function execString(index){
  //here we go
- return this.execStrClosed(this.getStringAt[index]);
+ return this.execStrClosed(this.stringManager.getStringAt(index));
 };
 
 AdminStringServer.prototype.strEq = function strEq(i, str){
- return this.getStringAt[i] == ""+str;
+ return this.stringManager.strEq(i, str);
+}
+StringManager.prototype.strEq = function strEq(i, str){
+ return this.getStringAt(i) == ""+str;
 };
 AdminStringServer.prototype.stringEquals = AdminStringServer.prototype.strEq;
 AdminStringServer.prototype.stringAtIndexEquals = AdminStringServer.prototype.strEq;
 
 AdminStringServer.prototype.storeExecString = function(str){
- var i = this.appendNewString(str);
+ var i = this.stringManager.appendNewString(str);
  return [i, this.execString(i)];
 }
 
@@ -181,7 +192,7 @@ AdminStringServer.prototype.loadStrings = function loadStrings(dir, callback, er
        x,
        function(err, data){
 	if(err) return f([x, -1, err]);// TODO: redesign mapBack
-	return f([x, this.appendString(""+data)]);
+	return f([x, this.stringManager.appendNewString(""+data)]);
        }.bind(this)
       )
      ];
@@ -212,12 +223,15 @@ AdminStringServer.prototype.saveBufferSync = function saveBufferSync(buffer, dir
 AdminStringServer.prototype.saveBuffer = AdminStringServer.prototype.saveBufferSync;
 
 AdminStringServer.prototype.getStringAt = function getStringAt(index){
- return this.stringManager.strings[index];
+ return this.stringManager.getStringAt(index);
+}
+StringManager.prototype.getStringAt = function getStringAt(index){
+ return this.strings[index];
 }
 
 AdminStringServer.prototype.saveString = function saveString(index, dir){
  if(index in this.stringManager.strings)
-  return this.saveBufferSync(this.getStringAt[index], dir);
+  return this.saveBufferSync(this.getStringAt(index), dir);
 }
 AdminStringServer.prototype.dumpAllStrings = function dumpAllStrings(dir){
  return this.stringManager.strings.map(
@@ -509,7 +523,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
   var form = new FormStream(req);
   var noString = true;
   function stringBack(string){
-   index = that.appendString(string);
+   index = this.stringManager.appendNewString(string);
    res.writeHead(200, {"Content-type": "text/plain"});
    return res.end(
     "POST successful: " +
@@ -529,7 +543,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
     ).on(
      "end",
      function(){
-      return stringBack(buf.join(""));
+      return stringBack.bind(that)(buf.join(""));
      }
     ).resume();
    }
@@ -883,7 +897,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
      ].join("\n")
     );
    var p = matchStringUrlPrefix(req.url);
-   str = this.deleteString(+p[0]);
+   str = this.stringManager.deleteString(+p[0]);
    if(!str)
     return (
      function(r){

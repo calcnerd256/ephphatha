@@ -23,7 +23,7 @@ this.storeAt(
   "    }\r",
   "   );\r",
   "   var str = [\r",
-  "    \"this.storeAt(\",\r",
+  "    \"this.stringManager.storeAt(\",\r",
   "    \" \" +\r",
   "     JSON.stringify(path) +\r",
   "     \",\",\r",
@@ -317,7 +317,7 @@ this.storeAt(
 
 function g(h){
  var quine = h+"\ng.bind(this)(g);\n//quine\n";
- this.strings = [quine, "this.replaceDir();"];
+ this.stringManager.strings = [quine, "this.replaceDir();"];
  this.loadStrings();
 }
 g.bind(this)(g);
