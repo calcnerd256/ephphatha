@@ -73,13 +73,18 @@ AdminStringServer.prototype.deleteString = function deleteString(index){
  delete strs[index];
  return result;
 }
+function execStrClosed(str){
+ //captures the scope in which this function was defined
+ return eval(str);
+}
+AdminStringServer.prototype.execStrClosed = execStrClosed;
 AdminStringServer.prototype.execString = function execString(index){
  //here we go
- return eval(this.strings[index]);
+ return this.execStrClosed(this.getStringAt[index]);
 };
 
 AdminStringServer.prototype.strEq = function strEq(i, str){
- return this.strings[i] == ""+str;
+ return this.getStringAt[i] == ""+str;
 };
 AdminStringServer.prototype.stringEquals = AdminStringServer.prototype.strEq;
 AdminStringServer.prototype.stringAtIndexEquals = AdminStringServer.prototype.strEq;
@@ -88,6 +93,7 @@ AdminStringServer.prototype.storeExecString = function(str){
  var i = this.appendNewString(str);
  return [i, this.execString(i)];
 }
+
 
 AdminStringServer.prototype.storeAt = function(path, expr){
  var target = this;
@@ -104,6 +110,7 @@ AdminStringServer.prototype.storeAt = function(path, expr){
   }
  )(this.storeExecString(expr));
 }
+
 
 AdminStringServer.prototype.mapBack = function mapBack(arr, action, callback){
  //action must take two parameters and pass its result to the second parameter exactly once
@@ -201,9 +208,13 @@ AdminStringServer.prototype.saveBufferSync = function saveBufferSync(buffer, dir
 }
 AdminStringServer.prototype.saveBuffer = AdminStringServer.prototype.saveBufferSync;
 
+AdminStringServer.prototype.getStringAt = function getStringAt(index){
+ return this.strings[index];
+}
+
 AdminStringServer.prototype.saveString = function saveString(index, dir){
  if(index in this.strings)
-  return this.saveBufferSync(this.strings[index], dir);
+  return this.saveBufferSync(this.getStringAt[index], dir);
 }
 AdminStringServer.prototype.dumpAllStrings = function dumpAllStrings(dir){
  return this.strings.map(
