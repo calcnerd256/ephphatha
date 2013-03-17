@@ -122,7 +122,6 @@ function mapBack(arr, action, callback){
   }
  );
 };
-AdminStringServer.prototype.mapBack = mapBack;
 
 function getUniqueValue(oldValues, hash, n, increment){
  if(!oldValues)
@@ -143,14 +142,34 @@ function getUniqueValue(oldValues, hash, n, increment){
  return result;
 }
 
-function FilesystemLiaison(stringManager){
- this.stringManager = stringManager;
-}
 
-// string persistence
 
 AdminStringServer.prototype.loadStrings = function loadStrings(dir, callback, errback){
  return this.stringPersistence.loadStrings(dir, callback, errback);
+}
+function saveBufferSync(buffer, dir){
+ if(!dir)
+  dir = "persist";
+ var filename = getUniqueFilenameSync(dir);
+ var fd = fs.openSync(dir + "/" + filename, "w", 0660);//want "wx", but it doesn't exist yet
+ fs.writeSync(fd, buffer);
+ fs.closeSync(fd);
+ return filename;
+}
+
+
+AdminStringServer.prototype.saveString = function saveString(index, dir){
+ return this.stringPersistence.saveString(index, dir);
+}
+AdminStringServer.prototype.dumpAllStrings = function dumpAllStrings(dir){
+ return this.stringPersistence.dumpAllStrings(dir);
+}
+AdminStringServer.prototype.replaceDir = function replaceDir(dir, callback){
+ return this.stringPersistence.replaceDir(dir, callback);
+}
+
+function FilesystemLiaison(stringManager){
+ this.stringManager = stringManager;
 }
 FilesystemLiaison.prototype.loadStrings = function loadStrings(dir, callback, errback){
  if(!dir)
@@ -189,26 +208,9 @@ function getUniqueFilenameSync(dir, hasher){
  );
 }
 
-function saveBufferSync(buffer, dir){
- if(!dir)
-  dir = "persist";
- var filename = getUniqueFilenameSync(dir);
- var fd = fs.openSync(dir + "/" + filename, "w", 0660);//want "wx", but it doesn't exist yet
- fs.writeSync(fd, buffer);
- fs.closeSync(fd);
- return filename;
-}
-
-
-AdminStringServer.prototype.saveString = function saveString(index, dir){
- return this.stringPersistence.saveString(index, dir);
-}
 FilesystemLiaison.prototype.saveString = function saveString(index, dir){
  if(index in this.stringManager.strings)
   return saveBufferSync(this.stringManager.getStringAt(index), dir);
-}
-AdminStringServer.prototype.dumpAllStrings = function dumpAllStrings(dir){
- return this.stringPersistence.dumpAllStrings(dir);
 }
 FilesystemLiaison.prototype.dumpAllStrings = function dumpAllStrings(dir){
  return this.stringManager.strings.map(
@@ -218,7 +220,7 @@ FilesystemLiaison.prototype.dumpAllStrings = function dumpAllStrings(dir){
  );
 }
 
-AdminStringServer.prototype.nukeDir = function nukeDir(dir, callback){
+function nukeDir(dir, callback){
  //callback takes a list of lists of [path, error]
  if(!dir)
   dir = "persist";
@@ -243,12 +245,12 @@ AdminStringServer.prototype.nukeDir = function nukeDir(dir, callback){
   }
  );
 };
-AdminStringServer.prototype.replaceDir = function replaceDir(dir, callback){
+FilesystemLiaison.prototype.replaceDir = function replaceDir(dir, callback){
  if(!dir)
   dir = "persist";
  if(!callback)
   callback = function(){};
- this.nukeDir(
+ nukeDir(
   dir,
   function(errors){
    return callback(
