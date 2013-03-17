@@ -34,4 +34,41 @@ StringManager.prototype.getStringAt = function getStringAt(index){
  return this.strings[index];
 };
 
+function FilesystemLiaison(stringManager){
+ this.stringManager = stringManager;
+}
+
+
+function mapBack(arr, action, callback){
+ //action must take two parameters and pass its result to the second parameter exactly once
+ //the return value of this function is the result of mapping action across the input array
+ //the second parameter passed to action returns
+ // the return value of callback the last time it's called
+ // its argument the first time it's called for a given index
+ // its old argument subsequent times
+ var outstanding = arr.length;
+ var result = [];
+ return arr.map(
+  function(x, i){
+   var called = 0;
+   return action(
+    x,
+    function(image){
+     var old = result[i];
+     result[i] = image;
+     if(called) return old;
+     called++;
+     outstanding--;
+     if(!outstanding)
+      return callback(result);
+     return image;
+    }
+   );
+  }
+ );
+};
+
+
 this.StringManager = StringManager;
+this.FilesystemLiaison = FilesystemLiaison;
+this.mapBack = mapBack;

@@ -93,35 +93,7 @@ AdminStringServer.prototype.storeAt = function(path, expr){
 }
 
 
-
-function mapBack(arr, action, callback){
- //action must take two parameters and pass its result to the second parameter exactly once
- //the return value of this function is the result of mapping action across the input array
- //the second parameter passed to action returns
- // the return value of callback the last time it's called
- // its argument the first time it's called for a given index
- // its old argument subsequent times
- var outstanding = arr.length;
- var result = [];
- return arr.map(
-  function(x, i){
-   var called = 0;
-   return action(
-    x,
-    function(image){
-     var old = result[i];
-     result[i] = image;
-     if(called) return old;
-     called++;
-     outstanding--;
-     if(!outstanding)
-      return callback(result);
-     return image;
-    }
-   );
-  }
- );
-};
+var mapBack = stringManager.mapBack;
 
 function getUniqueValue(oldValues, hash, n, increment){
  if(!oldValues)
@@ -167,10 +139,41 @@ AdminStringServer.prototype.dumpAllStrings = function dumpAllStrings(dir){
 AdminStringServer.prototype.replaceDir = function replaceDir(dir, callback){
  return this.stringPersistence.replaceDir(dir, callback);
 }
-
-function FilesystemLiaison(stringManager){
- this.stringManager = stringManager;
+function getUniqueFilenameSync(dir, hasher){
+ return getUniqueValue(
+  fs.readdirSync(dir),
+  hasher
+ );
 }
+
+function nukeDir(dir, callback){
+ //callback takes a list of lists of [path, error]
+ if(!dir)
+  dir = "persist";
+ if(!callback)
+  callback = function(){};
+ fs.readdir(
+  dir,
+  function(err, files){
+   if(err) return callback([[dir, err]]);
+   return mapBack(
+    files.map(function(x){return dir + "/" + x}),
+    function(x, f){
+     return fs.unlink(
+      x,
+      function(err){
+       return f([x, err]);
+      }
+     );
+    },
+    function(xs){return callback(null, xs);}
+   );
+  }
+ );
+};
+
+var FilesystemLiaison = stringManager.FilesystemLiaison;
+
 FilesystemLiaison.prototype.loadStrings = function loadStrings(dir, callback, errback){
  if(!dir)
   dir = "persist";
@@ -201,13 +204,6 @@ FilesystemLiaison.prototype.loadStrings = function loadStrings(dir, callback, er
  return results;
 };
 
-function getUniqueFilenameSync(dir, hasher){
- return getUniqueValue(
-  fs.readdirSync(dir),
-  hasher
- );
-}
-
 FilesystemLiaison.prototype.saveString = function saveString(index, dir){
  if(index in this.stringManager.strings)
   return saveBufferSync(this.stringManager.getStringAt(index), dir);
@@ -220,31 +216,6 @@ FilesystemLiaison.prototype.dumpAllStrings = function dumpAllStrings(dir){
  );
 }
 
-function nukeDir(dir, callback){
- //callback takes a list of lists of [path, error]
- if(!dir)
-  dir = "persist";
- if(!callback)
-  callback = function(){};
- fs.readdir(
-  dir,
-  function(err, files){
-   if(err) return callback([[dir, err]]);
-   return mapBack(
-    files.map(function(x){return dir + "/" + x}),
-    function(x, f){
-     return fs.unlink(
-      x,
-      function(err){
-       return f([x, err]);
-      }
-     );
-    },
-    function(xs){return callback(null, xs);}
-   );
-  }
- );
-};
 FilesystemLiaison.prototype.replaceDir = function replaceDir(dir, callback){
  if(!dir)
   dir = "persist";
