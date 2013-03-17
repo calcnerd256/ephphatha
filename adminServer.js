@@ -124,7 +124,7 @@ function mapBack(arr, action, callback){
 };
 AdminStringServer.prototype.mapBack = mapBack;
 
-AdminStringServer.prototype.getUniqueValue = function getUniqueValue(oldValues, hash, n, increment){
+function getUniqueValue(oldValues, hash, n, increment){
  if(!oldValues)
   oldValues = [];//useless
  if(!hash)
@@ -182,30 +182,35 @@ FilesystemLiaison.prototype.loadStrings = function loadStrings(dir, callback, er
  return results;
 };
 
-AdminStringServer.prototype.getUniqueFilenameSync = function getUniqueFilenameSync(dir, hasher){
- return this.getUniqueValue(
+function getUniqueFilenameSync(dir, hasher){
+ return getUniqueValue(
   fs.readdirSync(dir),
   hasher
  );
 }
 
-AdminStringServer.prototype.saveBufferSync = function saveBufferSync(buffer, dir){
+function saveBufferSync(buffer, dir){
  if(!dir)
   dir = "persist";
- var filename = this.getUniqueFilenameSync(dir);
+ var filename = getUniqueFilenameSync(dir);
  var fd = fs.openSync(dir + "/" + filename, "w", 0660);//want "wx", but it doesn't exist yet
  fs.writeSync(fd, buffer);
  fs.closeSync(fd);
  return filename;
 }
-AdminStringServer.prototype.saveBuffer = AdminStringServer.prototype.saveBufferSync;
 
 
 AdminStringServer.prototype.saveString = function saveString(index, dir){
+ return this.stringPersistence.saveString(index, dir);
+}
+FilesystemLiaison.prototype.saveString = function saveString(index, dir){
  if(index in this.stringManager.strings)
-  return this.saveBufferSync(this.stringManager.getStringAt(index), dir);
+  return saveBufferSync(this.stringManager.getStringAt(index), dir);
 }
 AdminStringServer.prototype.dumpAllStrings = function dumpAllStrings(dir){
+ return this.stringPersistence.dumpAllStrings(dir);
+}
+FilesystemLiaison.prototype.dumpAllStrings = function dumpAllStrings(dir){
  return this.stringManager.strings.map(
   function(s,i){
    return this.saveString(i, dir);
@@ -223,7 +228,7 @@ AdminStringServer.prototype.nukeDir = function nukeDir(dir, callback){
   dir,
   function(err, files){
    if(err) return callback([[dir, err]]);
-   return this.mapBack(
+   return mapBack(
     files.map(function(x){return dir + "/" + x}),
     function(x, f){
      return fs.unlink(
@@ -235,7 +240,7 @@ AdminStringServer.prototype.nukeDir = function nukeDir(dir, callback){
     },
     function(xs){return callback(null, xs);}
    );
-  }.bind(this)
+  }
  );
 };
 AdminStringServer.prototype.replaceDir = function replaceDir(dir, callback){
