@@ -34,6 +34,7 @@ var stringManager = require("./stringState");
 function AdminStringServer(){
  this.admin = new Admin();
  this.stringManager = new StringManager();
+ this.stringPersistence = new FilesystemLiaison(this.stringManager);
  this.publicStaticHtml = {};
  this.routeState = {};//for testing
  this.apiState = {};
@@ -75,8 +76,6 @@ AdminStringServer.prototype.storeExecString = function(str){
 
 
 
-// string persistence
-
 AdminStringServer.prototype.storeAt = function(path, expr){
  var target = this;
  var last = path.pop();
@@ -94,7 +93,8 @@ AdminStringServer.prototype.storeAt = function(path, expr){
 }
 
 
-AdminStringServer.prototype.mapBack = function mapBack(arr, action, callback){
+
+function mapBack(arr, action, callback){
  //action must take two parameters and pass its result to the second parameter exactly once
  //the return value of this function is the result of mapping action across the input array
  //the second parameter passed to action returns
@@ -122,6 +122,8 @@ AdminStringServer.prototype.mapBack = function mapBack(arr, action, callback){
   }
  );
 };
+AdminStringServer.prototype.mapBack = mapBack;
+
 AdminStringServer.prototype.getUniqueValue = function getUniqueValue(oldValues, hash, n, increment){
  if(!oldValues)
   oldValues = [];//useless
@@ -141,8 +143,16 @@ AdminStringServer.prototype.getUniqueValue = function getUniqueValue(oldValues, 
  return result;
 }
 
+function FilesystemLiaison(stringManager){
+ this.stringManager = stringManager;
+}
+
+// string persistence
 
 AdminStringServer.prototype.loadStrings = function loadStrings(dir, callback, errback){
+ return this.stringPersistence.loadStrings(dir, callback, errback);
+}
+FilesystemLiaison.prototype.loadStrings = function loadStrings(dir, callback, errback){
  if(!dir)
   dir = "persist";
  if(!callback) callback = function(){};
@@ -151,7 +161,7 @@ AdminStringServer.prototype.loadStrings = function loadStrings(dir, callback, er
   dir,
   function(err, files){
    if(err) return errback(err);
-   return this.mapBack(
+   return mapBack(
     files.map(function(x){return dir + "/" + x}),
     function(x, f){
      return [
@@ -159,8 +169,8 @@ AdminStringServer.prototype.loadStrings = function loadStrings(dir, callback, er
       fs.readFile(
        x,
        function(err, data){
-	if(err) return f([x, -1, err]);// TODO: redesign mapBack
-	return f([x, this.stringManager.appendNewString(""+data)]);
+        if(err) return f([x, -1, err]);// TODO: redesign mapBack
+        return f([x, this.stringManager.appendNewString(""+data)]);
        }.bind(this)
       )
      ];
