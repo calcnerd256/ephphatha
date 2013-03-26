@@ -95,38 +95,10 @@ AdminStringServer.prototype.storeAt = function(path, expr){
 
 var mapBack = stringManager.mapBack;
 
-function getUniqueValue(oldValues, hash, n, increment){
- if(!oldValues)
-  oldValues = [];//useless
- if(!hash)
-  hash = function I(x){return x};
- if(!n)
-  n = oldValues.length ? oldValues.length - 1 : 0;
- if(!increment)
-  increment = function(n){return n + 1;};
- var result;
- var count = 0;
- while(-1 != oldValues.indexOf(result = ""+hash(n))){
-  n = increment(n) + (increment(n) == n); // I refuse to run an infinite loop!
-  if(count++ > (oldValues.length + 1) * (oldValues.length + 1) * 10) // how dare it be quadratic?
-   return oldValues.join(".")+"_"; // guaranteed not to be in there by finity of oldValues and its elements
- }
- return result;
-}
-
 
 
 AdminStringServer.prototype.loadStrings = function loadStrings(dir, callback, errback){
  return this.stringPersistence.loadStrings(dir, callback, errback);
-}
-function saveBufferSync(buffer, dir){
- if(!dir)
-  dir = "persist";
- var filename = getUniqueFilenameSync(dir);
- var fd = fs.openSync(dir + "/" + filename, "w", 0660);//want "wx", but it doesn't exist yet
- fs.writeSync(fd, buffer);
- fs.closeSync(fd);
- return filename;
 }
 
 
@@ -138,12 +110,6 @@ AdminStringServer.prototype.dumpAllStrings = function dumpAllStrings(dir){
 }
 AdminStringServer.prototype.replaceDir = function replaceDir(dir, callback){
  return this.stringPersistence.replaceDir(dir, callback);
-}
-function getUniqueFilenameSync(dir, hasher){
- return getUniqueValue(
-  fs.readdirSync(dir),
-  hasher
- );
 }
 
 function nukeDir(dir, callback){
@@ -174,47 +140,8 @@ function nukeDir(dir, callback){
 
 var FilesystemLiaison = stringManager.FilesystemLiaison;
 
-FilesystemLiaison.prototype.loadStrings = function loadStrings(dir, callback, errback){
- if(!dir)
-  dir = "persist";
- if(!callback) callback = function(){};
- if(!errback) errback = function(){};
- return fs.readdir(
-  dir,
-  function(err, files){
-   if(err) return errback(err);
-   return mapBack(
-    files.map(function(x){return dir + "/" + x}),
-    function(x, f){
-     return [
-      x,
-      fs.readFile(
-       x,
-       function(err, data){
-        if(err) return f([x, -1, err]);// TODO: redesign mapBack
-        return f([x, this.stringManager.appendNewString(""+data)]);
-       }.bind(this)
-      )
-     ];
-    }.bind(this),
-    callback
-   );
-  }.bind(this)
- );
- return results;
-};
 
-FilesystemLiaison.prototype.saveString = function saveString(index, dir){
- if(index in this.stringManager.strings)
-  return saveBufferSync(this.stringManager.getStringAt(index), dir);
-}
-FilesystemLiaison.prototype.dumpAllStrings = function dumpAllStrings(dir){
- return this.stringManager.strings.map(
-  function(s,i){
-   return this.saveString(i, dir);
-  }.bind(this)
- );
-}
+
 
 FilesystemLiaison.prototype.replaceDir = function replaceDir(dir, callback){
  if(!dir)
