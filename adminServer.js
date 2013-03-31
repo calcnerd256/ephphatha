@@ -101,16 +101,21 @@ AdminStringServer.prototype.loadStrings = function loadStrings(dir, callback, er
  return this.stringPersistence.loadStrings(dir, callback, errback);
 }
 
-
-AdminStringServer.prototype.saveString = function saveString(index, dir){
- return this.stringPersistence.saveString(index, dir);
+function delegateCall(ob, methodName, member, method){
+ if(arguments.length < 4)
+  method = methodName;
+ var result = function(){
+  return this[member][method].apply(this[member], arguments);
+ }
+ result.method = method;
+ result.member = member;
+ return ob[methodName] = result;
 }
-AdminStringServer.prototype.dumpAllStrings = function dumpAllStrings(dir){
- return this.stringPersistence.dumpAllStrings(dir);
-}
-AdminStringServer.prototype.replaceDir = function replaceDir(dir, callback){
- return this.stringPersistence.replaceDir(dir, callback);
-}
+"saveString dumpAllStrings replaceDir".split(" ").map(
+ function(k){
+  return delegateCall(AdminStringServer.prototype, k, "stringPersistence");
+ }
+);
 
 var FilesystemLiaison = stringManager.FilesystemLiaison;
 
