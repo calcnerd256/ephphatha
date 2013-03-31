@@ -127,6 +127,8 @@ function mapBack(arr, action, callback){
  // its old argument subsequent times
  var outstanding = arr.length;
  var result = [];
+ if(!outstanding)//empty should succeed immediately
+  return callback(result);
  return arr.map(
   function(x, i){
    var called = 0;
@@ -146,10 +148,52 @@ function mapBack(arr, action, callback){
   }
  );
 };
-//a priori algorithm
+function nukeDir(dir, callback){
+ //callback takes a list of lists of [path, error]
+ if(!dir)
+  dir = "persist";
+ if(!callback)
+  callback = function(){};
+ fs.readdir(
+  dir,
+  function(err, files){
+   if(err) return callback([[dir, err]]);
+   return mapBack(
+    files.map(function(x){return dir + "/" + x}),
+    function(x, f){
+     return fs.unlink(
+      x,
+      function(err){
+       return f([x, err]);
+      }
+     );
+    },
+    function(xs){return callback(null, xs);}
+   );
+  }
+ );
+};
+
+FilesystemLiaison.prototype.replaceDir = function replaceDir(dir, callback){
+ if(!dir)
+  dir = "persist";
+ if(!callback)
+  callback = function(){};
+ return nukeDir(
+  dir,
+  function(errors){
+   return callback(
+    this.dumpAllStrings(dir)
+   );
+  }.bind(this)
+ );
+}
+
+
 
 this.StringManager = StringManager;
 this.FilesystemLiaison = FilesystemLiaison;
 this.mapBack = mapBack;
 this.getUniqueValue = getUniqueValue;
 this.getUniqueFilenameSync = getUniqueFilenameSync;
+this.nukeDir = nukeDir;

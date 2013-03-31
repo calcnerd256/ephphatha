@@ -112,52 +112,7 @@ AdminStringServer.prototype.replaceDir = function replaceDir(dir, callback){
  return this.stringPersistence.replaceDir(dir, callback);
 }
 
-function nukeDir(dir, callback){
- //callback takes a list of lists of [path, error]
- if(!dir)
-  dir = "persist";
- if(!callback)
-  callback = function(){};
- fs.readdir(
-  dir,
-  function(err, files){
-   if(err) return callback([[dir, err]]);
-   return mapBack(
-    files.map(function(x){return dir + "/" + x}),
-    function(x, f){
-     return fs.unlink(
-      x,
-      function(err){
-       return f([x, err]);
-      }
-     );
-    },
-    function(xs){return callback(null, xs);}
-   );
-  }
- );
-};
-
 var FilesystemLiaison = stringManager.FilesystemLiaison;
-
-
-
-
-FilesystemLiaison.prototype.replaceDir = function replaceDir(dir, callback){
- if(!dir)
-  dir = "persist";
- if(!callback)
-  callback = function(){};
- nukeDir(
-  dir,
-  function(errors){
-   return callback(
-    this.dumpAllStrings(dir)
-   );
-  }.bind(this)
- );
-}
-
 
 
 function callOnce(fn, noisy){
