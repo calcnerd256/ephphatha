@@ -30,6 +30,17 @@ var admin = require("./admin");
 var stringManager = require("./stringState");
  var StringManager = stringManager.StringManager;
 
+function delegateCall(ob, methodName, member, method){
+ if(arguments.length < 4)
+  method = methodName;
+ var result = function(){
+  return this[member][method].apply(this[member], arguments);
+ }
+ result.method = method;
+ result.member = member;
+ return ob[methodName] = result;
+}
+
 
 function AdminStringServer(){
  this.admin = new Admin();
@@ -40,10 +51,7 @@ function AdminStringServer(){
  this.apiState = {};
  this.routerState = new DictRouterList({});//replace everything with this
 }
-
-AdminStringServer.prototype.setPassword = function setPassword(password){
- return this.admin.setPassword(password);
-}
+delegateCall(AdminStringServer.prototype, "setPassword", "admin");
 
 AdminStringServer.prototype.formToResponder = formController.formToResponder;
 
@@ -95,23 +103,12 @@ AdminStringServer.prototype.storeAt = function(path, expr){
 
 var mapBack = stringManager.mapBack;
 
-
-
-AdminStringServer.prototype.loadStrings = function loadStrings(dir, callback, errback){
- return this.stringPersistence.loadStrings(dir, callback, errback);
-}
-
-function delegateCall(ob, methodName, member, method){
- if(arguments.length < 4)
-  method = methodName;
- var result = function(){
-  return this[member][method].apply(this[member], arguments);
- }
- result.method = method;
- result.member = member;
- return ob[methodName] = result;
-}
-"saveString dumpAllStrings replaceDir".split(" ").map(
+[
+ "loadStrings",
+ "saveString",
+ "dumpAllStrings",
+ "replaceDir"
+].map(
  function(k){
   return delegateCall(AdminStringServer.prototype, k, "stringPersistence");
  }
