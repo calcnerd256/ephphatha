@@ -650,22 +650,8 @@ AdminStringServer.prototype.getAdminLoginResponder = function(){
  return adminLoginResponder;
 }
 
-AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
- var that = this;
- var adminLoginUrl = this.adminLoginUrl;
- var links = {
-  "/admin/gconf/": "gconf",
-  "/admin/mouse/": "mouse",
-  "/admin/list/": "list",
-  "/admin/dashboard.html": "dashboard"
- }
- links[this.adminLoginUrl] = "log in";
 
- var handleAdminIndexRequest = this.constantResponder(
-  this.getAdminIndexSource(links)
- );
-
- function listStrings(req, res){
+AdminStringServer.prototype.listStrings = function listStrings(req, res){
   var strs = this.stringManager.strings;
   res.writeHead(200, {"Content-Type": "text/html"});
   for(var i = 0; i < strs.length; i++)
@@ -691,13 +677,30 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     ).toString() + "\n"
    );
   res.end("listing");
+ };
+
+AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
+ var that = this;
+ var adminLoginUrl = this.adminLoginUrl;
+ var links = {
+  "/admin/gconf/": "gconf",
+  "/admin/mouse/": "mouse",
+  "/admin/list/": "list",
+  "/admin/dashboard.html": "dashboard"
  }
+ links[this.adminLoginUrl] = "log in";
+
+ var handleAdminIndexRequest = this.constantResponder(
+  this.getAdminIndexSource(links)
+ );
+
+
 
  var routingDictionary = {
   "/admin/": handleAdminIndexRequest,
   "/admin/index": handleAdminIndexRequest,
   "/admin/index.html": handleAdminIndexRequest,
-  "/admin/list/": this.adminOnly(listStrings.bind(this))
+  "/admin/list/": this.adminOnly(this.listStrings.bind(this))
  };
  routingDictionary[adminLoginUrl] = this.getAdminLoginResponder();
 
