@@ -41,6 +41,65 @@ function delegateCall(ob, methodName, member, method){
  return ob[methodName] = result;
 }
 
+function tagToXml(t, kids, atrs, expand, noindent){
+ var oneLiner = false;
+ var kidMemo = kids.map(function(x){return "" + x;});
+ if(!kids)
+  oneLiner = true;
+ else
+  if(!kids.length)
+   oneLiner = true;
+  else
+   if(kids.length < 2)
+    if(kidMemo[0].split("\n").length <= 2)
+     oneLiner = ("<" != kidMemo[0][0]);
+
+ var closeTag = "</" + t + ">";
+ var indentation = noindent ? "" : " ";
+ var atrstr = (
+  atrs && Object.keys(atrs).length ?
+  " " + (
+   function(d){
+    return Object.keys(d).map(
+     function(k){return [k, d[k]];}
+    );
+   }
+  )(atrs).map(
+   function(atr){
+    return atr[0] +
+     "=\"" +
+     atr[1].split("\"").join("&quot;") +
+     "\"";
+   }
+  ).join(" ") :
+  ""
+ );
+ return "<" + t +
+  atrstr +
+  (
+   (kids && kids.length) || expand ?
+   ">" +
+   (oneLiner ? "" : ("\n" + indentation)) +
+    kidMemo.join("\n").split("\n").join(
+     "\n" + indentation
+    ) +
+    (oneLiner ? "" : "\n") +
+    closeTag :
+   " />"
+  );
+}
+
+var tagToString = function(){
+ if("tag" == this.type)
+  return tagToXml(
+   this.tag,
+   this.children,
+   this.attributes,
+   this.expand
+  );
+ if("raw" == this.type)
+  return "" + this.raw;
+}
 
 function AdminStringServer(){
  this.admin = new Admin();
@@ -51,13 +110,35 @@ function AdminStringServer(){
  this.apiState = {};
  this.routerState = new DictRouterList({});//replace everything with this
 }
-delegateCall(AdminStringServer.prototype, "setPassword", "admin");
+
+["setPassword"].map(
+ function(k){
+  delegateCall(AdminStringServer.prototype, k, "admin");
+ }
+);
+[
+ "appendNewString",
+ "strEq"
+].map(
+ function(k){
+  delegateCall(AdminStringServer.prototype, k, "stringManager");
+ }
+);
+
+[
+ "loadStrings",
+ "saveString",
+ "dumpAllStrings",
+ "replaceDir"
+].map(
+ function(k){
+  return delegateCall(AdminStringServer.prototype, k, "stringPersistence");
+ }
+);
 
 AdminStringServer.prototype.formToResponder = formController.formToResponder;
 
-AdminStringServer.prototype.appendNewString = function appendNewString(str){
- return this.stringManager.appendNewString(str);
-};
+
 AdminStringServer.prototype.appendString = AdminStringServer.prototype.appendNewString;
 
 function execStrClosed(str){
@@ -71,9 +152,6 @@ AdminStringServer.prototype.execString = function execString(index){
  return this.execStrClosed(this.stringManager.getStringAt(index));
 };
 
-AdminStringServer.prototype.strEq = function strEq(i, str){
- return this.stringManager.strEq(i, str);
-}
 AdminStringServer.prototype.stringEquals = AdminStringServer.prototype.strEq;
 AdminStringServer.prototype.stringAtIndexEquals = AdminStringServer.prototype.strEq;
 
@@ -103,17 +181,6 @@ AdminStringServer.prototype.storeAt = function(path, expr){
 
 var mapBack = stringManager.mapBack;
 
-[
- "loadStrings",
- "saveString",
- "dumpAllStrings",
- "replaceDir"
-].map(
- function(k){
-  return delegateCall(AdminStringServer.prototype, k, "stringPersistence");
- }
-);
-
 var FilesystemLiaison = stringManager.FilesystemLiaison;
 
 
@@ -140,6 +207,9 @@ function fluentKeyCall(ob, key){
 this.callOnce = callOnce;
 this.fluentCall = fluentCall;
 this.fluentKeyCall = fluentKeyCall;
+
+
+
 
 
 AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
@@ -182,6 +252,8 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
  };
  return this.servers;
 }
+
+
 
 AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol(prot){
  var server = new Server.Server();
@@ -260,6 +332,8 @@ AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDat
   }
  );
 }
+
+
 
 AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
  var appendUrl = "/append";
@@ -415,6 +489,9 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 }
 
 
+
+
+
 AdminStringServer.prototype.adminOnly = function adminOnly(responder){
  var result = function respond(req, res){
   if(this.admin.requestIsAdmin(req))
@@ -443,83 +520,32 @@ AdminStringServer.prototype.adminRoute = function adminRoute(router){
 AdminStringServer.prototype.adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
 
 AdminStringServer.prototype.getAdminIndexSource = function getAdminIndexSource(links){
- return [
-  "<HTML>",
-  " <HEAD>",
-  " </HEAD>",
-  " <BODY>",
-  "  admin",
-  "  <BR />",
-  "  " + dictToAlist(links).map(
-   function(kv){
-    return "<A HREF=\"" + kv[0] + "\">" + kv[1] + "</A>\n  <BR />";
-   }
-  ).join("\n  "),
-  " </BODY>",
-  "</HTML>",
-  ""
- ].join("\n");
-}
-
-
-function tagToXml(t, kids, atrs, expand, noindent){
- var oneLiner = false;
- var kidMemo = kids.map(function(x){return "" + x;});
- if(!kids)
-   oneLiner = true;
- else
-   if(!kids.length)
-    oneLiner = true;
-   else
-    if(kids.length < 2)
-     if(kidMemo[0].split("\n").length <= 2)
-      oneLiner = ("<" != kidMemo[0][0]);
-
- var closeTag = "</" + t + ">";
- var indentation = noindent ? "" : " ";
- var atrstr = (
-    atrs && Object.keys(atrs).length ?
-    " " + (
-     function(d){
-      return Object.keys(d).map(
-       function(k){return [k, d[k]];}
-      );
+ return this.tagShorthand(
+  this.tagShorthand.bind(this),
+  [
+   "HTML", {},
+   "tHEAD,x",
+   [].concat.apply(
+    [
+     "BODY", {},
+     "radmin",
+     "tBR",
+    ],
+    dictToAlist(links).map(
+     function(kv){
+      return [
+       ["A", {HREF: kv[0]}, "r" + kv[1]],
+       ["BR"]
+      ];
      }
-    )(atrs).map(
-     function(atr){
-      return atr[0] +
-       "=\"" +
-       atr[1].split("\"").join("&quot;") +
-       "\"";
-     }
-    ).join(" ") :
-    ""
-   );
- return "<" + t +
-   atrstr +
-   (
-    (kids && kids.length) || expand ?
-    ">" +
-    (oneLiner ? "" : ("\n" + indentation)) +
-     kidMemo.join("\n").split("\n").join(
-      "\n" + indentation
-     ) +
-     (oneLiner ? "" : "\n") +
-     closeTag :
-    "/>"
-   );
+    )
+   )
+  ]
+ ).toString();
 }
-var tagToString = function(){
- if("tag" == this.type)
-  return tagToXml(
-   this.tag,
-   this.children,
-   this.attributes,
-   this.expand
-  );
- if("raw" == this.type)
-  return "" + this.raw;
-}
+
+
+
 
 AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
  var children = [];
