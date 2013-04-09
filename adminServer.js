@@ -30,6 +30,47 @@ var admin = require("./admin");
 var stringManager = require("./stringState");
  var StringManager = stringManager.StringManager;
 
+//delegateCall
+//tagToXml
+//AdminStringServer
+// delegateCall
+//formToResponder
+//appendString
+//execStrClosed
+//execString
+//stringEquals
+//stringAtIndexEquals
+//storeExecString
+//storeAt
+//mapBack
+//FilesystemLiaison
+//callOnce
+//fluentCall
+//fluentKeyCall
+//init
+//getServerPerProtocol
+//alistToDict
+//dictToExactRouterListRouter
+//constantResponder
+//dictionaryMap
+//constantStaticRouterDict
+//dictIndirect
+//urlDecodeFormDataToAlist
+//getHttpRouterList
+//adminOnly
+//adminRoute
+//adminLoginUrl
+//getAdminIndexSource
+//tagShorthand
+//getAdminLoginResponder
+//adminLoginResponder
+//listStrings
+//matchStringUrlPrefix
+//davString
+//delString
+//execString
+//getHttpsRouterList
+
 function delegateCall(ob, methodName, member, method){
  if(arguments.length < 4)
   method = methodName;
