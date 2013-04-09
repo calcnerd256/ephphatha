@@ -679,6 +679,16 @@ AdminStringServer.prototype.listStrings = function listStrings(req, res){
   res.end("listing");
  };
 
+// matches "/admin/" followed by a number
+ function matchStringUrlPrefix(u){
+  var p = u.split("?")[0].split("/");
+  p.shift();
+  if("admin" != p.shift()) return false;
+  if(+p[0] != p[0]) return false;
+  return p;
+ }
+
+
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  var that = this;
  var adminLoginUrl = this.adminLoginUrl;
@@ -705,16 +715,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  routingDictionary[adminLoginUrl] = this.getAdminLoginResponder();
 
 
-
- var stringDav = new Router(
-  new UrlMatcher(
-   function match(u){
-    var p = u.split("?")[0].split("/");
-    if(3 != p.length) return false;
-    if("admin" != p[1]) return false;
-    return +p[2] == p[2];
-   }
-  ),
   function davString(req, res){
    var p = url.parse(req.url).pathname.split("/");
    var n = +(p[2]);
@@ -729,22 +729,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    var str = strs[n];
    res.setHeader("Content-Type", "text/plain");
    return res.end(str);
-  }.bind(this)
- );
- function matchStringUrlPrefix(u){
-  var p = u.split("?")[0].split("/");
-  p.shift();
-  if("admin" != p.shift()) return false;
-  if(+p[0] != p[0]) return false;
-  return p;
- }
- var stringDel = new Router(
-  new UrlMatcher(
-   function match(u){
-    var p = matchStringUrlPrefix(u);
-    return "del" == p[1] || "delete" == p[1];
-   }
-  ),
+  }
   function delString(req, res){
    if("GET" == req.method)
     //why is this not a methodRouting responder?
@@ -771,16 +756,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
     )(res).end("no such string" + p[0]);
    res.setHeader("Content-Type", "text/plain");
    return res.end(str);
-  }.bind(this)
- );
-
- var stringExec = new Router(
-  new UrlMatcher(
-   function match(u){
-    var p = matchStringUrlPrefix(u);
-    return "exec" == p[1];
-   }
-  ),
+  }
   function execString(req, res){
    if("GET" == req.method)
     return (
@@ -802,7 +778,40 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    str = ""+this.execString(i);
    res.setHeader("Content-Type", "text/plain");
    return res.end(str);
-  }.bind(this)
+  }
+
+
+ var stringDav = new Router(
+  new UrlMatcher(
+   function match(u){
+    var p = u.split("?")[0].split("/");
+    if(3 != p.length) return false;
+    if("admin" != p[1]) return false;
+    return +p[2] == p[2];
+   }
+  ),
+  davString.bind(this)
+ );
+
+
+ var stringDel = new Router(
+  new UrlMatcher(
+   function match(u){
+    var p = matchStringUrlPrefix(u);
+    return "del" == p[1] || "delete" == p[1];
+   }
+  ),
+  delString.bind(this)
+ );
+
+ var stringExec = new Router(
+  new UrlMatcher(
+   function match(u){
+    var p = matchStringUrlPrefix(u);
+    return "exec" == p[1];
+   }
+  ),
+  execString.bind(this)
  );
 
 
