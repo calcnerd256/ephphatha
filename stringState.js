@@ -189,7 +189,42 @@ FilesystemLiaison.prototype.replaceDir = function replaceDir(dir, callback){
  );
 }
 
+function listStrings(req, res){
+  var strs = this.stringManager.strings;
+  res.writeHead(200, {"Content-Type": "text/html"});
+  for(var i = 0; i < strs.length; i++)
+   res.write(
+    this.tagShorthand(
+     this.tagShorthand.bind(this),
+     [
+      "LI", {},
+      [
+       "A", {HREF: "../" + i},
+       "r" + i
+      ],
+      [
+       "FORM", {METHOD: "POST", ACTION: "../" + i + "/del"},
+        ["INPUT,x", {TYPE: "submit", VALUE: "delete"}]
+      ],
+      [
+       "FORM", {METHOD: "POST", ACTION: "../" + i + "/exec"},
+       ["INPUT,x", {TYPE: "submit", VALUE: "eval"}]
+      ],
+      ["IFRAME,x", {SRC: "../" + i}],
+     ]
+    ).toString() + "\n"
+   );
+  res.end("listing");
+ };
 
+// matches "/admin/" followed by a number
+ function matchStringUrlPrefix(u){
+  var p = u.split("?")[0].split("/");
+  p.shift();
+  if("admin" != p.shift()) return false;
+  if(+p[0] != p[0]) return false;
+  return p;
+ }
 
 this.StringManager = StringManager;
 this.FilesystemLiaison = FilesystemLiaison;
@@ -197,3 +232,6 @@ this.mapBack = mapBack;
 this.getUniqueValue = getUniqueValue;
 this.getUniqueFilenameSync = getUniqueFilenameSync;
 this.nukeDir = nukeDir;
+
+this.listStrings = listStrings;
+this.matchStringUrlPrefix = matchStringUrlPrefix;
