@@ -688,33 +688,7 @@ AdminStringServer.prototype.listStrings = function listStrings(req, res){
   return p;
  }
 
-
-AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
- var that = this;
- var adminLoginUrl = this.adminLoginUrl;
- var links = {
-  "/admin/gconf/": "gconf",
-  "/admin/mouse/": "mouse",
-  "/admin/list/": "list",
-  "/admin/dashboard.html": "dashboard"
- }
- links[this.adminLoginUrl] = "log in";
-
- var handleAdminIndexRequest = this.constantResponder(
-  this.getAdminIndexSource(links)
- );
-
-
-
- var routingDictionary = {
-  "/admin/": handleAdminIndexRequest,
-  "/admin/index": handleAdminIndexRequest,
-  "/admin/index.html": handleAdminIndexRequest,
-  "/admin/list/": this.adminOnly(this.listStrings.bind(this))
- };
- routingDictionary[adminLoginUrl] = this.getAdminLoginResponder();
-
-
+// these belong in the stringManager class
   function davString(req, res){
    var p = url.parse(req.url).pathname.split("/");
    var n = +(p[2]);
@@ -781,13 +755,40 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   }
 
 
+
+AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
+ var that = this;
+ var adminLoginUrl = this.adminLoginUrl;
+ var links = {
+  "/admin/gconf/": "gconf",
+  "/admin/mouse/": "mouse",
+  "/admin/list/": "list",
+  "/admin/dashboard.html": "dashboard"
+ }
+ links[this.adminLoginUrl] = "log in";
+
+ var handleAdminIndexRequest = this.constantResponder(
+  this.getAdminIndexSource(links)
+ );
+
+
+
+ var routingDictionary = {
+  "/admin/": handleAdminIndexRequest,
+  "/admin/index": handleAdminIndexRequest,
+  "/admin/index.html": handleAdminIndexRequest,
+  "/admin/list/": this.adminOnly(this.listStrings.bind(this))
+ };
+ routingDictionary[this.adminLoginUrl] = this.getAdminLoginResponder();
+
+
+
  var stringDav = new Router(
   new UrlMatcher(
    function match(u){
-    var p = u.split("?")[0].split("/");
-    if(3 != p.length) return false;
-    if("admin" != p[1]) return false;
-    return +p[2] == p[2];
+    var p = matchStringUrlPrefix(u);
+    if(!p) return p;
+    return 1 == p.length;
    }
   ),
   davString.bind(this)
@@ -798,6 +799,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   new UrlMatcher(
    function match(u){
     var p = matchStringUrlPrefix(u);
+    if(!p) return p;
     return "del" == p[1] || "delete" == p[1];
    }
   ),
