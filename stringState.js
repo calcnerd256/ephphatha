@@ -1,4 +1,5 @@
 var fs = require("fs");
+var url = require("url");
 
 function StringManager(){
  this.strings = [];
@@ -225,6 +226,77 @@ function listStrings(req, res){
   if(+p[0] != p[0]) return false;
   return p;
  }
+// these belong in the stringManager class
+  function davString(req, res){
+   var p = url.parse(req.url).pathname.split("/");
+   var n = +(p[2]);
+   var strs = this.stringManager.strings;
+   if(!(n in strs))
+    return (
+     function(r){
+      r.statusCode = 404;
+      r.end("index out of bounds");
+     }
+    )(res);
+   var str = strs[n];
+   res.setHeader("Content-Type", "text/plain");
+   return res.end(str);
+  }
+
+  function delString(req, res){
+   if("GET" == req.method)
+    //why is this not a methodRouting responder?
+    return (
+     function(r){
+      r.setHeader("Content-Type", "text/html");
+      return r;
+     }
+    )(res).end(
+     [
+      "<FORM METHOD=\"POST\">",
+      " <INPUT TYPE=\"SUBMIT\"></INPUT>",
+      "</FORM>"
+     ].join("\n")
+    );
+   var p = matchStringUrlPrefix(req.url);
+   str = this.stringManager.deleteString(+p[0]);
+   if(!str)
+    return (
+     function(r){
+      r.statusCode = 404;
+      return r;
+     }
+    )(res).end("no such string" + p[0]);
+   res.setHeader("Content-Type", "text/plain");
+   return res.end(str);
+  }
+  function execString(req, res){
+   if("GET" == req.method)
+    return (
+     function(r){
+      r.setHeader("Content-Type", "text/html");
+      return r;
+     }
+    )(res).end(
+     [
+      "<FORM METHOD=\"POST\">",
+      " <INPUT TYPE=\"SUBMIT\"></INPUT>",
+      "</FORM>"
+     ].join("\n")
+    );
+   var p = matchStringUrlPrefix(req.url);
+   var i = +p[0];
+   if(!(i in this.stringManager.strings))
+    res.statusCode = 404;
+   str = ""+this.execString(i);
+   res.setHeader("Content-Type", "text/plain");
+   return res.end(str);
+  }
+
+
+
+
+
 
 this.StringManager = StringManager;
 this.FilesystemLiaison = FilesystemLiaison;
@@ -235,3 +307,6 @@ this.nukeDir = nukeDir;
 
 this.listStrings = listStrings;
 this.matchStringUrlPrefix = matchStringUrlPrefix;
+this.davString = davString;
+this.delString = delString;
+this.execString = execString;

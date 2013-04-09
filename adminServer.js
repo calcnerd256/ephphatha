@@ -655,74 +655,9 @@ AdminStringServer.prototype.listStrings = stringManager.listStrings;
 
 var matchStringUrlPrefix = stringManager.matchStringUrlPrefix;
 
-// these belong in the stringManager class
-  function davString(req, res){
-   var p = url.parse(req.url).pathname.split("/");
-   var n = +(p[2]);
-   var strs = this.stringManager.strings;
-   if(!(n in strs))
-    return (
-     function(r){
-      r.statusCode = 404;
-      r.end("index out of bounds");
-     }
-    )(res);
-   var str = strs[n];
-   res.setHeader("Content-Type", "text/plain");
-   return res.end(str);
-  }
-  function delString(req, res){
-   if("GET" == req.method)
-    //why is this not a methodRouting responder?
-    return (
-     function(r){
-      r.setHeader("Content-Type", "text/html");
-      return r;
-     }
-    )(res).end(
-     [
-      "<FORM METHOD=\"POST\">",
-      " <INPUT TYPE=\"SUBMIT\"></INPUT>",
-      "</FORM>"
-     ].join("\n")
-    );
-   var p = matchStringUrlPrefix(req.url);
-   str = this.stringManager.deleteString(+p[0]);
-   if(!str)
-    return (
-     function(r){
-      r.statusCode = 404;
-      return r;
-     }
-    )(res).end("no such string" + p[0]);
-   res.setHeader("Content-Type", "text/plain");
-   return res.end(str);
-  }
-  function execString(req, res){
-   if("GET" == req.method)
-    return (
-     function(r){
-      r.setHeader("Content-Type", "text/html");
-      return r;
-     }
-    )(res).end(
-     [
-      "<FORM METHOD=\"POST\">",
-      " <INPUT TYPE=\"SUBMIT\"></INPUT>",
-      "</FORM>"
-     ].join("\n")
-    );
-   var p = matchStringUrlPrefix(req.url);
-   var i = +p[0];
-   if(!(i in this.stringManager.strings))
-    res.statusCode = 404;
-   str = ""+this.execString(i);
-   res.setHeader("Content-Type", "text/plain");
-   return res.end(str);
-  }
-
-
-
+var davString = stringManager.davString;
+var delString = stringManager.delString;
+var execString = stringManager.execString;
 
 
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
