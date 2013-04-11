@@ -201,7 +201,7 @@ AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
   toString: tagToString
  };
  return result;
-}
+};
 
 
 //use delegateCall
@@ -237,12 +237,13 @@ AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
 //ssssss d f AA wwww A aa A aaa s A sss A
 
 
-
 ["setPassword"].map(
  function(k){
   delegateCall(AdminStringServer.prototype, k, "admin");
  }
 );
+
+
 [
  "appendNewString",
  "strEq"
