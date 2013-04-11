@@ -84,15 +84,12 @@ function fluentKeyCall(ob, key){
  args[0] = ob;
  return fluentCall.apply(ob[key], args);
 }
-this.callOnce = callOnce;
-this.fluentCall = fluentCall;
-this.fluentKeyCall = fluentKeyCall;
-AdminStringServer.prototype.alistToDict = Admin.prototype.alistToDict;
-AdminStringServer.prototype.dictionaryMap = function dictionaryMap(ob, fn){
- return this.alistToDict(dictToAlist(ob).map(fn));
+var alistToDict = Admin.prototype.alistToDict;
+function dictionaryMap(ob, fn){
+ return alistToDict(dictToAlist(ob).map(fn));
 }
-AdminStringServer.prototype.dictIndirect = function dictIndirect(keys, vals){
- return this.dictionaryMap(
+function dictIndirect(keys, vals){
+ return dictionaryMap(
   vals,
   function(kv){
    var k = kv[0];
@@ -100,6 +97,13 @@ AdminStringServer.prototype.dictIndirect = function dictIndirect(keys, vals){
   }
  );
 }
+
+AdminStringServer.prototype.alistToDict = alistToDict;
+AdminStringServer.prototype.dictionaryMap = dictionaryMap;
+AdminStringServer.prototype.dictIndirect = dictIndirect;
+this.callOnce = callOnce;
+this.fluentCall = fluentCall;
+this.fluentKeyCall = fluentKeyCall;
 
 
 
@@ -382,7 +386,7 @@ AdminStringServer.prototype.constantResponder = function constantResponder(str, 
 
 AdminStringServer.prototype.constantStaticRouterDict = function constantStaticRouterDict(d){
  var that = this;
- return this.dictionaryMap(
+ return dictionaryMap(
   d,
   function(kv){
    return [
@@ -444,7 +448,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
  };
 
  function stepper(dictionary){
-  return that.dictionaryMap(
+  return dictionaryMap(
    dictionary,
    function(kv){
     var key = kv[0];
@@ -477,7 +481,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
  while(!terminator(pathDictionary))
   pathDictionary = stepper(pathDictionary);
- var paths = this.dictionaryMap(
+ var paths = dictionaryMap(
   pathDictionary,
   function(kv){
    var key = kv[0];
@@ -488,7 +492,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
  var constantStaticRouters = new ExactDictRouter(
   this.constantStaticRouterDict(
-   this.dictIndirect(
+   dictIndirect(
     paths,
     {
      root: index,
@@ -551,7 +555,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
   }
  );
  var moreRouters = new ExactDictRouter(
-  this.dictIndirect(
+  dictIndirect(
    paths,
    {
     favicon: function handleFaviconRequest(req, res){
