@@ -102,39 +102,11 @@ AdminStringServer.prototype.dictIndirect = function dictIndirect(keys, vals){
 }
 
 
-//x tagToXml
-//use delegateCall
-//x formToResponder
-//s appendString
-//s execStrClosed
-//s execString
-//s stringEquals
-//s stringAtIndexEquals
-//s storeExecString
-//d storeAt
-//f FilesystemLiaison
-//A init
-//A getServerPerProtocol
-//w dictToExactRouterListRouter
-//w constantResponder
-//w constantStaticRouterDict
-//w urlDecodeFormDataToAlist
-//A getHttpRouterList
-//a adminOnly
-//a adminRoute
-//A adminLoginUrl
-//a getAdminIndexSource
-//x tagShorthand
-//a getAdminLoginResponder
-//a adminLoginResponder
-//s listStrings
-//A matchStringUrlPrefix
-//s davString
-//s delString
-//s execString
-//A getHttpsRouterList
 
-//x A x ssssss d f AA wwww A aa A a x aa s A sss A
+//tagToXml
+//tagToString
+//formToResponder
+//tagShorthand
 
 
 function tagToXml(t, kids, atrs, expand, noindent){
@@ -198,6 +170,74 @@ var tagToString = function(){
 }
 
 
+AdminStringServer.prototype.formToResponder = formController.formToResponder;
+
+AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
+ var children = [];
+ var tag = x[0];//what if x is empty? error
+ if(!x.length) return {type: "raw", raw: "", toString: tagToString};
+ if("string" != typeof x[0])
+  return x[0];//assume only one element
+ var attributes = {};
+ if("string" == typeof x){
+  tag = x.substring(1);
+  if("r" == x.charAt(0))
+   return {type: "raw", raw: tag, toString: tagToString};
+ }
+ else
+  if(x.length > 1){
+   attributes = x[1];
+   if(x.length > 2)
+    for(var i = 2; i < x.length; i++)
+     children.push(f(f, x[i]));
+  }
+ var components = tag.split(",");//.map(function(s){return s.})
+ var result = {
+  type: "tag",
+  tag: components[0],
+  children: children,
+  attributes: attributes,
+  expand: components[1] == "x",
+  toString: tagToString
+ };
+ return result;
+}
+
+
+//use delegateCall
+//s appendString
+//s execStrClosed
+//s execString
+//s stringEquals
+//s stringAtIndexEquals
+//s storeExecString
+//d storeAt
+//f FilesystemLiaison
+//A init
+//A getServerPerProtocol
+//w dictToExactRouterListRouter
+//w constantResponder
+//w constantStaticRouterDict
+//w urlDecodeFormDataToAlist
+//A getHttpRouterList
+//a adminOnly
+//a adminRoute
+//A adminLoginUrl
+//a getAdminIndexSource
+//a getAdminLoginResponder
+//a adminLoginResponder
+//s listStrings
+//A matchStringUrlPrefix
+//s davString
+//s delString
+//s execString
+//A getHttpsRouterList
+
+
+//ssssss d f AA wwww A aa A aaa s A sss A
+
+
+
 ["setPassword"].map(
  function(k){
   delegateCall(AdminStringServer.prototype, k, "admin");
@@ -222,8 +262,6 @@ var tagToString = function(){
   return delegateCall(AdminStringServer.prototype, k, "stringPersistence");
  }
 );
-
-AdminStringServer.prototype.formToResponder = formController.formToResponder;
 
 
 AdminStringServer.prototype.appendString = AdminStringServer.prototype.appendNewString;
@@ -586,38 +624,6 @@ AdminStringServer.prototype.getAdminIndexSource = function getAdminIndexSource(l
 }
 
 
-
-
-AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
- var children = [];
- var tag = x[0];//what if x is empty? error
- if(!x.length) return {type: "raw", raw: "", toString: tagToString};
- if("string" != typeof x[0])
-  return x[0];//assume only one element
- var attributes = {};
- if("string" == typeof x){
-  tag = x.substring(1);
-  if("r" == x.charAt(0))
-   return {type: "raw", raw: tag, toString: tagToString};
- }
- else
-  if(x.length > 1){
-   attributes = x[1];
-   if(x.length > 2)
-    for(var i = 2; i < x.length; i++)
-     children.push(f(f, x[i]));
-  }
- var components = tag.split(",");//.map(function(s){return s.})
- var result = {
-  type: "tag",
-  tag: components[0],
-  children: children,
-  attributes: attributes,
-  expand: components[1] == "x",
-  toString: tagToString
- };
- return result;
-}
 
 AdminStringServer.prototype.getAdminLoginResponder = function(){
  var passwordFieldName = "password";
