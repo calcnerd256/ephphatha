@@ -30,46 +30,26 @@ var admin = require("./admin");
 var stringManager = require("./stringState");
  var StringManager = stringManager.StringManager;
 
+function AdminStringServer(){
+ this.admin = new Admin();
+ this.stringManager = new StringManager();
+ this.stringPersistence = new FilesystemLiaison(this.stringManager);
+ this.publicStaticHtml = {};
+ this.routeState = {};//for testing
+ this.apiState = {};
+ this.routerState = new DictRouterList({});//replace everything with this
+}
+
+
 //delegateCall
-//tagToXml
-//AdminStringServer
-// delegateCall
-//formToResponder
-//appendString
-//execStrClosed
-//execString
-//stringEquals
-//stringAtIndexEquals
-//storeExecString
-//storeAt
 //mapBack
-//FilesystemLiaison
 //callOnce
 //fluentCall
 //fluentKeyCall
-//init
-//getServerPerProtocol
 //alistToDict
-//dictToExactRouterListRouter
-//constantResponder
 //dictionaryMap
-//constantStaticRouterDict
 //dictIndirect
-//urlDecodeFormDataToAlist
-//getHttpRouterList
-//adminOnly
-//adminRoute
-//adminLoginUrl
-//getAdminIndexSource
-//tagShorthand
-//getAdminLoginResponder
-//adminLoginResponder
-//listStrings
-//matchStringUrlPrefix
-//davString
-//delString
-//execString
-//getHttpsRouterList
+
 
 function delegateCall(ob, methodName, member, method){
  if(arguments.length < 4)
@@ -81,6 +61,81 @@ function delegateCall(ob, methodName, member, method){
  result.member = member;
  return ob[methodName] = result;
 }
+
+var mapBack = stringManager.mapBack;
+
+function callOnce(fn, noisy){
+ return function vapor(){
+  var result = fn.apply(this, arguments);
+  fn = function(){
+   if(noisy)
+    throw new Error("attempted to call a once-only function multiple times");
+  };
+  return result;
+ };
+}
+function fluentCall(ob){
+ var args = [].slice.call(arguments, 1);
+ this.apply(ob, args);
+ return ob;
+}
+function fluentKeyCall(ob, key){
+ var args = [].slice.call(arguments, 1);
+ args[0] = ob;
+ return fluentCall.apply(ob[key], args);
+}
+this.callOnce = callOnce;
+this.fluentCall = fluentCall;
+this.fluentKeyCall = fluentKeyCall;
+AdminStringServer.prototype.alistToDict = Admin.prototype.alistToDict;
+AdminStringServer.prototype.dictionaryMap = function dictionaryMap(ob, fn){
+ return this.alistToDict(dictToAlist(ob).map(fn));
+}
+AdminStringServer.prototype.dictIndirect = function dictIndirect(keys, vals){
+ return this.dictionaryMap(
+  vals,
+  function(kv){
+   var k = kv[0];
+   return [keys[k], vals[k]];
+  }
+ );
+}
+
+
+//x tagToXml
+//use delegateCall
+//x formToResponder
+//s appendString
+//s execStrClosed
+//s execString
+//s stringEquals
+//s stringAtIndexEquals
+//s storeExecString
+//d storeAt
+//f FilesystemLiaison
+//A init
+//A getServerPerProtocol
+//w dictToExactRouterListRouter
+//w constantResponder
+//w constantStaticRouterDict
+//w urlDecodeFormDataToAlist
+//A getHttpRouterList
+//a adminOnly
+//a adminRoute
+//A adminLoginUrl
+//a getAdminIndexSource
+//x tagShorthand
+//a getAdminLoginResponder
+//a adminLoginResponder
+//s listStrings
+//A matchStringUrlPrefix
+//s davString
+//s delString
+//s execString
+//A getHttpsRouterList
+
+//x A x ssssss d f AA wwww A aa A a x aa s A sss A
+
 
 function tagToXml(t, kids, atrs, expand, noindent){
  var oneLiner = false;
@@ -142,15 +197,6 @@ var tagToString = function(){
   return "" + this.raw;
 }
 
-function AdminStringServer(){
- this.admin = new Admin();
- this.stringManager = new StringManager();
- this.stringPersistence = new FilesystemLiaison(this.stringManager);
- this.publicStaticHtml = {};
- this.routeState = {};//for testing
- this.apiState = {};
- this.routerState = new DictRouterList({});//replace everything with this
-}
 
 ["setPassword"].map(
  function(k){
@@ -220,37 +266,7 @@ AdminStringServer.prototype.storeAt = function(path, expr){
 }
 
 
-var mapBack = stringManager.mapBack;
-
 var FilesystemLiaison = stringManager.FilesystemLiaison;
-
-
-function callOnce(fn, noisy){
- return function vapor(){
-  var result = fn.apply(this, arguments);
-  fn = function(){
-   if(noisy)
-    throw new Error("attempted to call a once-only function multiple times");
-  };
-  return result;
- };
-}
-function fluentCall(ob){
- var args = [].slice.call(arguments, 1);
- this.apply(ob, args);
- return ob;
-}
-function fluentKeyCall(ob, key){
- var args = [].slice.call(arguments, 1);
- args[0] = ob;
- return fluentCall.apply(ob[key], args);
-}
-this.callOnce = callOnce;
-this.fluentCall = fluentCall;
-this.fluentKeyCall = fluentKeyCall;
-
-
-
 
 
 AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
@@ -309,8 +325,6 @@ AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol
  return server;
 }
 
-AdminStringServer.prototype.alistToDict = Admin.prototype.alistToDict;
-
 AdminStringServer.prototype.dictToExactRouterListRouter = function dictToExactRouterList(dictionary){
  return new ExactDictRouter(dictionary);
 }
@@ -327,10 +341,6 @@ AdminStringServer.prototype.constantResponder = function constantResponder(str, 
  return result;
 }
 
-AdminStringServer.prototype.dictionaryMap = function dictionaryMap(ob, fn){
- return this.alistToDict(dictToAlist(ob).map(fn));
-}
-
 AdminStringServer.prototype.constantStaticRouterDict = function constantStaticRouterDict(d){
  var that = this;
  return this.dictionaryMap(
@@ -340,16 +350,6 @@ AdminStringServer.prototype.constantStaticRouterDict = function constantStaticRo
     kv[0],
     that.constantResponder(kv[1])
    ];
-  }
- );
-}
-
-AdminStringServer.prototype.dictIndirect = function dictIndirect(keys, vals){
- return this.dictionaryMap(
-  vals,
-  function(kv){
-   var k = kv[0];
-   return [keys[k], vals[k]];
   }
  );
 }
