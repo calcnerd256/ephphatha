@@ -1,4 +1,5 @@
 var crypto = require("crypto");
+var util = require("./util");
 
 function Admin(){
  this.adminTokens = {};
@@ -72,26 +73,7 @@ Admin.prototype.expireAdminTokens = function expireAdminTokens(){
  this.adminTokens = {};
 }
 
-Admin.prototype.alistToDict = function alistToDict(alist, stacks){
- var result = {};
- alist.map(
-  stacks ?
-   function(kv){
-    var k = kv[0];
-    var v = kv[1];
-    if(!(k in result)) result[k] = [];
-    result[k].push(v);
-   } :
-   function(kv){
-    var k = kv[0];
-    var v = kv[1];
-    if(k in result) return;
-    result[k] = v;
-   }
- );
- return result;
-}
-
+Admin.prototype.alistToDict = util.alistToDict;
 
 
 Admin.prototype.requestIsAdmin = function requestIsAdmin(req){

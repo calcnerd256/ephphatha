@@ -54,7 +54,41 @@ function callOnce(fn, noisy){
  };
 }
 
+function fluentCall(ob){
+ var args = [].slice.call(arguments, 1);
+ this.apply(ob, args);
+ return ob;
+}
+function fluentKeyCall(ob, key){
+ var args = [].slice.call(arguments, 1);
+ args[0] = ob;
+ return fluentCall.apply(ob[key], args);
+}
+
+function alistToDict(alist, stacks){
+ var result = {};
+ alist.map(
+  stacks ?
+   function(kv){
+    var k = kv[0];
+    var v = kv[1];
+    if(!(k in result)) result[k] = [];
+    result[k].push(v);
+   } :
+   function(kv){
+    var k = kv[0];
+    var v = kv[1];
+    if(k in result) return;
+    result[k] = v;
+   }
+ );
+ return result;
+}
+
 
 this.delegateCall = delegateCall;
 this.mapBack = mapBack;
 this.callOnce = callOnce;
+this.fluentCall = fluentCall;
+this.fluentKeyCall = fluentKeyCall;
+this.alistToDict = alistToDict;

@@ -53,18 +53,10 @@ function AdminStringServer(){
 var delegateCall = util.delegateCall;
 var mapBack = util.mapBack;
 var callOnce = util.callOnce;
+var fluentCall = util.fluentCall;
+var fluentKeyCall = util.fluentKeyCall;
+var alistToDict = util.alistToDict;
 
-function fluentCall(ob){
- var args = [].slice.call(arguments, 1);
- this.apply(ob, args);
- return ob;
-}
-function fluentKeyCall(ob, key){
- var args = [].slice.call(arguments, 1);
- args[0] = ob;
- return fluentCall.apply(ob[key], args);
-}
-var alistToDict = Admin.prototype.alistToDict;
 function dictionaryMap(ob, fn){
  return alistToDict(dictToAlist(ob).map(fn));
 }
