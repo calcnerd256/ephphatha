@@ -1,4 +1,4 @@
-var util = require("util");
+var util = require("./util");
 var Server = require("./server");
 var http = require("http");
 var https = require("https");
@@ -50,19 +50,8 @@ function AdminStringServer(){
 //dictionaryMap
 //dictIndirect
 
-
-function delegateCall(ob, methodName, member, method){
- if(arguments.length < 4)
-  method = methodName;
- var result = function(){
-  return this[member][method].apply(this[member], arguments);
- }
- result.method = method;
- result.member = member;
- return ob[methodName] = result;
-}
-
-var mapBack = stringManager.mapBack;
+var delegateCall = util.delegateCall;
+var mapBack = util.mapBack;
 
 function callOnce(fn, noisy){
  return function vapor(){
