@@ -102,8 +102,18 @@ function getUniqueValue(oldValues, hash, n, increment){
  return result;
 }
 function getUniqueFilenameSync(dir, hasher){
+ // side effect: creates directory if it doesn't exist
+ var listing;
+ try{
+  listing = fs.readdirSync(dir);
+ }
+ catch(e){
+  //TODO how do I check for ENOENT?
+  fs.mkdirSync(dir);
+  listing = [];
+ }
  return getUniqueValue(
-  fs.readdirSync(dir),
+  listing,
   hasher
  );
 }
