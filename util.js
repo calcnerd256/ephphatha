@@ -43,6 +43,18 @@ function mapBack(arr, action, callback){
  );
 };
 
+function callOnce(fn, noisy){
+ return function vapor(){
+  var result = fn.apply(this, arguments);
+  fn = function(){
+   if(noisy)
+    throw new Error("attempted to call a once-only function multiple times");
+  };
+  return result;
+ };
+}
+
 
 this.delegateCall = delegateCall;
 this.mapBack = mapBack;
+this.callOnce = callOnce;

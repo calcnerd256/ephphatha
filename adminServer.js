@@ -52,17 +52,8 @@ function AdminStringServer(){
 
 var delegateCall = util.delegateCall;
 var mapBack = util.mapBack;
+var callOnce = util.callOnce;
 
-function callOnce(fn, noisy){
- return function vapor(){
-  var result = fn.apply(this, arguments);
-  fn = function(){
-   if(noisy)
-    throw new Error("attempted to call a once-only function multiple times");
-  };
-  return result;
- };
-}
 function fluentCall(ob){
  var args = [].slice.call(arguments, 1);
  this.apply(ob, args);
