@@ -43,32 +43,16 @@ function AdminStringServer(){
 AdminStringServer.prototype.alistToDict = util.alistToDict;
 AdminStringServer.prototype.dictionaryMap = util.dictionaryMap;
 AdminStringServer.prototype.dictIndirect = util.dictIndirect;
-
-
-
-//tagToXml
-//tagToString
-//formToResponder
-//tagShorthand
-
-var tagToXml = formController.tagToXml;
-
-var tagToString = function(){
- if("tag" == this.type)
-  return tagToXml(
-   this.tag,
-   this.children,
-   this.attributes,
-   this.expand
-  );
- if("raw" == this.type)
-  return "" + this.raw;
-}
-
-
 AdminStringServer.prototype.formToResponder = formController.formToResponder;
 
-AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
+
+//tagToString
+//tagShorthand
+
+var tagToString = formController.tagToString;
+
+
+function tagShorthand(f, x){
  var children = [];
  var tag = x[0];//what if x is empty? error
  if(!x.length) return {type: "raw", raw: "", toString: tagToString};
@@ -98,6 +82,7 @@ AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
  };
  return result;
 };
+AdminStringServer.prototype.tagShorthand = tagShorthand;
 
 
 //use delegateCall

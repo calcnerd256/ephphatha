@@ -220,6 +220,17 @@ function tagToXml(t, kids, atrs, expand, noindent){
    " />"
   );
 }
+var tagToString = function(){
+ if("tag" == this.type)
+  return tagToXml(
+   this.tag,
+   this.children,
+   this.attributes,
+   this.expand
+  );
+ if("raw" == this.type)
+  return "" + this.raw;
+}
 
 
 
@@ -230,3 +241,4 @@ this.SimpleFormController = SimpleFormController;
 this.formToResponder = formToResponder;
 
 this.tagToXml = tagToXml;
+this.tagToString = tagToString;
