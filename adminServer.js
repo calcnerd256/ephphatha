@@ -44,45 +44,7 @@ AdminStringServer.prototype.alistToDict = util.alistToDict;
 AdminStringServer.prototype.dictionaryMap = util.dictionaryMap;
 AdminStringServer.prototype.dictIndirect = util.dictIndirect;
 AdminStringServer.prototype.formToResponder = formController.formToResponder;
-
-
-//tagToString
-//tagShorthand
-
-var tagToString = formController.tagToString;
-
-
-function tagShorthand(f, x){
- var children = [];
- var tag = x[0];//what if x is empty? error
- if(!x.length) return {type: "raw", raw: "", toString: tagToString};
- if("string" != typeof x[0])
-  return x[0];//assume only one element
- var attributes = {};
- if("string" == typeof x){
-  tag = x.substring(1);
-  if("r" == x.charAt(0))
-   return {type: "raw", raw: tag, toString: tagToString};
- }
- else
-  if(x.length > 1){
-   attributes = x[1];
-   if(x.length > 2)
-    for(var i = 2; i < x.length; i++)
-     children.push(f(f, x[i]));
-  }
- var components = tag.split(",");//.map(function(s){return s.})
- var result = {
-  type: "tag",
-  tag: components[0],
-  children: children,
-  attributes: attributes,
-  expand: components[1] == "x",
-  toString: tagToString
- };
- return result;
-};
-AdminStringServer.prototype.tagShorthand = tagShorthand;
+AdminStringServer.prototype.tagShorthand = formController.tagShorthand;
 
 
 //use delegateCall
