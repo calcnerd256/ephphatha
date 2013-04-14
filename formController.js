@@ -173,8 +173,60 @@ function formToResponder(form){
 }
 
 
+function tagToXml(t, kids, atrs, expand, noindent){
+ var oneLiner = false;
+ var kidMemo = kids.map(function(x){return "" + x;});
+ if(!kids)
+  oneLiner = true;
+ else
+  if(!kids.length)
+   oneLiner = true;
+  else
+   if(kids.length < 2)
+    if(kidMemo[0].split("\n").length <= 2)
+     oneLiner = ("<" != kidMemo[0][0]);
+
+ var closeTag = "</" + t + ">";
+ var indentation = noindent ? "" : " ";
+ var atrstr = (
+  atrs && Object.keys(atrs).length ?
+  " " + (
+   function(d){
+    return Object.keys(d).map(
+     function(k){return [k, d[k]];}
+    );
+   }
+  )(atrs).map(
+   function(atr){
+    return atr[0] +
+     "=\"" +
+     atr[1].split("\"").join("&quot;") +
+     "\"";
+   }
+  ).join(" ") :
+  ""
+ );
+ return "<" + t +
+  atrstr +
+  (
+   (kids && kids.length) || expand ?
+   ">" +
+   (oneLiner ? "" : ("\n" + indentation)) +
+    kidMemo.join("\n").split("\n").join(
+     "\n" + indentation
+    ) +
+    (oneLiner ? "" : "\n") +
+    closeTag :
+   " />"
+  );
+}
+
+
+
 
 this.FormField = FormField;
 this.TextAreaField = TextAreaField;
 this.SimpleFormController = SimpleFormController;
 this.formToResponder = formToResponder;
+
+this.tagToXml = tagToXml;

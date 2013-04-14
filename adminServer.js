@@ -43,9 +43,6 @@ function AdminStringServer(){
 AdminStringServer.prototype.alistToDict = util.alistToDict;
 AdminStringServer.prototype.dictionaryMap = util.dictionaryMap;
 AdminStringServer.prototype.dictIndirect = util.dictIndirect;
-this.callOnce = util.callOnce;
-this.fluentCall = util.fluentCall;
-this.fluentKeyCall = util.fluentKeyCall;
 
 
 
@@ -54,54 +51,7 @@ this.fluentKeyCall = util.fluentKeyCall;
 //formToResponder
 //tagShorthand
 
-
-function tagToXml(t, kids, atrs, expand, noindent){
- var oneLiner = false;
- var kidMemo = kids.map(function(x){return "" + x;});
- if(!kids)
-  oneLiner = true;
- else
-  if(!kids.length)
-   oneLiner = true;
-  else
-   if(kids.length < 2)
-    if(kidMemo[0].split("\n").length <= 2)
-     oneLiner = ("<" != kidMemo[0][0]);
-
- var closeTag = "</" + t + ">";
- var indentation = noindent ? "" : " ";
- var atrstr = (
-  atrs && Object.keys(atrs).length ?
-  " " + (
-   function(d){
-    return Object.keys(d).map(
-     function(k){return [k, d[k]];}
-    );
-   }
-  )(atrs).map(
-   function(atr){
-    return atr[0] +
-     "=\"" +
-     atr[1].split("\"").join("&quot;") +
-     "\"";
-   }
-  ).join(" ") :
-  ""
- );
- return "<" + t +
-  atrstr +
-  (
-   (kids && kids.length) || expand ?
-   ">" +
-   (oneLiner ? "" : ("\n" + indentation)) +
-    kidMemo.join("\n").split("\n").join(
-     "\n" + indentation
-    ) +
-    (oneLiner ? "" : "\n") +
-    closeTag :
-   " />"
-  );
-}
+var tagToXml = formController.tagToXml;
 
 var tagToString = function(){
  if("tag" == this.type)
@@ -808,3 +758,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
 }
 
 this.AdminStringServer = AdminStringServer;
+
+this.callOnce = util.callOnce;
+this.fluentCall = util.fluentCall;
+this.fluentKeyCall = util.fluentKeyCall;
