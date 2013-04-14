@@ -29,55 +29,22 @@ var admin = require("./admin");
 var stringManager = require("./stringState");
  var StringManager = stringManager.StringManager;
 
+
+function execStrClosed(str){
+ //captures the scope in which this function was defined
+ return eval(str);
+}
+
+
 function AdminStringServer(){
  this.admin = new Admin();
  this.stringManager = new StringManager();
- this.stringPersistence = new FilesystemLiaison(this.stringManager);
+ this.stringPersistence = new stringManager.FilesystemLiaison(this.stringManager);
  this.publicStaticHtml = {};
  this.routeState = {};//for testing
  this.apiState = {};
  this.routerState = new DictRouterList({});//replace everything with this
 }
-
-
-AdminStringServer.prototype.alistToDict = util.alistToDict;
-AdminStringServer.prototype.dictionaryMap = util.dictionaryMap;
-AdminStringServer.prototype.dictIndirect = util.dictIndirect;
-AdminStringServer.prototype.formToResponder = formController.formToResponder;
-AdminStringServer.prototype.tagShorthand = formController.tagShorthand;
-
-
-//use delegateCall
-//s appendString
-//s execStrClosed
-//s execString
-//s stringEquals
-//s stringAtIndexEquals
-//s storeExecString
-//d storeAt
-//f FilesystemLiaison
-//A init
-//A getServerPerProtocol
-//w dictToExactRouterListRouter
-//w constantResponder
-//w constantStaticRouterDict
-//w urlDecodeFormDataToAlist
-//A getHttpRouterList
-//a adminOnly
-//a adminRoute
-//A adminLoginUrl
-//a getAdminIndexSource
-//a getAdminLoginResponder
-//a adminLoginResponder
-//s listStrings
-//A matchStringUrlPrefix
-//s davString
-//s delString
-//s execString
-//A getHttpsRouterList
-
-
-//ssssss d f AA wwww A aa A aaa s A sss A
 
 
 ["setPassword"].map(
@@ -107,29 +74,31 @@ AdminStringServer.prototype.tagShorthand = formController.tagShorthand;
  }
 );
 
-
+AdminStringServer.prototype.alistToDict = util.alistToDict;
+AdminStringServer.prototype.dictionaryMap = util.dictionaryMap;
+AdminStringServer.prototype.dictIndirect = util.dictIndirect;
+AdminStringServer.prototype.formToResponder = formController.formToResponder;
+AdminStringServer.prototype.tagShorthand = formController.tagShorthand;
 AdminStringServer.prototype.appendString = AdminStringServer.prototype.appendNewString;
-
-function execStrClosed(str){
- //captures the scope in which this function was defined
- return eval(str);
-}
 AdminStringServer.prototype.execStrClosed = execStrClosed;
+AdminStringServer.prototype.stringEquals = AdminStringServer.prototype.strEq;
+AdminStringServer.prototype.stringAtIndexEquals = AdminStringServer.prototype.strEq;
+
+
+//execString
+//storeExecString
+//storeAt
 
 AdminStringServer.prototype.execString = function execString(index){
  //here we go
  return this.execStrClosed(this.stringManager.getStringAt(index));
 };
 
-AdminStringServer.prototype.stringEquals = AdminStringServer.prototype.strEq;
-AdminStringServer.prototype.stringAtIndexEquals = AdminStringServer.prototype.strEq;
 
 AdminStringServer.prototype.storeExecString = function(str){
  var i = this.stringManager.appendNewString(str);
  return [i, this.execString(i)];
 }
-
-
 
 AdminStringServer.prototype.storeAt = function(path, expr){
  var target = this;
@@ -147,8 +116,28 @@ AdminStringServer.prototype.storeAt = function(path, expr){
  )(this.storeExecString(expr));
 }
 
+//A init
+//A getServerPerProtocol
+//w dictToExactRouterListRouter
+//w constantResponder
+//w constantStaticRouterDict
+//w urlDecodeFormDataToAlist
+//A getHttpRouterList
+//a adminOnly
+//a adminRoute
+//A adminLoginUrl
+//a getAdminIndexSource
+//a getAdminLoginResponder
+//a adminLoginResponder
+//s listStrings
+//A matchStringUrlPrefix
+//s davString
+//s delString
+//s execString
+//A getHttpsRouterList
 
-var FilesystemLiaison = stringManager.FilesystemLiaison;
+
+//AA wwww A aa A aaa s A sss A
 
 
 AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
