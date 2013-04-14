@@ -85,6 +85,22 @@ function alistToDict(alist, stacks){
  return result;
 }
 
+var dictToAlist = require("webserver_functors").dictToAlist;
+//ugh
+
+function dictionaryMap(ob, fn){
+ return alistToDict(dictToAlist(ob).map(fn));
+}
+function dictIndirect(keys, vals){
+ return dictionaryMap(
+  vals,
+  function(kv){
+   var k = kv[0];
+   return [keys[k], vals[k]];
+  }
+ );
+}
+
 
 this.delegateCall = delegateCall;
 this.mapBack = mapBack;
@@ -92,3 +108,6 @@ this.callOnce = callOnce;
 this.fluentCall = fluentCall;
 this.fluentKeyCall = fluentKeyCall;
 this.alistToDict = alistToDict;
+this.dictionaryMap = dictionaryMap;
+this.dictIndirect = dictIndirect;
+this.dictToAlist = dictToAlist;

@@ -17,7 +17,6 @@ var routers = require("./routers");
  var ExactDictRouter = router.ExactDictRouter;
  var UrlMatcher = router.UrlMatcher;
  var UrlExactMatcher = router.UrlExactMatcher;
- var dictToAlist = router.dictToAlist;
  var MethodRoutingResponder = router.MethodRoutingResponder;
  var DictionaryRouter = router.DictionaryRouter;
  var DictRouterList = routers.DictRouterList;
@@ -41,41 +40,12 @@ function AdminStringServer(){
 }
 
 
-//delegateCall
-//mapBack
-//callOnce
-//fluentCall
-//fluentKeyCall
-//alistToDict
-//dictionaryMap
-//dictIndirect
-
-var delegateCall = util.delegateCall;
-var mapBack = util.mapBack;
-var callOnce = util.callOnce;
-var fluentCall = util.fluentCall;
-var fluentKeyCall = util.fluentKeyCall;
-var alistToDict = util.alistToDict;
-
-function dictionaryMap(ob, fn){
- return alistToDict(dictToAlist(ob).map(fn));
-}
-function dictIndirect(keys, vals){
- return dictionaryMap(
-  vals,
-  function(kv){
-   var k = kv[0];
-   return [keys[k], vals[k]];
-  }
- );
-}
-
-AdminStringServer.prototype.alistToDict = alistToDict;
-AdminStringServer.prototype.dictionaryMap = dictionaryMap;
-AdminStringServer.prototype.dictIndirect = dictIndirect;
-this.callOnce = callOnce;
-this.fluentCall = fluentCall;
-this.fluentKeyCall = fluentKeyCall;
+AdminStringServer.prototype.alistToDict = util.alistToDict;
+AdminStringServer.prototype.dictionaryMap = util.dictionaryMap;
+AdminStringServer.prototype.dictIndirect = util.dictIndirect;
+this.callOnce = util.callOnce;
+this.fluentCall = util.fluentCall;
+this.fluentKeyCall = util.fluentKeyCall;
 
 
 
@@ -215,7 +185,7 @@ AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
 
 ["setPassword"].map(
  function(k){
-  delegateCall(AdminStringServer.prototype, k, "admin");
+  util.delegateCall(AdminStringServer.prototype, k, "admin");
  }
 );
 
@@ -225,7 +195,7 @@ AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
  "strEq"
 ].map(
  function(k){
-  delegateCall(AdminStringServer.prototype, k, "stringManager");
+  util.delegateCall(AdminStringServer.prototype, k, "stringManager");
  }
 );
 
@@ -236,7 +206,7 @@ AdminStringServer.prototype.tagShorthand = function tagShorthand(f, x){
  "replaceDir"
 ].map(
  function(k){
-  return delegateCall(AdminStringServer.prototype, k, "stringPersistence");
+  return util.delegateCall(AdminStringServer.prototype, k, "stringPersistence");
  }
 );
 
@@ -297,12 +267,12 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
   if(!--outstanding)
    return onceBack.apply(this, arguments);
  }
- var httpServer = fluentKeyCall(
+ var httpServer = util.fluentKeyCall(
   this.getServerPerProtocol("HTTP"),
   "setPort",
   port
- ).init(http.createServer, callOnce(eachBack));
- var httpsBack = callOnce(eachBack);
+ ).init(http.createServer, util.callOnce(eachBack));
+ var httpsBack = util.callOnce(eachBack);
  var httpsServer;
  function createHttpsServerClosure(responder){
   return https.createServer(
@@ -312,7 +282,7 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
  }
  if(!httpsOptions) httpsServer = httpsBack();
  else
-  httpsServer = fluentKeyCall(
+  httpsServer = util.fluentKeyCall(
    this.getServerPerProtocol("HTTPS"),
    "setPort",
    securePort
@@ -358,7 +328,7 @@ AdminStringServer.prototype.constantResponder = function constantResponder(str, 
 
 AdminStringServer.prototype.constantStaticRouterDict = function constantStaticRouterDict(d){
  var that = this;
- return dictionaryMap(
+ return util.dictionaryMap(
   d,
   function(kv){
    return [
@@ -420,7 +390,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
  };
 
  function stepper(dictionary){
-  return dictionaryMap(
+  return util.dictionaryMap(
    dictionary,
    function(kv){
     var key = kv[0];
@@ -453,7 +423,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
  while(!terminator(pathDictionary))
   pathDictionary = stepper(pathDictionary);
- var paths = dictionaryMap(
+ var paths = util.dictionaryMap(
   pathDictionary,
   function(kv){
    var key = kv[0];
@@ -464,7 +434,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
  var constantStaticRouters = new ExactDictRouter(
   this.constantStaticRouterDict(
-   dictIndirect(
+   util.dictIndirect(
     paths,
     {
      root: index,
@@ -527,7 +497,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
   }
  );
  var moreRouters = new ExactDictRouter(
-  dictIndirect(
+  util.dictIndirect(
    paths,
    {
     favicon: function handleFaviconRequest(req, res){
@@ -587,7 +557,7 @@ AdminStringServer.prototype.getAdminIndexSource = function getAdminIndexSource(l
      "radmin",
      "tBR",
     ],
-    dictToAlist(links).map(
+    util.dictToAlist(links).map(
      function(kv){
       return [
        ["A", {HREF: kv[0]}, "r" + kv[1]],
