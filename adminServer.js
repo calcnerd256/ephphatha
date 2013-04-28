@@ -196,11 +196,14 @@ AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol
  return server;
 }
 
-AdminStringServer.prototype.dictToExactRouterListRouter = function dictToExactRouterList(dictionary){
+//wwww
+
+function dictToExactRouterListRouter(dictionary){
  return new ExactDictRouter(dictionary);
 }
 
-AdminStringServer.prototype.constantResponder = function constantResponder(str, mimetype){
+
+function constantResponder(str, mimetype){
  if(!mimetype) mimetype = "text/html";
  var result = function(req, res){
   if("text/plain" != mimetype)
@@ -211,19 +214,20 @@ AdminStringServer.prototype.constantResponder = function constantResponder(str, 
  result.mimetype = mimetype;
  return result;
 }
+AdminStringServer.prototype.constantResponder = constantResponder;
 
-AdminStringServer.prototype.constantStaticRouterDict = function constantStaticRouterDict(d){
- var that = this;
+function constantStaticRouterDict(d){
  return util.dictionaryMap(
   d,
   function(kv){
    return [
     kv[0],
-    that.constantResponder(kv[1])
+    constantResponder(kv[1])
    ];
   }
  );
 }
+AdminStringServer.prototype.constantStaticRouterDict = constantStaticRouterDict;
 
 AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDataToAlist(str){
  return str.split(";").map(
