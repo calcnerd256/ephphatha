@@ -147,23 +147,41 @@ AdminStringServer.prototype.storeAt = function(path, expr){
  )(this.storeExecString(expr));
 }
 
-//A init
-//A getServerPerProtocol
-//A getHttpRouterList
-//A adminLoginUrl
 //a adminOnly
 //a getAdminIndexSource
 //a getAdminLoginResponder
 //a adminLoginResponder
 //s listStrings
 //A matchStringUrlPrefix
+//A adminLoginUrl
+//A init
+//A getServerPerProtocol
+//A getHttpRouterList
 //s davString
 //s delString
 //s execString
 //A getHttpsRouterList
 
 
-//AAAA aaaaa s A sss A
+//aaaa s AAAAA sss A
+
+
+
+AdminStringServer.prototype.adminOnly = function adminOnly(responder){
+ return this.admin.adminOnly(responder.bind(this));
+}
+
+
+
+AdminStringServer.prototype.getAdminIndexSource = admin.getAdminIndexSource;
+
+AdminStringServer.prototype.getAdminLoginResponder = admin.getAdminLoginResponder;
+
+AdminStringServer.prototype.listStrings = stringManager.listStrings;
+
+var matchStringUrlPrefix = stringManager.matchStringUrlPrefix;
+
+AdminStringServer.prototype.adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
 
 
 AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
@@ -379,22 +397,6 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
 
 
-
-AdminStringServer.prototype.adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
-
-AdminStringServer.prototype.adminOnly = function adminOnly(responder){
- return this.admin.adminOnly(responder.bind(this));
-}
-
-
-
-AdminStringServer.prototype.getAdminIndexSource = admin.getAdminIndexSource;
-
-AdminStringServer.prototype.getAdminLoginResponder = admin.getAdminLoginResponder;
-
-AdminStringServer.prototype.listStrings = stringManager.listStrings;
-
-var matchStringUrlPrefix = stringManager.matchStringUrlPrefix;
 
 var davString = stringManager.davString;
 var delString = stringManager.delString;
