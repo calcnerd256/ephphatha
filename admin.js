@@ -1,6 +1,12 @@
 var crypto = require("crypto");
 var util = require("./util");
 
+var formStream = require("form_stream");
+ var FormStream = formStream.FormStream;
+var routers = require("./routers");
+ var router = routers.router;
+ var MethodRoutingResponder = router.MethodRoutingResponder;
+
 function Admin(){
  this.adminTokens = {};
  this.generatePassword(
@@ -93,6 +99,125 @@ Admin.prototype.requestIsAdmin = function requestIsAdmin(req){
  return token in this.adminTokens && "active" == this.adminTokens[token];
 }
 
+function getAdminIndexSource(links){
+ return this.tagShorthand(//make sure whoever calls it has a tagShorthand :(
+  this.tagShorthand.bind(this),
+  [
+   "HTML", {},
+   "tHEAD,x",
+   [].concat.apply(
+    [
+     "BODY", {},
+     "radmin",
+     "tBR",
+    ],
+    util.dictToAlist(links).map(
+     function(kv){
+      return [
+       ["A", {HREF: kv[0]}, "r" + kv[1]],
+       ["BR"]
+      ];
+     }
+    )
+   )
+  ]
+ ).toString();
+}
+
+
+//real live duplicate code
+//please refactor
+//from adminServer
+function constantResponder(str, mimetype){
+ if(!mimetype) mimetype = "text/html";
+ var result = function(req, res){
+  if("text/plain" != mimetype)
+   res.writeHead(200, {"Content-type": mimetype});
+  res.end(str);
+ };
+ result.str = str;
+ result.mimetype = mimetype;
+ return result;
+}
+
+
+//depends on constantResponder
+//depends on FormStream
+//depends on MethodRoutingResponder
+function getAdminLoginResponder(){
+ var passwordFieldName = "password";
+ var inputs = [
+  {"NAME": passwordFieldName, "TYPE": "password"}
+ ];
+ var adminLoginSource = this.tagShorthand(
+  this.tagShorthand.bind(this),
+  [
+   "HTML", {},
+   "tHEAD,x",
+   [
+    "BODY", {},
+    "rlog in",
+    ["FORM", {METHOD:"POST"}].concat(
+     inputs.concat([{"TYPE": "submit"}]).map(
+      function(inp){return ["INPUT,x", inp];}
+     )
+    )
+   ]
+  ]
+ ).toString();
+ var handleAdminLoginGetRequest = constantResponder(adminLoginSource);
+ function handleAdminLoginPostRequest(req, res){
+  var form = new FormStream(req);
+  var done = false;
+  form.on(
+   "s_" + passwordFieldName,
+   function(s){
+    done = true;
+    formStream.bufferChunks(
+     s,
+     function(password){
+      if(password == this.admin.password)
+       return this.admin.createAdminToken(
+	function(token){
+	 var cookie = [
+	  "token=" + token,
+	  "Path=/",
+	  "Secure",
+	  "HttpOnly"
+	 ].join("; ");
+	 res.setHeader("Set-Cookie", cookie);
+	 res.end("login success " + token);
+	}.bind(this),
+	function(e){
+	 res.statusCode = 500;
+	 res.end("oops");
+	}
+       );
+      res.statusCode = 403;
+      res.end("login failure");
+     }.bind(this)
+    ).resume();
+   }.bind(this)
+  ).on(
+   "end",
+   function(){
+    if(!done)
+     return res.end("bad login");
+   }
+  );
+ }
+
+ var adminLoginResponder = new MethodRoutingResponder(
+  {
+   "GET": handleAdminLoginGetRequest,
+   "POST": handleAdminLoginPostRequest.bind(this)
+  }
+ );
+ return adminLoginResponder;
+}
+
 
 
 this.Admin = Admin;
+this.getAdminIndexSource = getAdminIndexSource;
+this.getAdminLoginResponder = getAdminLoginResponder;

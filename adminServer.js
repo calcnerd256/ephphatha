@@ -147,9 +147,9 @@ AdminStringServer.prototype.storeAt = function(path, expr){
 //A init
 //A getServerPerProtocol
 //A getHttpRouterList
+//A adminLoginUrl
 //a adminOnly
 //a adminRoute
-//A adminLoginUrl
 //a getAdminIndexSource
 //a getAdminLoginResponder
 //a adminLoginResponder
@@ -161,7 +161,7 @@ AdminStringServer.prototype.storeAt = function(path, expr){
 //A getHttpsRouterList
 
 
-//AAA aa A aaa s A sss A
+//AAAA aaaaa s A sss A
 
 
 AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
@@ -378,6 +378,8 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
 
 
+AdminStringServer.prototype.adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
+
 AdminStringServer.prototype.adminOnly = function adminOnly(responder){
  var result = function respond(req, res){
   if(this.admin.requestIsAdmin(req))
@@ -405,107 +407,9 @@ AdminStringServer.prototype.adminRoute = function adminRoute(router){
 
 
 
-AdminStringServer.prototype.adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
+AdminStringServer.prototype.getAdminIndexSource = admin.getAdminIndexSource;
 
-AdminStringServer.prototype.getAdminIndexSource = function getAdminIndexSource(links){
- return this.tagShorthand(
-  this.tagShorthand.bind(this),
-  [
-   "HTML", {},
-   "tHEAD,x",
-   [].concat.apply(
-    [
-     "BODY", {},
-     "radmin",
-     "tBR",
-    ],
-    util.dictToAlist(links).map(
-     function(kv){
-      return [
-       ["A", {HREF: kv[0]}, "r" + kv[1]],
-       ["BR"]
-      ];
-     }
-    )
-   )
-  ]
- ).toString();
-}
-
-
-
-AdminStringServer.prototype.getAdminLoginResponder = function(){
- var passwordFieldName = "password";
- var inputs = [
-  {"NAME": passwordFieldName, "TYPE": "password"}
- ];
- var adminLoginSource = this.tagShorthand(
-  this.tagShorthand.bind(this),
-  [
-   "HTML", {},
-   "tHEAD,x",
-   [
-    "BODY", {},
-    "rlog in",
-    ["FORM", {METHOD:"POST"}].concat(
-     inputs.concat([{"TYPE": "submit"}]).map(
-      function(inp){return ["INPUT,x", inp];}
-     )
-    )
-   ]
-  ]
- ).toString();
- var handleAdminLoginGetRequest = constantResponder(adminLoginSource);
- function handleAdminLoginPostRequest(req, res){
-  var form = new FormStream(req);
-  var done = false;
-  form.on(
-   "s_" + passwordFieldName,
-   function(s){
-    done = true;
-    formStream.bufferChunks(
-     s,
-     function(password){
-      if(password == this.admin.password)
-       return this.admin.createAdminToken(
-	function(token){
-	 var cookie = [
-	  "token=" + token,
-	  "Path=/",
-	  "Secure",
-	  "HttpOnly"
-	 ].join("; ");
-	 res.setHeader("Set-Cookie", cookie);
-	 res.end("login success " + token);
-	}.bind(this),
-	function(e){
-	 res.statusCode = 500;
-	 res.end("oops");
-	}
-       );
-      res.statusCode = 403;
-      res.end("login failure");
-     }.bind(this)
-    ).resume();
-   }.bind(this)
-  ).on(
-   "end",
-   function(){
-    if(!done)
-     return res.end("bad login");
-   }
-  );
- }
-
- var adminLoginResponder = new MethodRoutingResponder(
-  {
-   "GET": handleAdminLoginGetRequest,
-   "POST": handleAdminLoginPostRequest.bind(this)
-  }
- );
- return adminLoginResponder;
-}
-
+AdminStringServer.prototype.getAdminLoginResponder = admin.getAdminLoginResponder;
 
 AdminStringServer.prototype.listStrings = stringManager.listStrings;
 
