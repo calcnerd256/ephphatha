@@ -75,7 +75,10 @@ function AdminStringServer(){
 }
 
 
-["setPassword"].map(
+[
+ "setPassword",
+ "adminRoute"
+].map(
  function(k){
   util.delegateCall(AdminStringServer.prototype, k, "admin");
  }
@@ -149,7 +152,6 @@ AdminStringServer.prototype.storeAt = function(path, expr){
 //A getHttpRouterList
 //A adminLoginUrl
 //a adminOnly
-//a adminRoute
 //a getAdminIndexSource
 //a getAdminLoginResponder
 //a adminLoginResponder
@@ -383,9 +385,6 @@ AdminStringServer.prototype.adminLoginUrl = "/admin/login"; //TODO use the routi
 AdminStringServer.prototype.adminOnly = function adminOnly(responder){
  return this.admin.adminOnly(responder.bind(this));
 }
-AdminStringServer.prototype.adminRoute = function adminRoute(router){
- return this.admin.adminRoute(router);
-}
 
 
 
@@ -423,7 +422,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   "/admin/": handleAdminIndexRequest,
   "/admin/index": handleAdminIndexRequest,
   "/admin/index.html": handleAdminIndexRequest,
-  "/admin/list/": this.adminOnly(this.listStrings.bind(this))
+  "/admin/list/": this.admin.adminOnly(this.listStrings.bind(this))
  };
  routingDictionary[this.adminLoginUrl] = this.getAdminLoginResponder();
 
@@ -536,17 +535,17 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  );
  var result = {
   rd: new ExactDictRouter(routingDictionary),//takes exact paths to responder functions
-  sda: this.adminRoute(stringDav),//make this part of strings?
-  sde: this.adminRoute(stringDel),//make this part of strings?
-  se: this.adminRoute(stringExec),//make this part of strings?
-  mouse: this.adminRoute(//put this in routingDictionary?
+  sda: this.admin.adminRoute(stringDav),//make this part of strings?
+  sde: this.admin.adminRoute(stringDel),//make this part of strings?
+  se: this.admin.adminRoute(stringExec),//make this part of strings?
+  mouse: this.admin.adminRoute(//put this in routingDictionary?
    new ExactRouter(
     "/admin/mouse/",
     require("webmouse").responder
    )
   ),
   rs: this.routerState,//where's this come from?
-  gconf: this.adminRoute(gconf),
+  gconf: this.admin.adminRoute(gconf),
   http: new RouterListRouter(this.getHttpRouterList()),//let every HTTP route handle HTTPS requests, too
   sr: stateRouter,//what's this again?
   html: publicStaticHtmlRouter,//look into this
