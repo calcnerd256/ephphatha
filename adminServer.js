@@ -30,6 +30,34 @@ var stringManager = require("./stringState");
  var StringManager = stringManager.StringManager;
 
 
+//HTTP server helpers
+//please move these
+
+function constantResponder(str, mimetype){
+ if(!mimetype) mimetype = "text/html";
+ var result = function(req, res){
+  if("text/plain" != mimetype)
+   res.writeHead(200, {"Content-type": mimetype});
+  res.end(str);
+ };
+ result.str = str;
+ result.mimetype = mimetype;
+ return result;
+}
+
+function constantStaticRouterDict(d){
+ return util.dictionaryMap(
+  d,
+  function(kv){
+   return [
+    kv[0],
+    constantResponder(kv[1])
+   ];
+  }
+ );
+}
+
+
 function execStrClosed(str){
  //captures the scope in which this function was defined
  return eval(str);
@@ -118,10 +146,6 @@ AdminStringServer.prototype.storeAt = function(path, expr){
 
 //A init
 //A getServerPerProtocol
-//w dictToExactRouterListRouter
-//w constantResponder
-//w constantStaticRouterDict
-//w urlDecodeFormDataToAlist
 //A getHttpRouterList
 //a adminOnly
 //a adminRoute
@@ -137,7 +161,7 @@ AdminStringServer.prototype.storeAt = function(path, expr){
 //A getHttpsRouterList
 
 
-//AA wwww A aa A aaa s A sss A
+//AAA aa A aaa s A sss A
 
 
 AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
@@ -195,60 +219,6 @@ AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol
   server.unshiftRoute(route);
  return server;
 }
-
-//wwww
-
-function dictToExactRouterListRouter(dictionary){
- return new ExactDictRouter(dictionary);
-}
-
-
-function constantResponder(str, mimetype){
- if(!mimetype) mimetype = "text/html";
- var result = function(req, res){
-  if("text/plain" != mimetype)
-   res.writeHead(200, {"Content-type": mimetype});
-  res.end(str);
- };
- result.str = str;
- result.mimetype = mimetype;
- return result;
-}
-AdminStringServer.prototype.constantResponder = constantResponder;
-
-function constantStaticRouterDict(d){
- return util.dictionaryMap(
-  d,
-  function(kv){
-   return [
-    kv[0],
-    constantResponder(kv[1])
-   ];
-  }
- );
-}
-AdminStringServer.prototype.constantStaticRouterDict = constantStaticRouterDict;
-
-AdminStringServer.prototype.urlDecodeFormDataToAlist = function urlDecodeFormDataToAlist(str){
- return str.split(";").map(
-  function(s){
-   return s.split("=");
-  }
- ).map(
-  function(xs){
-   k = xs.shift();
-   return [
-    k,
-    xs.join("=")
-   ].map(
-    function(s){
-     return s.split("+").join(" ");
-    }
-   ).map(decodeURIComponent);
-  }
- );
-}
-
 
 
 AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
@@ -323,7 +293,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
  );
 
  var constantStaticRouters = new ExactDictRouter(
-  this.constantStaticRouterDict(
+  constantStaticRouterDict(
    util.dictIndirect(
     paths,
     {
@@ -334,7 +304,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
    )
   )
  );
- var handleAppendGet = this.constantResponder(
+ var handleAppendGet = constantResponder(
   [
    "<FORM METHOD=\"POST\">",
    " <TEXTAREA NAME=\"string\"></TEXTAREA>",
@@ -433,6 +403,8 @@ AdminStringServer.prototype.adminRoute = function adminRoute(router){
  return result;
 }
 
+
+
 AdminStringServer.prototype.adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
 
 AdminStringServer.prototype.getAdminIndexSource = function getAdminIndexSource(links){
@@ -483,7 +455,7 @@ AdminStringServer.prototype.getAdminLoginResponder = function(){
    ]
   ]
  ).toString();
- var handleAdminLoginGetRequest = this.constantResponder(adminLoginSource);
+ var handleAdminLoginGetRequest = constantResponder(adminLoginSource);
  function handleAdminLoginPostRequest(req, res){
   var form = new FormStream(req);
   var done = false;
@@ -555,7 +527,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  }
  links[this.adminLoginUrl] = "log in";
 
- var handleAdminIndexRequest = this.constantResponder(
+ var handleAdminIndexRequest = constantResponder(
   this.getAdminIndexSource(links)
  );
 
