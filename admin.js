@@ -6,6 +6,7 @@ var formStream = require("form_stream");
 var routers = require("./routers");
  var router = routers.router;
  var MethodRoutingResponder = router.MethodRoutingResponder;
+ var coerceToFunction = router.coerceToFunction;
 
 function Admin(){
  this.adminTokens = {};
@@ -97,6 +98,31 @@ Admin.prototype.requestIsAdmin = function requestIsAdmin(req){
  var dict = this.alistToDict(alist);
  var token = dict.token;
  return token in this.adminTokens && "active" == this.adminTokens[token];
+}
+
+Admin.prototype.adminRoute = function adminRoute(router){
+ var result = function route(req){
+  var responder = coerceToFunction(router)(req);
+  if(this.requestIsAdmin(req))
+   return responder;
+  return responder &&
+   function respond(req, res){
+    res.statusCode = 403;
+    return res.end("not an admin");
+   };
+ }.bind(this);
+ result.router = router;
+ return result;
+}
+Admin.prototype.adminOnly = function adminOnly(responder){
+ var result = function respond(req, res){
+  if(this.requestIsAdmin(req))
+   return responder.apply(this, arguments);
+  res.statusCode = 403;
+  return res.end("not an admin");
+ }.bind(this);
+ result.responder = responder;
+ return result;
 }
 
 function getAdminIndexSource(links){

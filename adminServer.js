@@ -381,28 +381,10 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 AdminStringServer.prototype.adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
 
 AdminStringServer.prototype.adminOnly = function adminOnly(responder){
- var result = function respond(req, res){
-  if(this.admin.requestIsAdmin(req))
-   return responder.apply(this, arguments);
-  res.statusCode = 403;
-  return res.end("not an admin");
- }.bind(this);
- result.responder = responder;
- return result;
+ return this.admin.adminOnly(responder.bind(this));
 }
 AdminStringServer.prototype.adminRoute = function adminRoute(router){
- var result = function route(req){
-  var responder = coerceToFunction(router)(req);
-  if(this.admin.requestIsAdmin(req))
-   return responder;
-  return responder &&
-   function respond(req, res){
-    res.statusCode = 403;
-    return res.end("not an admin");
-   };
- }.bind(this);
- result.router = router;
- return result;
+ return this.admin.adminRoute(router);
 }
 
 
