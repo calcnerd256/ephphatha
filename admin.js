@@ -151,9 +151,6 @@ function getAdminIndexSource(links){
 }
 
 
-//real live duplicate code
-//please refactor
-//from adminServer
 function constantResponder(str, mimetype){
  if(!mimetype) mimetype = "text/html";
  var result = function(req, res){
@@ -247,3 +244,4 @@ function getAdminLoginResponder(){
 this.Admin = Admin;
 this.getAdminIndexSource = getAdminIndexSource;
 this.getAdminLoginResponder = getAdminLoginResponder;
+this.constantResponder = constantResponder;

@@ -26,24 +26,18 @@ var formController = require("./formController");
  var SimpleFormController = formController.SimpleFormController;
 var admin = require("./admin");
  var Admin = admin.Admin;
+ var constantResponder = admin.constantResponder;
 var stringManager = require("./stringState");
  var StringManager = stringManager.StringManager;
+ var matchStringUrlPrefix = stringManager.matchStringUrlPrefix;
+ var davString = stringManager.davString;
+ var delString = stringManager.delString;
+ var execString = stringManager.execString;
 
 
-//HTTP server helpers
-//please move these
 
-function constantResponder(str, mimetype){
- if(!mimetype) mimetype = "text/html";
- var result = function(req, res){
-  if("text/plain" != mimetype)
-   res.writeHead(200, {"Content-type": mimetype});
-  res.end(str);
- };
- result.str = str;
- result.mimetype = mimetype;
- return result;
-}
+//HTTP server helper
+//please move this
 
 function constantStaticRouterDict(d){
  return util.dictionaryMap(
@@ -56,6 +50,7 @@ function constantStaticRouterDict(d){
   }
  );
 }
+
 
 
 function execStrClosed(str){
@@ -114,6 +109,10 @@ AdminStringServer.prototype.appendString = AdminStringServer.prototype.appendNew
 AdminStringServer.prototype.execStrClosed = execStrClosed;
 AdminStringServer.prototype.stringEquals = AdminStringServer.prototype.strEq;
 AdminStringServer.prototype.stringAtIndexEquals = AdminStringServer.prototype.strEq;
+AdminStringServer.prototype.getAdminIndexSource = admin.getAdminIndexSource;
+AdminStringServer.prototype.getAdminLoginResponder = admin.getAdminLoginResponder;
+AdminStringServer.prototype.listStrings = stringManager.listStrings;
+
 
 
 //execString
@@ -148,42 +147,25 @@ AdminStringServer.prototype.storeAt = function(path, expr){
 }
 
 //a adminOnly
-//a getAdminIndexSource
-//a getAdminLoginResponder
-//a adminLoginResponder
-//s listStrings
-//A matchStringUrlPrefix
 //A adminLoginUrl
 //A init
 //A getServerPerProtocol
 //A getHttpRouterList
-//s davString
-//s delString
-//s execString
 //A getHttpsRouterList
 
 
-//aaaa s AAAAA sss A
-
-
-
+//can't quite delegate until I'm sure nothing depends on that binding behavior
 AdminStringServer.prototype.adminOnly = function adminOnly(responder){
  return this.admin.adminOnly(responder.bind(this));
 }
 
 
 
-AdminStringServer.prototype.getAdminIndexSource = admin.getAdminIndexSource;
-
-AdminStringServer.prototype.getAdminLoginResponder = admin.getAdminLoginResponder;
-
-AdminStringServer.prototype.listStrings = stringManager.listStrings;
-
-var matchStringUrlPrefix = stringManager.matchStringUrlPrefix;
 
 AdminStringServer.prototype.adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
 
 
+//TODO: break this up
 AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
  var outstanding = 2;
  var calledTimes = 0;
@@ -240,7 +222,7 @@ AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol
  return server;
 }
 
-
+//TODO: break this up
 AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
  var appendUrl = "/append";
  var adminUrl = "/admin/";//TODO: make this point to HTTPS only
@@ -395,14 +377,7 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 }
 
 
-
-
-
-var davString = stringManager.davString;
-var delString = stringManager.delString;
-var execString = stringManager.execString;
-
-
+//TODO: break this up
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  var that = this;
  var adminLoginUrl = this.adminLoginUrl;
@@ -419,7 +394,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  );
 
 
-
  var routingDictionary = {
   "/admin/": handleAdminIndexRequest,
   "/admin/index": handleAdminIndexRequest,
@@ -427,7 +401,6 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   "/admin/list/": this.admin.adminOnly(this.listStrings.bind(this))
  };
  routingDictionary[this.adminLoginUrl] = this.getAdminLoginResponder();
-
 
 
  var stringDav = new Router(
