@@ -377,10 +377,32 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 }
 
 
+
+ function responderRequestTransform(transformRequest, responder){
+  var result = function(req, res){
+   return coerceToFunction(responder)(transformRequest(req), res);
+  }
+  result.responder = responder;
+  return result;
+ }
+
+
 //TODO: break this up
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  var that = this;
+
+ //index
+ //strings
+ //gconf
+ //state
+ //public static HTML
+ //API state
+ //routers
+ //to array
+
  var adminLoginUrl = this.adminLoginUrl;
+
+ //index
  var links = {
   "/admin/gconf/": "gconf",
   "/admin/mouse/": "mouse",
@@ -402,6 +424,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  };
  routingDictionary[this.adminLoginUrl] = this.getAdminLoginResponder();
 
+ //strings
 
  var stringDav = new Router(
   new UrlMatcher(
@@ -437,14 +460,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
  );
 
 
-
- function responderRequestTransform(transformRequest, responder){
-  var result = function(req, res){
-   return coerceToFunction(responder)(transformRequest(req), res);
-  }
-  result.responder = responder;
-  return result;
- }
+ //gconf
  var gconf = new Router(
   new UrlMatcher(
    function(u){
@@ -474,6 +490,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    require("web_gconf").responder
   )
  );
+ //state
  var stateRouter = new Router(
   new UrlMatcher(
    function(u){
@@ -484,6 +501,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    return this.routeState[req.url](req, res);
   }.bind(this)
  );
+ //public static HTML
  var publicStaticHtmlRouter = new Router(
   new UrlMatcher(
    function(u){
@@ -496,6 +514,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    return res.end(result);
   }.bind(this)
  );
+ //API state
  var apiStateRouter = new Router(
   new UrlMatcher(
    function(u){
@@ -508,6 +527,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
    )(req, res);
   }.bind(this)
  );
+ //routers
  var result = {
   rd: new ExactDictRouter(routingDictionary),//takes exact paths to responder functions
   sda: this.admin.adminRoute(stringDav),//make this part of strings?
@@ -526,7 +546,17 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   html: publicStaticHtmlRouter,//look into this
   api: apiStateRouter//and that one
  };
- return Object.keys(result).map(function (k){return result[k];});
+ //dictionary to array
+ return (
+  function forgetDict(ob){
+   function pluck(key){
+    return this[key];
+   }
+   return Object.keys(ob).map(
+    pluck.bind(ob)
+   );
+  }
+ )(result);
 }
 
 this.AdminStringServer = AdminStringServer;
