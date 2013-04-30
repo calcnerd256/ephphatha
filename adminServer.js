@@ -164,27 +164,43 @@ AdminStringServer.prototype.adminOnly = function adminOnly(responder){
 
 AdminStringServer.prototype.adminLoginUrl = "/admin/login"; //TODO use the routing table like in getHttpRouterList
 
-
-//TODO: break this up
-AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
- var outstanding = 2;
- var calledTimes = 0;
- var that = this;
- function onceBack(){
-  if(calledTimes++) return;
-  require("./adminServerState").init.apply(that, arguments);
-  return callback.apply(this, arguments);
- }
+function parallelWait(fns, callback, errback){
+ var outstanding = fns.length;
  function eachBack(){
   if(!--outstanding)
-   return onceBack.apply(this, arguments);
+   return callback.apply(this, arguments);
+ }
+ if(!outstanding) return callback();
+ return fns.map(
+  function(f){
+   return f(
+    util.callOnce(eachBack),
+    errback
+   );
+  }
+ );
+}
+
+AdminStringServer.prototype.init = function init(port, securePort, httpsOptions, callback){
+ var that = this;
+ var adminServerState = require("./adminServerState");
+ function calledOnce(){
+  adminServerState.init.apply(that, arguments);
+  return callback.apply(this.arguments);
  }
  var httpServer = util.fluentKeyCall(
   this.getServerPerProtocol("HTTP"),
   "setPort",
   port
- ).init(http.createServer, util.callOnce(eachBack));
- var httpsBack = util.callOnce(eachBack);
+ );
+ function httpBack(callback, errback){
+  return httpServer.init(
+   http.createServer,
+   callback
+  );
+ }
+
+
  var httpsServer;
  function createHttpsServerClosure(responder){
   return https.createServer(
@@ -192,13 +208,23 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
    responder
   );
  }
- if(!httpsOptions) httpsServer = httpsBack();
- else
-  httpsServer = util.fluentKeyCall(
-   this.getServerPerProtocol("HTTPS"),
-   "setPort",
-   securePort
-  ).init(createHttpsServerClosure, httpsBack);
+ function httpsBack(callback){
+  if(!httpsOptions) httpsServer = callback();
+  else
+   httpsServer = util.fluentKeyCall(
+    this.getServerPerProtocol("HTTPS"),
+    "setPort",
+    securePort
+   ).init(createHttpsServerClosure, callback);
+ }
+ parallelWait(
+  [
+   httpBack,
+   httpsBack.bind(this)
+  ],
+  calledOnce
+ );
+
 
  this.servers = {
   http: httpServer,
