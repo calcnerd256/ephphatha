@@ -339,14 +339,18 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
   )
  );
  var handleAppendGet = constantResponder(
-  [
-   "<FORM METHOD=\"POST\">",
-   " <TEXTAREA NAME=\"string\"></TEXTAREA>",
+  this.tagShorthand(
+   this.tagShorthand.bind(this),
+   [
+    "FORM", {METHOD: "POST"},
+    [
+     "TEXTAREA,x", {NAME: "string"}
    //TODO make the name of that field a variable
    // such that elsewhere the form-processing code uses that same variable
-   " <INPUT TYPE=\"SUBMIT\"></INPUT>",
-   "</FORM>"
-  ].join("\n")
+    ],
+    ["INPUT,x", {TYPE: "SUBMIT"}]
+   ]
+  ).toString()
  );
  var handleAppendPost = function handleAppendPost(req, res){
   var form = new FormStream(req);
