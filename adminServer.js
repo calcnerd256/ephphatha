@@ -248,35 +248,7 @@ AdminStringServer.prototype.getServerPerProtocol = function getServerPerProtocol
  return server;
 }
 
-//TODO: break this up
-AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
- var appendUrl = "/append";
- var adminUrl = "/admin/";//TODO: make this point to HTTPS only
- var index = [
-  "<HTML>",
-  " <HEAD>",
-  " </HEAD>",
-  " <BODY>",
-  "  index",
-  "  <BR />",
-  "  <A HREF=\"" + appendUrl + "\">append</A>",
-  "  <BR />",
-  "  <A HREF=\"" + adminUrl + "\">admin</A>",
-  " </BODY>",
-  "</HTML>",
-  ""
- ].join("\n");
- var that = this;
-
- var pathDictionary = {
-  "empty": [null, ""],
-  "root": ["empty", ""],
-  "index": ["empty", "index"],
-  "indexhtml": ["empty", "index.html"],
-  "favicon": ["empty", "favicon.ico"],
-  "append": ["empty", "append"]
- };
-
+function pathDictExpand(pd){
  function stepper(dictionary){
   return util.dictionaryMap(
    dictionary,
@@ -308,9 +280,43 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
      return false;
   return true;
  }
+ while(!terminator(pd))
+  pd = stepper(pd);
+ return pd;
+}
 
- while(!terminator(pathDictionary))
-  pathDictionary = stepper(pathDictionary);
+//TODO: break this up
+AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
+ var appendUrl = "/append";
+ var adminUrl = "/admin/";//TODO: make this point to HTTPS only
+ var index = this.tagShorthand(
+  this.tagShorthand.bind(this),
+  [
+   "HTML", {},
+   "tHEAD,x",
+   [
+    "BODY", {},
+    "rindex",
+    "tBR",
+    ["A", {HREF: appendUrl}, "rappend"],
+    "tBR",
+    ["A", {HREF: adminUrl}, "radmin"]
+   ]
+  ]
+ ).toString();
+
+ var that = this;
+
+ var pathDictionary = {
+  "empty": [null, ""],
+  "root": ["empty", ""],
+  "index": ["empty", "index"],
+  "indexhtml": ["empty", "index.html"],
+  "favicon": ["empty", "favicon.ico"],
+  "append": ["empty", "append"]
+ };
+
+ pathDictionary = pathDictExpand(pathDictionary);
  var paths = util.dictionaryMap(
   pathDictionary,
   function(kv){
