@@ -285,6 +285,67 @@ function pathDictExpand(pd){
  return pd;
 }
 
+AdminStringServer.prototype.getStringAppendRouter = function getStringAppendRouter(){
+ var paramName = "string";
+
+ var handleAppendGet = constantResponder(
+  this.tagShorthand(
+   this.tagShorthand.bind(this),
+   [
+    "FORM", {METHOD: "POST"},
+    [
+     "TEXTAREA,x", {NAME: paramName}
+    ],
+    ["INPUT,x", {TYPE: "SUBMIT"}]
+   ]
+  ).toString()
+ );
+
+ var handleAppendPost = function handleAppendPost(req, res){
+  var form = new FormStream(req);
+  var noString = true;
+  function stringBack(string){
+   var index = this.stringManager.appendNewString(string);
+   res.writeHead(200, {"Content-type": "text/plain"});
+   return res.end(
+    "POST successful: " +
+     index +
+     "\n" +
+     string
+   );
+  }
+  form.on(
+   "s_" + paramName,
+   function(stream){
+    noString = false;
+    var buf = [];
+    stream.on(
+     "data",
+     buf.push.bind(buf)
+    ).on(
+     "end",
+     function(){
+      return stringBack.bind(this)(buf.join(""));
+     }.bind(this)
+    ).resume();
+   }.bind(this)
+  ).on(
+   "end",
+   function(){
+    if(noString)
+     return res.end("bad POST attempt");
+   }
+  );
+ }.bind(this);
+ var handleAppendRequest = new MethodRoutingResponder(
+  {
+   "GET": handleAppendGet,
+   POST: handleAppendPost
+  }
+ );
+ return handleAppendRequest;
+}
+
 //TODO: break this up
 AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
  var appendUrl = "/append";
@@ -304,8 +365,6 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
    ]
   ]
  ).toString();
-
- var that = this;
 
  var pathDictionary = {
   "empty": [null, ""],
@@ -338,62 +397,9 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
    )
   )
  );
- var handleAppendGet = constantResponder(
-  this.tagShorthand(
-   this.tagShorthand.bind(this),
-   [
-    "FORM", {METHOD: "POST"},
-    [
-     "TEXTAREA,x", {NAME: "string"}
-   //TODO make the name of that field a variable
-   // such that elsewhere the form-processing code uses that same variable
-    ],
-    ["INPUT,x", {TYPE: "SUBMIT"}]
-   ]
-  ).toString()
- );
- var handleAppendPost = function handleAppendPost(req, res){
-  var form = new FormStream(req);
-  var noString = true;
-  function stringBack(string){
-   index = this.stringManager.appendNewString(string);
-   res.writeHead(200, {"Content-type": "text/plain"});
-   return res.end(
-    "POST successful: " +
-     index +
-     "\n" +
-     string
-   );
-  }
-  form.on(
-   "s_string",
-   function(stream){
-    noString = false;
-    var buf = [];
-    stream.on(
-     "data",
-     buf.push.bind(buf)
-    ).on(
-     "end",
-     function(){
-      return stringBack.bind(that)(buf.join(""));
-     }
-    ).resume();
-   }
-  ).on(
-   "end",
-   function(){
-    if(noString)
-     return res.end("bad POST attempt");
-   }
-  );
- }
- var handleAppendRequest = new MethodRoutingResponder(
-  {
-   "GET": handleAppendGet,
-   POST: handleAppendPost
-  }
- );
+
+ var handleAppendRequest = this.getStringAppendRouter();
+
  var moreRouters = new ExactDictRouter(
   util.dictIndirect(
    paths,
@@ -425,7 +431,6 @@ AdminStringServer.prototype.getHttpRouterList = function getHttpRouterList(){
 
 //TODO: break this up
 AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
- var that = this;
 
  //index
  //strings
