@@ -80,73 +80,70 @@ this.storeAt(
  ].join("\n")
 );
 
-this.storeAt(
- ["prefixState","/admin/fs/browse/"],
- [
-  "this.adminOnly(\r",
-  " function(req, res, u){\r",
-  "  var fs = require(\"fs\");\r",
-  "  var p = \"/\" + u;\r",
-  "  function streamDir(path, res){//not actually streaming\r",
-  "   res.setHeader(\"Content-Type\", \"text/html\");\r",
-  "   return fs.readdir(\r",
-  "    path,\r",
-  "    function(err, files){\r",
-  "     //ignoring errors\r",
-  "     return res.end(\r",
-  "      \"<ul>\\n\" +\r",
-  "       files.map(\r",
-  "        function(fn){\r",
-  "         var stats = {isDirectory: function(){return false;}};\r",
-  "         try{\r",
-  "          var stats = fs.statSync(path + fn);\r",
-  "         }\r",
-  "         catch(e){\r",
-  "         }\r",
-  "         return \"<li>\" +\r",
-  "          \"<a href=\\\"\" +\r",
-  "          fn +\r",
-  "          (stats.isDirectory() ? \"/\" : \"\") +\r",
-  "          \"\\\">\" +\r",
-  "          fn +\r",
-  "          \"</a>\" +\r",
-  "          \"</li>\";\r",
-  "        }\r",
-  "       ).join(\"\\n\") +\r",
-  "       \"\\n</ul>\"\r",
-  "     );\r",
-  "    }\r",
-  "   );\r",
-  "  }\r",
-  "  function streamTextFile(path, res){//misnamed\r",
-  "   return fs.readFile(\r",
-  "    path,\r",
-  "    function(err, data){\r",
-  "     //ignoring errors for now\r",
-  "     res.setHeader(\"Content-Type\", \"text/plain\");\r",
-  "     res.end(data);\r",
-  "    }\r",
-  "   );\r",
-  "  }\r",
-  "  fs.stat(\r",
-  "   p,\r",
-  "   function(err, stats){\r",
-  "    if(err)\r",
-  "     return (\r",
-  "      function(s){\r",
-  "       s.statusCode = 404;\r",
-  "       return s.end(\"stat error\");\r",
-  "      }\r",
-  "     )(res);\r",
-  "    if(stats.isDirectory()) return streamDir(p, res);\r",
-  "    if(stats.isFile()) return streamTextFile(p, res);\r",
-  "    s.statusCode = 404;\r",
-  "    return s.end(\"ignoring atypical files for now\");\r",
-  "   }\r",
-  "  );\r",
-  " }\r",
-  ")"
- ].join("\n")
+if(!("prefixState" in this)) this.prefixState = {};
+
+this.prefixState["/admin/fs/browse/"] = this.adminOnly(
+ function(req, res, u){
+  var fs = require("fs");
+  var p = "/" + u;
+  function streamDir(path, res){//not actually streaming
+   res.setHeader("Content-Type", "text/html");
+   return fs.readdir(
+    path,
+    function(err, files){
+     //ignoring errors
+     return res.end(
+      "<ul>\n" +
+       files.map(
+        function(fn){
+         var stats = {isDirectory: function(){return false;}};
+         try{
+          var stats = fs.statSync(path + fn);
+         }
+         catch(e){
+         }
+         return "<li>" +
+          "<a href=\"" +
+          fn +
+          (stats.isDirectory() ? "/" : "") +
+          "\">" +
+          fn +
+          "</a>" +
+          "</li>";
+        }
+       ).join("\n") +
+       "\n</ul>"
+     );
+    }
+   );
+  }
+  function streamTextFile(path, res){//misnamed
+   return fs.readFile(
+    path,
+    function(err, data){
+     //ignoring errors for now
+     res.setHeader("Content-Type", "text/plain");
+     res.end(data);
+    }
+   );
+  }
+  fs.stat(
+   p,
+   function(err, stats){
+    if(err)
+     return (
+      function(s){
+       s.statusCode = 404;
+       return s.end("stat error");
+      }
+     )(res);
+    if(stats.isDirectory()) return streamDir(p, res);
+    if(stats.isFile()) return streamTextFile(p, res);
+    s.statusCode = 404;
+    return s.end("ignoring atypical files for now");
+   }
+  );
+ }
 );
 
 this.storeAt(

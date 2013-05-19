@@ -10,6 +10,8 @@ var fs = require("fs");
 var adminServer = require("./adminServer");
 
 
+// ports
+
 var port = 15213;
 var sslPort = 15214;
 
@@ -21,6 +23,8 @@ if("--sslPort" == process.argv[4])
  if(+process.argv[5] == process.argv[5])
   sslPort = +process.argv[5];
 
+
+// start servers
 
 this.server = new adminServer.AdminStringServer();
 this.server.init(
@@ -37,6 +41,9 @@ this.server.init(
 );
 
 global.server = this.server;
+
+
+//silently ignore errors
 
 process.on(
  "uncaughtException",
