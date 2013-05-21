@@ -1,53 +1,55 @@
+var formController = require("./formController");
+ var SimpleFormController = formController.SimpleFormController;
+ var TextAreaField = formController.TextAreaField;
+
+
 function init(){
 
-this.storeAt(
- ["apiState","/admin/dumbWrite/"],
- [
-  "(\r",
-  " function(form){\r",
-  "  [\"path\", \"expr\"].map(\r",
-  "   function(name){return new TextAreaField(name);}\r",
-  "  ).map(\r",
-  "   function(field){\r",
-  "    return form.fields.push(field);\r",
-  "   }\r",
-  "  );\r",
-  "  form.that = this;\r",
-  "  form.process = function(ob){\r",
-  "   var path = ob.path.split(\"\\n\").map(\r",
-  "    function(s){\r",
-  "     //trim only one trailing \"\\r\" character\r",
-  "     if(!s.length) return s;\r",
-  "     if(\"\\r\" != s[s.length - 1]) return s;\r",
-  "     return s.substring(0, s.length - 1);\r",
-  "    }\r",
-  "   );\r",
-  "   var str = [\r",
-  "    \"this.stringManager.storeAt(\",\r",
-  "    \" \" +\r",
-  "     JSON.stringify(path) +\r",
-  "     \",\",\r",
-  "    \" [\",\r",
-  "    \"  \" +\r",
-  "     ob.expr.split(\"\\n\").map(\r",
-  "      function(s){return JSON.stringify(s);}\r",
-  "     ).join(\",\\n  \"),\r",
-  "    \" ].join(\\\"\\\\n\\\")\",\r",
-  "    \")\"\r",
-  "   ].join(\"\\n\");\r",
-  "   var i = this.that.storeExecString(str)[0];\r",
-  "   return {\r",
-  "    ID: +i,\r",
-  "    toHtml: function toHtml(){\r",
-  "     return \"stored in \" + i + \" and eval'd storage\";\r",
-  "    }\r",
-  "   };\r",
-  "  };\r",
-  "  return form;\r",
-  " }.bind(this)\r",
-  ")(new SimpleFormController());"
- ].join("\n")
-);
+ if(!("apiState" in this)) this.apiState = {};
+
+this.apiState["/admin/dumbWrite/"] = (
+ function(form){
+  ["path", "expr"].map(
+   function(name){return new TextAreaField(name);}
+  ).map(
+   function(field){
+    return form.fields.push(field);
+   }
+  );
+  form.that = this;
+  form.process = function(ob){
+   var path = ob.path.split("\n").map(
+    function(s){
+     //trim only one trailing "\r" character
+     if(!s.length) return s;
+     if("\r" != s[s.length - 1]) return s;
+     return s.substring(0, s.length - 1);
+    }
+   );
+   var str = [
+    "this.storeAt(",
+    " " +
+     JSON.stringify(path) +
+     ",",
+    " [",
+    "  " +
+     ob.expr.split("\n").map(
+      function(s){return JSON.stringify(s);}
+     ).join(",\n  "),
+    " ].join(\"\\n\")",
+    ")"
+   ].join("\n");
+   var i = this.that.storeExecString(str)[0];
+   return {
+    ID: +i,
+    toHtml: function toHtml(){
+     return "stored in " + i + " and eval'd storage";
+    }
+   };
+  };
+  return form;
+ }.bind(this)
+)(new SimpleFormController());
 
 this.storeAt(
  ["apiState","/admin/eval/"],
@@ -80,10 +82,9 @@ this.storeAt(
  ].join("\n")
 );
 
-if(!("prefixState" in this)) this.prefixState = {};
+ if(!("prefixState" in this)) this.prefixState = {};
 
-this.prefixState["/admin/fs/browse/"] = this.adminOnly(
- function(req, res, u){
+ function handleBrowse(req, res, u){
   var fs = require("fs");
   var p = "/" + u;
   function streamDir(path, res){//not actually streaming
@@ -144,7 +145,7 @@ this.prefixState["/admin/fs/browse/"] = this.adminOnly(
    }
   );
  }
-);
+ this.prefixState["/admin/fs/browse/"] = this.adminOnly(handleBrowse);
 
 this.storeAt(
  ["once","0"],
