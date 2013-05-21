@@ -1,4 +1,5 @@
 var formController = require("./formController");
+ var FormField = formController.FormField;
  var SimpleFormController = formController.SimpleFormController;
  var TextAreaField = formController.TextAreaField;
 
@@ -7,8 +8,7 @@ function init(){
 
  if(!("apiState" in this)) this.apiState = {};
 
-this.apiState["/admin/dumbWrite/"] = (
- function(form){
+ function dumbWriteForm(form){
   ["path", "expr"].map(
    function(name){return new TextAreaField(name);}
   ).map(
@@ -48,39 +48,35 @@ this.apiState["/admin/dumbWrite/"] = (
    };
   };
   return form;
- }.bind(this)
-)(new SimpleFormController());
+ }
 
-this.storeAt(
- ["apiState","/admin/eval/"],
- [
-  "(\r",
-  " function(form){\r",
-  "  form.fields.push(\r",
-  "   (\r",
-  "    function(field){\r",
-  "     field.toHtml = function toHtml(){\r",
-  "      return \"<textarea name=\\\"\" + this.name + \"\\\"></textarea>\";\r",
-  "     }\r",
-  "     return field;\r",
-  "    }.bind(this)\r",
-  "   )(new FormField(\"expr\"))\r",
-  "  );\r",
-  "  var that = this;\r",
-  "  form.that = this;\r",
-  "  form.process = function process(ob){\r",
-  "   var i = this.that.storeExecString(ob.expr)[0];\r",
-  "   return {\r",
-  "    ID: +i,\r",
-  "    toHtml: function(){return \"stored in \" + i + \" and exec'd\";}\r",
-  "   };\r",
-  "  };\r",
-  "  form.public = false;\r",
-  "  return form;\r",
-  " }.bind(this)\r",
-  ")(new SimpleFormController());"
- ].join("\n")
-);
+ this.apiState["/admin/dumbWrite/"] = dumbWriteForm.call(this, new SimpleFormController());
+
+ this.apiState["/admin/eval/"] = (
+  function buildEvalForm(form){
+   form.fields.push(
+    (
+     function buildTextareaField(field){
+      field.toHtml = function toHtml(){
+       return "<textarea name=\"" + this.name + "\"></textarea>";
+      }
+      return field;
+     }.bind(this)
+    )(new FormField("expr"))
+   );
+   var that = this;
+   form.that = this;
+   form.process = function process(ob){
+    var i = this.that.storeExecString(ob.expr)[0];
+    return {
+     ID: +i,
+     toHtml: function(){return "stored in " + i + " and exec'd";}
+    };
+   };
+   form.public = false;
+   return form;
+  }.bind(this)
+ )(new SimpleFormController());
 
  if(!("prefixState" in this)) this.prefixState = {};
 
@@ -145,6 +141,7 @@ this.storeAt(
    }
   );
  }
+
  this.prefixState["/admin/fs/browse/"] = this.adminOnly(handleBrowse);
 
 this.storeAt(
