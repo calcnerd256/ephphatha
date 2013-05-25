@@ -173,32 +173,26 @@ function init(){
   )
  );
 
-this.storeAt(
- ["apiState","/admin/fs/overwrite/"],
- [
-  "(\r",
-  " function(form){\r",
-  "  form.fields.push(new FormField(\"path\"));\r",
-  "  form.fields.push(new TextAreaField(\"contents\"));\r",
-  "  form.process = function(ob){\r",
-  "   //ugh, this is synchronous\r",
-  "   //might as well rube it up\r",
-  "   require(\"fs\").writeFileSync(ob.path, ob.contents);\r",
-  "   return {\r",
-  "    toHtml: function(){\r",
-  "     return \"seems to have worked, maybe\" +\r",
-  "      \" <a href=\\\"/admin/fs/browse/\" +\r",
-  "      ob.path.substring(1).split(\"/\").map(encodeURIComponent).join(\"/\") +\r",
-  "      \"\\\">here</a>\";\r",
-  "    }\r",
-  "   }\r",
-  "  };\r",
-  "  return form;\r",
-  " }\r",
-  ")(new SimpleFormController())"
- ].join("\n")
-);
-
+ this.apiState["/admin/fs/overwrite/"] = (
+  function(form){
+   form.fields.push(new FormField("path"));
+   form.fields.push(new TextAreaField("contents"));
+   form.process = function(ob){
+    //ugh, this is synchronous
+    //might as well rube it up
+    require("fs").writeFileSync(ob.path, ob.contents);
+    return {
+     toHtml: function(){
+      return "seems to have worked, maybe" +
+       " <a href=\"/admin/fs/browse/" +
+       ob.path.substring(1).split("/").map(encodeURIComponent).join("/") +
+       "\">here</a>";
+     }
+    }
+   };
+   return form;
+  }
+ )(new SimpleFormController());
 
 this.storeAt(
  ["publicStaticHtml","/admin/dashboard.html"],
