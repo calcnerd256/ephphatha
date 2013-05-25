@@ -2,11 +2,16 @@ var formController = require("./formController");
  var FormField = formController.FormField;
  var SimpleFormController = formController.SimpleFormController;
  var TextAreaField = formController.TextAreaField;
-
+var routers = require("./routers");
+ var router = routers.router;
+ var Router = router.Router;
+ var UrlMatcher = router.UrlMatcher;
 
 function init(){
 
  if(!("apiState" in this)) this.apiState = {};
+ if(!("prefixState" in this)) this.prefixState = {};
+ if(!("once" in this)) this.once = {};
 
  function dumbWriteForm(form){
   ["path", "expr"].map(
@@ -78,8 +83,6 @@ function init(){
   }.bind(this)
  )(new SimpleFormController());
 
- if(!("prefixState" in this)) this.prefixState = {};
-
  function handleBrowse(req, res, u){
   var fs = require("fs");
   var p = "/" + u;
@@ -144,37 +147,31 @@ function init(){
 
  this.prefixState["/admin/fs/browse/"] = this.adminOnly(handleBrowse);
 
-this.storeAt(
- ["once","0"],
- [
-  "this.servers.https.routeListRouter.pushRoute(\r",
-  " new Router(\r",
-  "  new UrlMatcher(\r",
-  "   function(u){\r",
-  "    return Object.keys(this.prefixState).some(\r",
-  "     function(k){return u.substring(0, k.length) == k;}\r",
-  "    );\r",
-  "   }.bind(this)\r",
-  "  ),\r",
-  "  function(req, res){\r",
-  "   var u = require(\"url\").parse(req.url).pathname;\r",
-  "   var ob = {};\r",
-  "   var prefix = ob;\r",
-  "   for(var k in this.prefixState)\r",
-  "    if(prefix === ob && u.substring(0, k.length) == k)\r",
-  "     prefix = k;\r",
-  "   return this.prefixState[prefix].call(\r",
-  "    this,\r",
-  "    req,\r",
-  "    res,\r",
-  "    u.substring(k.length)\r",
-  "   );\r",
-  "  }.bind(this)\r",
-  " )\r",
-  ");"
- ].join("\n")
-);
-
+ this.servers.https.routeListRouter.pushRoute(
+  new Router(
+   new UrlMatcher(
+    function(u){
+     return Object.keys(this.prefixState).some(
+      function(k){return u.substring(0, k.length) == k;}
+     );
+    }.bind(this)
+   ),
+   function(req, res){
+    var u = require("url").parse(req.url).pathname;
+    var ob = {};
+    var prefix = ob;
+    for(var k in this.prefixState)
+     if(prefix === ob && u.substring(0, k.length) == k)
+      prefix = k;
+    return this.prefixState[prefix].call(
+     this,
+     req,
+     res,
+     u.substring(k.length)
+    );
+   }.bind(this)
+  )
+ );
 
 this.storeAt(
  ["apiState","/admin/fs/overwrite/"],
