@@ -256,47 +256,47 @@ this.storeAt(
     ].join("\n");
    } + "",
   ")(\r",
-  " function(t, kids, atrs, expand, noindent){\r",
-  "  var oneLiner = !(\r",
-  "   kids && kids.length &&\r",
-  "   (\r",
-  "    kids.length > 1 ||\r",
-  "    kids[0].split(\"\\n\").length > 1 ||\r",
-  "    \"<\" == kids[0][0]\r",
-  "   )\r",
-  "  );\r",
-  "  return \"<\" + t +\r",
-  "   (\r",
-  "    atrs ?\r",
-  "    \" \" + (\r",
-  "     function(d){\r",
-  "      return Object.keys(d).map(\r",
-  "       function(k){return [k, d[k]];}\r",
-  "      );\r",
-  "     }\r",
-  "    )(atrs).map(\r",
-  "     function(atr){\r",
-  "      return atr[0] +\r",
-  "       \"=\\\"\" +\r",
-  "       atr[1].split(\"\\\"\").join(\"&quot;\") +\r",
-  "       \"\\\"\";\r",
-  "     }\r",
-  "    ).join(\" \") :\r",
-  "    \"\"\r",
-  "   ) +\r",
-  "   (\r",
-  "    (kids && kids.length) || expand ?\r",
-  "    \">\" +\r",
-  "    (oneLiner ? \"\" : (\"\\n\" + (noindent ? \"\" : \" \"))) +\r",
-  "     kids.join(\"\\n\").split(\"\\n\").join(\r",
-  "      \"\\n\" + (noindent ? \"\" : \" \")\r",
-  "     ) +\r",
-  "     (oneLiner ? \"\" : \"\\n\") +\r",
-  "     \"</\" + t :\r",
-  "    \"/\"\r",
-  "   ) +\r",
-  "   \">\";\r",
-  " }\r",
+   function(t, kids, atrs, expand, noindent){
+    var oneLiner = !(
+     kids && kids.length &&
+     (
+      kids.length > 1 ||
+      kids[0].split("\n").length > 1 ||
+      "<" == kids[0][0]
+     )
+    );
+    return "<" + t +
+     (
+      atrs ?
+      " " + (
+       function(d){
+        return Object.keys(d).map(
+         function(k){return [k, d[k]];}
+        );
+       }
+      )(atrs).map(
+       function(atr){
+        return atr[0] +
+         "=\"" +
+         atr[1].split("\"").join("&quot;") +
+         "\"";
+       }
+      ).join(" ") :
+      ""
+     ) +
+     (
+      (kids && kids.length) || expand ?
+      ">" +
+      (oneLiner ? "" : ("\n" + (noindent ? "" : " "))) +
+       kids.join("\n").split("\n").join(
+        "\n" + (noindent ? "" : " ")
+       ) +
+       (oneLiner ? "" : "\n") +
+       "</" + t :
+      "/"
+     ) +
+     ">";
+   },
   ")"
  ].join("\n")
 );
