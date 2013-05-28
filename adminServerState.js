@@ -198,63 +198,63 @@ this.storeAt(
  ["publicStaticHtml","/admin/dashboard.html"],
  [
   "(\r",
-  " function(h){\r",
-  "  var jqueryUrl = [\r",
-  "   \"//ajax.googleapis.com\",\r",
-  "   \"ajax\",\r",
-  "   \"libs\",\r",
-  "   \"jquery\",\r",
-  "   \"1.9.1\",\r",
-  "   \"jquery.min.js\"\r",
-  "  ].join(\"/\");// TODO: serve this locally\r",
-  "  function readFile(p, callback){\r",
-  "   return $.get(\r",
-  "    \"/admin/fs/browse/\" + p.substring(1),\r",
-  "    function(s){return callback(s);}\r",
-  "   );\r",
-  "  }\r",
-  "  function writeFile(p, contents, callback){\r",
-  "   return $.post(\r",
-  "    \"/admin/fs/overwrite/\",\r",
-  "    {path: p, contents: contents},\r",
-  "    function(h){return callback(h);}\r",
-  "   );\r",
-  "  }\r",
-  "  function init(){\r",
-  "   $(\"#load\").click(\r",
-  "    function(){\r",
-  "     return readFile($(\"#path\")[0].value, function(s){$(\"#box\")[0].value = s;});\r",
-  "    }\r",
-  "   );\r",
-  "   $(\"#save\").click(\r",
-  "    function(){\r",
-  "     return writeFile($(\"#path\")[0].value, $(\"#box\")[0].value, function(s){});\r",
-  "    }\r",
-  "   );\r",
-  "  }\r",
-  "  return [\r",
-  "   h(\"html\",[\r",
-  "    h(\"head\", [\r",
-  "     h(\"title\", [\"TODO\"]),\r",
-  "     h(\"script\", [], {src: jqueryUrl}, true),\r",
-  "     h(\"script\", [\r",
-  "      readFile,\r",
-  "      writeFile,\r",
-  "      init,\r",
-  "      \"$(init);\",\r",
-  "      \"\"\r",
-  "     ])\r",
-  "    ]),\r",
-  "    h(\"body\", [\r",
-  "     h(\"input\", [], {id: \"path\"}),\r",
-  "     h(\"textarea\", [], {id: \"box\"}, true),\r",
-  "     h(\"input\", [], {id: \"load\", value: \"load\", type: \"button\"}),\r",
-  "     h(\"input\", [], {id: \"save\", value: \"save\", type: \"button\"})\r",
-  "    ])\r",
-  "   ]),\r",
-  "   \"\"\r",
-  "  ].join(\"\\n\");\r",
-  " }\r",
+  function(h){
+    var jqueryUrl = [
+     "//ajax.googleapis.com",
+     "ajax",
+     "libs",
+     "jquery",
+     "1.9.1",
+     "jquery.min.js"
+    ].join("/");// TODO: serve this locally
+    function readFile(p, callback){
+     return $.get(
+      "/admin/fs/browse/" + p.substring(1),
+      function(s){return callback(s);}
+     );
+    }
+    function writeFile(p, contents, callback){
+     return $.post(
+      "/admin/fs/overwrite/",
+      {path: p, contents: contents},
+      function(h){return callback(h);}
+     );
+    }
+    function init(){
+     $("#load").click(
+      function(){
+       return readFile($("#path")[0].value, function(s){$("#box")[0].value = s;});
+      }
+     );
+     $("#save").click(
+      function(){
+       return writeFile($("#path")[0].value, $("#box")[0].value, function(s){});
+      }
+     );
+    }
+    return [
+     h("html",[
+      h("head", [
+       h("title", ["TODO"]),
+       h("script", [], {src: jqueryUrl}, true),
+       h("script", [
+        readFile,
+        writeFile,
+        init,
+        "$(init);",
+        ""
+       ])
+      ]),
+      h("body", [
+       h("input", [], {id: "path"}),
+       h("textarea", [], {id: "box"}, true),
+       h("input", [], {id: "load", value: "load", type: "button"}),
+       h("input", [], {id: "save", value: "save", type: "button"})
+      ])
+     ]),
+     ""
+    ].join("\n");
+   } + "",
   ")(\r",
   " function(t, kids, atrs, expand, noindent){\r",
   "  var oneLiner = !(\r",
