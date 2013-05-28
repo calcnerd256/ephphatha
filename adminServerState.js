@@ -196,7 +196,7 @@ function init(){
  )(new SimpleFormController());
 
  this.publicStaticHtml["/admin/dashboard.html"] = (
-  function(h){
+  function(h, readFile, writeFile, init){
     var jqueryUrl = [
      "//ajax.googleapis.com",
      "ajax",
@@ -205,40 +205,18 @@ function init(){
      "1.9.1",
      "jquery.min.js"
     ].join("/");// TODO: serve this locally
-    function readFile(p, callback){
-     return $.get(
-      "/admin/fs/browse/" + p.substring(1),
-      function(s){return callback(s);}
-     );
-    }
-    function writeFile(p, contents, callback){
-     return $.post(
-      "/admin/fs/overwrite/",
-      {path: p, contents: contents},
-      function(h){return callback(h);}
-     );
-    }
-    function init(){
-     $("#load").click(
-      function(){
-       return readFile($("#path")[0].value, function(s){$("#box")[0].value = s;});
-      }
-     );
-     $("#save").click(
-      function(){
-       return writeFile($("#path")[0].value, $("#box")[0].value, function(s){});
-      }
-     );
-    }
+
     return [
      h("html",[
       h("head", [
        h("title", ["TODO"]),
        h("script", [], {src: jqueryUrl}, true),
        h("script", [
-        readFile,
-        writeFile,
-        init,
+        [
+         readFile,
+         writeFile,
+         init
+        ].join("\n").split("\n  ").join("\n"),
         "$(init);",
         ""
        ])
@@ -255,45 +233,70 @@ function init(){
   }
  )(
   function(t, kids, atrs, expand, noindent){
-    var oneLiner = !(
-     kids && kids.length &&
-     (
-      kids.length > 1 ||
-      kids[0].split("\n").length > 1 ||
-      "<" == kids[0][0]
-     )
-    );
-    return "<" + t +
-     (
-      atrs ?
-      " " + (
-       function(d){
-        return Object.keys(d).map(
-         function(k){return [k, d[k]];}
-        );
-       }
-      )(atrs).map(
-       function(atr){
-        return atr[0] +
-         "=\"" +
-         atr[1].split("\"").join("&quot;") +
-         "\"";
-       }
-      ).join(" ") :
-      ""
-     ) +
-     (
-      (kids && kids.length) || expand ?
-      ">" +
-      (oneLiner ? "" : ("\n" + (noindent ? "" : " "))) +
-       kids.join("\n").split("\n").join(
-        "\n" + (noindent ? "" : " ")
-       ) +
-       (oneLiner ? "" : "\n") +
-       "</" + t :
-      "/"
-     ) +
-     ">";
+   var oneLiner = !(
+    kids && kids.length &&
+    (
+     kids.length > 1 ||
+     kids[0].split("\n").length > 1 ||
+     "<" == kids[0][0]
+    )
+   );
+   return "<" + t +
+    (
+     atrs ?
+     " " + (
+      function(d){
+       return Object.keys(d).map(
+        function(k){return [k, d[k]];}
+       );
+      }
+     )(atrs).map(
+      function(atr){
+       return atr[0] +
+        "=\"" +
+        atr[1].split("\"").join("&quot;") +
+        "\"";
+      }
+     ).join(" ") :
+     ""
+    ) +
+    (
+     (kids && kids.length) || expand ?
+     ">" +
+     (oneLiner ? "" : ("\n" + (noindent ? "" : " "))) +
+      kids.join("\n").split("\n").join(
+       "\n" + (noindent ? "" : " ")
+      ) +
+      (oneLiner ? "" : "\n") +
+      "</" + t :
+     "/"
+    ) +
+    ">";
+  },
+  function readFile(p, callback){
+   return $.get(
+    "/admin/fs/browse/" + p.substring(1),
+    function(s){return callback(s);}
+   );
+  },
+  function writeFile(p, contents, callback){
+   return $.post(
+    "/admin/fs/overwrite/",
+    {path: p, contents: contents},
+    function(h){return callback(h);}
+   );
+  },
+  function init(){
+   $("#load").click(
+    function(){
+     return readFile($("#path")[0].value, function(s){$("#box")[0].value = s;});
+    }
+   );
+   $("#save").click(
+    function(){
+     return writeFile($("#path")[0].value, $("#box")[0].value, function(s){});
+    }
+   );
   }
  );
 
