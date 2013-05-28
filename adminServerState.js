@@ -12,6 +12,7 @@ function init(){
  if(!("apiState" in this)) this.apiState = {};
  if(!("prefixState" in this)) this.prefixState = {};
  if(!("once" in this)) this.once = {};
+ if(!("publicStaticHtml" in this)) this.publicStaticHtml = {};
 
  function dumbWriteForm(form){
   ["path", "expr"].map(
@@ -194,10 +195,7 @@ function init(){
   }
  )(new SimpleFormController());
 
-this.storeAt(
- ["publicStaticHtml","/admin/dashboard.html"],
- [
-  "(\r",
+ this.publicStaticHtml["/admin/dashboard.html"] = (
   function(h){
     var jqueryUrl = [
      "//ajax.googleapis.com",
@@ -254,9 +252,9 @@ this.storeAt(
      ]),
      ""
     ].join("\n");
-   } + "",
-  ")(\r",
-   function(t, kids, atrs, expand, noindent){
+  }
+ )(
+  function(t, kids, atrs, expand, noindent){
     var oneLiner = !(
      kids && kids.length &&
      (
@@ -296,10 +294,8 @@ this.storeAt(
       "/"
      ) +
      ">";
-   },
-  ")"
- ].join("\n")
-);
+  }
+ );
 
 function g(h){
  var quine = h+"\ng.bind(this)(g);\n//quine\n";
