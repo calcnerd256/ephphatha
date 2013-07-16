@@ -175,6 +175,78 @@ function init(){
   )
  );
 
+ this.createForm = function(path, fields, process, patch, cls){
+  if(!cls) cls = SimpleFormController;
+  var form = new cls();
+  fields.map(function(field){form.fields.push(field);});
+  form.process = process;
+  for(var k in patch)
+   form[k] = patch[k];
+  this.apiState[path] = form;
+  return form;
+ }
+
+ this.createForm(
+  "/admin/loltest/",
+  [
+   new FormField("whatevz")
+  ],
+  function process(ob){
+   //how did this work again?
+   return {
+    toHtml: function(){
+     return "testing, lol";
+    }
+   };
+  },
+  {public: "sure"}
+ );
+
+ this.childProcesses = [];
+ this.createForm(
+  "/admin/spawn/",
+  [
+   new FormField("port"),
+   {
+    toHtml: function(){
+     return this.that.childProcesses.map(
+      function(pair){
+       var kid = pair[0];
+       return kid.pid + kid.killed;
+      }
+     ).join("<br />");
+    },
+    that: this
+   }
+  ],
+  function process(ob){
+   var port = +ob.port;
+   if(!port) return {toHtml: function(){return "lol nope (bad port)";}};
+   var kid = require("child_process").spawn("node", ["serve", "--port", port]);
+   var buf = [];
+   this.that.childProcesses.push([kid, buf]);
+   var i = this.that.childProcesses.length - 1;
+   kid.stdout.on(
+    "data",
+    function(chunk){
+     buf.push(chunk);
+    }
+   );
+   kid.stderr.on(
+    "data",
+    function(chunk){
+     buf.push(chunk);
+    }
+   );
+   return {
+    toHtml: function(){
+     return "child process at index " + i;
+    }
+   };
+  },
+  {that: this}
+ );
+
  this.apiState["/admin/fs/overwrite/"] = (
   function(form){
    form.fields.push(new FormField("path"));
