@@ -352,8 +352,6 @@ function g(h){
 g.bind(this)(g);
 //quine
 
-
-
 }
 
 this.init = init;
