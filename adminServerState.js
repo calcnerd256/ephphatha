@@ -10,10 +10,12 @@ var routers = require("./routers");
 
 function init(){
 
- if(!("apiState" in this)) this.apiState = {};
- if(!("prefixState" in this)) this.prefixState = {};
- if(!("once" in this)) this.once = {};
- if(!("publicStaticHtml" in this)) this.publicStaticHtml = {};
+ "apiState prefixState once publicStaticHtml".split(" ").map(
+  function(k){
+   if(!(k in this))
+    this[k] = {};
+  }.bind(this)
+ );
 
  function dumbWriteForm(form){
   ["path", "expr"].map(
@@ -26,8 +28,7 @@ function init(){
   form.that = this;
   form.process = function(ob){
    var path = ob.path.split("\n").map(
-    function(s){
-     //trim only one trailing "\r" character
+    function removeUpToOneTrailingCarriageReturn(s){
      if(!s.length) return s;
      if("\r" != s[s.length - 1]) return s;
      return s.substring(0, s.length - 1);
@@ -50,7 +51,7 @@ function init(){
    return {
     ID: +i,
     toHtml: function toHtml(){
-     return "stored in " + i + " and eval'd storage";
+     return "stored in " + this.ID + " and eval'd storage";
     }
    };
   };
@@ -222,7 +223,10 @@ function init(){
   function process(ob){
    var port = +ob.port;
    if(!port) return {toHtml: function(){return "lol nope (bad port)";}};
-   var kid = require("child_process").spawn("node", ["serve", "--port", port]);
+   var kid = require("child_process").spawn(
+    process.argv[0],
+    ["serve", "--port", port]
+   );
    var buf = [];
    this.that.childProcesses.push([kid, buf]);
    var i = this.that.childProcesses.length - 1;
@@ -343,6 +347,8 @@ function init(){
    );
   }
  );
+
+ //indentation takes a backseat to quining below, sorry
 
 function g(h){
  var quine = h+"\ng.bind(this)(g);\n//quine\n";
