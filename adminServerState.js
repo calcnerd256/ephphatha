@@ -213,14 +213,18 @@ function init(){
      return this.that.childProcesses.map(
       function(pair){
        var kid = pair[0];
-       return kid.pid + kid.killed;
+       return [
+        kid.pid,
+        !kid.killed,
+        pair[1].join("").split("&").join("&amp;").split("<").join("&lt;")
+       ].join(" ");
       }
      ).join("<br />");
     },
     that: this
    }
   ],
-  function process(ob){
+  function process_it(ob){
    var port = +ob.port;
    if(!port) return {toHtml: function(){return "lol nope (bad port)";}};
    var kid = require("child_process").spawn(
