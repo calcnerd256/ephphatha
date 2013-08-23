@@ -204,6 +204,15 @@ function init(){
  );
 
  this.childProcesses = [];
+ this.helicopterMom = function helicopterMom(command, args, options){
+  var kid = require("child_process").spawn(command, args, options);
+  var opticon = [];//the buffer
+  kid.stdout.on("data", function(chunk){opticon.push(chunk);});
+  kid.stderr.on("data", function(chunk){opticon.push(chunk);});
+  var choppa = [kid, opticon, [command, args]];
+  this.childProcesses.push(choppa);
+  return this.childProcesses.length - 1;
+ };
  this.createForm(
   "/admin/spawn/",
   [
@@ -216,6 +225,7 @@ function init(){
        return [
         kid.pid,
         !kid.killed,
+        pair[2],//lol, 3 elements in a "pair"
         pair[1].join("").split("&").join("&amp;").split("<").join("&lt;")
        ].join(" ");
       }
@@ -227,24 +237,54 @@ function init(){
   function process_it(ob){
    var port = +ob.port;
    if(!port) return {toHtml: function(){return "lol nope (bad port)";}};
-   var kid = require("child_process").spawn(
+   var i = this.that.spawn(
     process.argv[0],
     ["serve", "--port", port]
    );
-   var buf = [];
-   this.that.childProcesses.push([kid, buf]);
-   var i = this.that.childProcesses.length - 1;
-   kid.stdout.on(
-    "data",
-    function(chunk){
-     buf.push(chunk);
+   return {
+    toHtml: function(){
+     return "child process at index " + i;
     }
-   );
-   kid.stderr.on(
-    "data",
-    function(chunk){
-     buf.push(chunk);
-    }
+   };
+  },
+  {that: this}
+ );
+
+ this.createForm(
+  "/admin/spawn/test/",
+  [
+   new FormField("cmd"),
+   new TextAreaField("args"),
+   {
+    toHtml: function(){
+     return this.that.childProcesses.map(
+      function(trip){
+       var kid = trip[0];
+       return [
+        kid.pid,
+        !kid.killed,
+        trip[2],
+        trip[1].join("").split("&").join("&amp;").split("<").join("&lt;").split("\n").join("<br />")
+       ].join(" ");
+      }
+     ).join("<br />");
+    },
+    that: this
+   }
+  ],
+  function process_it(ob){
+   var cmd = ob.cmd;
+   var args = ob.args;
+   var i = this.that.helicopterMom(
+    cmd,
+    args ?
+     args.split("\n").map(
+      function removeUpToOneTrailingCarriageReturn(s){
+       if(!s.length) return s;
+       if("\r" != s[s.length - 1]) return s;
+       return s.substring(0, s.length - 1);
+      }
+     ) : []
    );
    return {
     toHtml: function(){
