@@ -213,7 +213,7 @@ function init(){
   this.childProcesses.push(choppa);
   return this.childProcesses.length - 1;
  };
- this.createForm(
+ /*this.createForm(
   "/admin/spawn/",
   [
    new FormField("port"),
@@ -248,14 +248,59 @@ function init(){
    };
   },
   {that: this}
- );
+ );*/
 
 
- //TODO: pivot into this
+ this.createForm(
+  "/admin/child/kill/",
+  [
+   new FormField("index"),//TODO: dropdown of PID, cmdline (truncated?)
+   {
+    toHtml: function(){
+     return [
+      "<ul>",
+      "<li>",
+      this.that.childProcesses.map(
+       function(choppa){
+        return choppa.join("\n").split(
+         "&"
+        ).join("&amp;").split(
+         "<"
+        ).join("&lt;").split(
+         "\n"
+        ).join("<br />")
+       }
+      ).join("</li>\n<li>\n"),
+      "</li>",
+      "</ul>"
+     ].join("\n")
+    },
+    that: this
+   }
+  ],
+  function processIt(ob){
+   var i = ob.index;
+   if(!(i in this.that.childProcesses))
+    return {toHtml: function(){return "index out of bounds (TODO: make this an error)";}};
+   var choppa = this.that.childProcesses[i];
+   // kill proc
+   // delete proc
+   choppa[0].kill();
+   delete this.that.childProcesses[i]
+   // print proc's stdio
+   return {
+    toHtml: function(){
+     return choppa[1].join("").split("&").join("&amp;").split("<").join("&lt;").split("\n").join("<br />");
+     //how do I POST only?
+    }
+   }
+  },
+  {that:this}
+ )
  //TODO: make a form to kill a child process (POST only?) by its index (and delete the record of it, for sanity's sake)
  //TODO: consider .killed useless
  this.createForm(
-  "/admin/spawn/test/",
+  "/admin/spawn/",
   [
    new FormField("cmd"),
    new TextAreaField("args"),
@@ -268,7 +313,13 @@ function init(){
         kid.pid,
         !kid.killed,
         trip[2],
-        trip[1].join("").split("&").join("&amp;").split("<").join("&lt;").split("\n").join("<br />")
+        trip[1].join("").split(
+         "&"
+        ).join("&amp;").split(
+         "<"
+        ).join("&lt;").split(
+         "\n"
+        ).join("<br />")
        ].join(" ");
       }
      ).join("<br />");
