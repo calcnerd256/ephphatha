@@ -249,21 +249,25 @@ function init(){
    }
   ],
   function processIt(ob){
+   //something is wrong. Is this getting called multiple times?
    var i = ob.index;
-   if(!(i in this.that.childProcesses))
-    return {toHtml: function(){return "index out of bounds (TODO: make this an error)";}};
-   var choppa = this.that.childProcesses[i];
+   var kids = this.that.childProcesses;
+   if(!(i in kids))
+    return {
+     toHtml: function(){return "index " + i + " out of bounds (TODO: make this an error)";}
+    };
+   var choppa = kids[i];
    // kill proc
    // delete proc
    choppa[0].kill();
-   delete this.that.childProcesses[i]
+   delete kids[i]
    // print proc's stdio
    return {
     toHtml: function(){
-     return this.sanitize(this.opticon)
+     return this.sanitize(this.opticon);
     },
     sanitize: choppa[3].sanitizeOutput,
-    opticon: choppa[1]
+    opticon: choppa[1].join("")
    }
   },
   {that:this}
