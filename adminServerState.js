@@ -209,47 +209,23 @@ function init(){
   var opticon = [];//the buffer
   kid.stdout.on("data", function(chunk){opticon.push(chunk);});
   kid.stderr.on("data", function(chunk){opticon.push(chunk);});
-  var choppa = [kid, opticon, [command, args]];
+  var choppa = [
+   kid,
+   opticon,
+   [command, args],
+   {
+    kid: kid,
+    opticon: opticon,
+    cmd: command,
+    "arguments": args,
+    "sanitizeOutput": function sanitizeHtml(str){
+     return str.split("&").join("&amp;").split("<").join("&lt;").split("\n").join("<br />");
+    }
+   }
+  ];
   this.childProcesses.push(choppa);
   return this.childProcesses.length - 1;
  };
- /*this.createForm(
-  "/admin/spawn/",
-  [
-   new FormField("port"),
-   {
-    toHtml: function(){
-     return this.that.childProcesses.map(
-      function(pair){
-       var kid = pair[0];
-       return [
-        kid.pid,
-        !kid.killed,
-        pair[2],//lol, 3 elements in a "pair"
-        pair[1].join("").split("&").join("&amp;").split("<").join("&lt;")
-       ].join(" ");
-      }
-     ).join("<br />");
-    },
-    that: this
-   }
-  ],
-  function process_it(ob){
-   var port = +ob.port;
-   if(!port) return {toHtml: function(){return "lol nope (bad port)";}};
-   var i = this.that.spawn(
-    process.argv[0],
-    ["serve", "--port", port]
-   );
-   return {
-    toHtml: function(){
-     return "child process at index " + i;
-    }
-   };
-  },
-  {that: this}
- );*/
-
 
  this.createForm(
   "/admin/child/kill/",
@@ -261,14 +237,8 @@ function init(){
       "<ul>",
       "<li>",
       this.that.childProcesses.map(
-       function(choppa){
-        return choppa.join("\n").split(
-         "&"
-        ).join("&amp;").split(
-         "<"
-        ).join("&lt;").split(
-         "\n"
-        ).join("<br />")
+       function(choppa, i){
+        return i + " " + choppa[3].sanitizeOutput(choppa.join("\n"))
        }
       ).join("</li>\n<li>\n"),
       "</li>",
@@ -290,15 +260,15 @@ function init(){
    // print proc's stdio
    return {
     toHtml: function(){
-     return choppa[1].join("").split("&").join("&amp;").split("<").join("&lt;").split("\n").join("<br />");
-     //how do I POST only?
-    }
+     return this.sanitize(this.opticon)
+    },
+    sanitize: choppa[3].sanitizeOutput,
+    opticon: choppa[1]
    }
   },
   {that:this}
  )
- //TODO: make a form to kill a child process (POST only?) by its index (and delete the record of it, for sanity's sake)
- //TODO: consider .killed useless
+
  this.createForm(
   "/admin/spawn/",
   [
@@ -311,7 +281,6 @@ function init(){
        var kid = trip[0];
        return [
         kid.pid,
-        !kid.killed,
         trip[2],
         trip[1].join("").split(
          "&"
