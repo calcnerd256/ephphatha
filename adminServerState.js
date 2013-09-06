@@ -250,6 +250,10 @@ function init(){
   {that: this}
  );
 
+
+ //TODO: pivot into this
+ //TODO: make a form to kill a child process (POST only?) by its index (and delete the record of it, for sanity's sake)
+ //TODO: consider .killed useless
  this.createForm(
   "/admin/spawn/test/",
   [
@@ -341,7 +345,7 @@ function init(){
      "html", {},
      [
       "head", {},
-      ["title", {}, "rTODO"],
+      ["title", {}, "rEdit File"],
       ["script,x", {src: jqueryUrl}],
       ["script", {}, "r" + fns, "r$(init);", "r"]
      ],
@@ -372,10 +376,21 @@ function init(){
   function init(){
    $("#load").click(
     function(){
+     var path = $("#path")[0].value;
      return readFile(
-      $("#path")[0].value,
+      path,
       function(s){
        $("#box")[0].value = s;
+       $("title").text(
+        [
+         "edit ",
+         (
+          function last(xs){return xs[xs.length - 1];}
+         )(path.split("/")),
+         "| editing file:",
+         path
+        ].join(" ")
+       );
       }
      );
     }
