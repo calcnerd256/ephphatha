@@ -50,7 +50,7 @@ Admin.prototype.generateRandomHex = function generateRandomHex(length, callback,
 }
 
 Admin.prototype.generatePassword = function(callback){
- return this.generateRandomHex(8, callback);
+ return this.generateRandomHex(32, callback);
 };
 
 
