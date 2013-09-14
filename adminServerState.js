@@ -384,7 +384,13 @@ function init(){
      ],
      [
       "body", {},
-      ["input", {id: "path"}],
+      [
+       "input",
+       {
+        id: "path",
+        style: "width: 100%"
+       }
+      ],
       ["textarea,x", {id: "box"}],
       ["input", {id: "load", value: "load", type: "button"}],
       ["input", {id: "save", value: "save", type: "button"}]
