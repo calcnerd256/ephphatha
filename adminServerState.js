@@ -8,8 +8,11 @@ var routers = require("./routers");
  var Router = router.Router;
  var UrlMatcher = router.UrlMatcher;
 var child_process = require("child_process");
+var processNanny = require("./processNanny");
 
 function init(){
+
+ processNanny.init.call(this);
 
  "apiState prefixState once publicStaticHtml".split(" ").map(
   function(k){
@@ -177,33 +180,6 @@ function init(){
   )
  );
 
- this.createForm = function(path, fields, process, patch, cls){
-  if(!cls) cls = SimpleFormController;
-  var form = new cls();
-  fields.map(function(field){form.fields.push(field);});
-  form.process = process;
-  for(var k in patch)
-   form[k] = patch[k];
-  this.apiState[path] = form;
-  return form;
- }
-
- this.createForm(
-  "/admin/loltest/",
-  [
-   new FormField("whatevz")
-  ],
-  function process(ob){
-   //how did this work again?
-   return {
-    toHtml: function(){
-     return "testing, lol";
-    }
-   };
-  },
-  {public: "sure"}
- );
-
  function sanitizeHtml(str){
   return str.split(
    "&"
@@ -213,124 +189,6 @@ function init(){
    "\n"
   ).join("<br />");
  }
-
- this.childProcesses = [];
- this.helicopterMom = function helicopterMom(command, args, options){
-  var kid = require("child_process").spawn(command, args, options);
-  var opticon = [];//the buffer
-  kid.stdout.on("data", function(chunk){opticon.push(chunk);});
-  kid.stderr.on("data", function(chunk){opticon.push(chunk);});
-  var choppa = [
-   kid,
-   opticon,
-   [command, args],
-   {
-    kid: kid,
-    opticon: opticon,
-    cmd: command,
-    "arguments": args,
-    "sanitizeOutput": sanitizeHtml
-   }
-  ];
-  this.childProcesses.push(choppa);
-  return this.childProcesses.length - 1;
- };
-
- this.createForm(
-  "/admin/child/kill/",
-  [
-   new FormField("index"),//TODO: dropdown of PID, cmdline (truncated?)
-   {
-    toHtml: function(){
-     return [
-      "<ul>",
-      "<li>",
-      this.that.childProcesses.map(
-       function(choppa, i){
-        return i + " " + choppa[3].sanitizeOutput(choppa.join("\n"))
-       }
-      ).join("</li>\n<li>\n"),
-      "</li>",
-      "</ul>"
-     ].join("\n")
-    },
-    that: this
-   }
-  ],
-  function processIt(ob){
-   //something is wrong. Is this getting called multiple times?
-   var i = ob.index;
-   var kids = this.that.childProcesses;
-   if(!(i in kids))
-    return {
-     toHtml: function(){return "index " + i + " out of bounds (TODO: make this an error)";}
-    };
-   var choppa = kids[i];
-   // kill proc
-   // delete proc
-   choppa[0].kill();
-   delete kids[i]
-   // print proc's stdio
-   return {
-    toHtml: function(){
-     return this.sanitize(this.opticon);
-    },
-    sanitize: choppa[3].sanitizeOutput,
-    opticon: choppa[1].join("")
-   }
-  },
-  {that:this}
- )
-
- this.createForm(
-  "/admin/spawn/",
-  [
-   new FormField("cmd"),
-   new TextAreaField("args"),
-   {
-    toHtml: function(){
-     return this.that.childProcesses.map(
-      function(trip){
-       var kid = trip[0];
-       return [
-        kid.pid,
-        trip[2],
-        trip[1].join("").split(
-         "&"
-        ).join("&amp;").split(
-         "<"
-        ).join("&lt;").split(
-         "\n"
-        ).join("<br />")
-       ].join(" ");
-      }
-     ).join("<br />");
-    },
-    that: this
-   }
-  ],
-  function process_it(ob){
-   var cmd = ob.cmd;
-   var args = ob.args;
-   var i = this.that.helicopterMom(
-    cmd,
-    args ?
-     args.split("\n").map(
-      function removeUpToOneTrailingCarriageReturn(s){
-       if(!s.length) return s;
-       if("\r" != s[s.length - 1]) return s;
-       return s.substring(0, s.length - 1);
-      }
-     ) : []
-   );
-   return {
-    toHtml: function(){
-     return "child process at index " + i;
-    }
-   };
-  },
-  {that: this}
- );
 
  this.apiState["/admin/fs/overwrite/"] = (
   function(form){
