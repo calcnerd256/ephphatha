@@ -2,7 +2,6 @@ var formController = require("./formController");
  var FormField = formController.FormField;
  var SimpleFormController = formController.SimpleFormController;
  var TextAreaField = formController.TextAreaField;
- var tagShorthand = formController.tagShorthand;
 var child_process = require("child_process");
 
 var processNanny = this;
@@ -136,40 +135,43 @@ function init(){
   that: this
  };
 
- /*
- var spawnDump = {
-  toHtml: function(){
-   return this.that.childProcesses.map(
-    function(cradle){
-     var kid = cradle.kid;
-     return [
-      kid.pid,
-      [cradle.cmd, cradle["arguments"]],
-      sanitizeHtml(cradle.opticon.join(""))
-     ].join(" ");
-    }
-   ).join("<br />");
-  },
-  that: this
- };
- */
+ var spawnUrl = "/admin/spawn/";
+ var listUrl = "/admin/child/";
+ var killUrl = "/admin/child/kill/";
+ function getLink(href, content){
+  if(!content) content = href;//lol inject
+  return {
+   toHtml: function(){return "<a href=\"" + this.href + "\">" + this.content + "</a>";},
+   href: href,
+   content: content
+  }
+ }
 
  this.createForm(
-  "/admin/child/kill/",
+  listUrl,
   [
-   new FormField("index"),//TODO: dropdown of PID, cmdline (truncated?)
+   getLink(spawnUrl, "spawn"),
+   getLink(killUrl, "kill"),
    kidList
+  ],
+  function(){return {toHtml: function(){return "nothing to see here";}};},
+  {}
+ )
+
+ this.createForm(
+  killUrl,
+  [
+   new FormField("index")//TODO: dropdown of PID, cmdline (truncated?)
   ],
   handleKill,
   {that:this}
  );
 
  this.createForm(
-  "/admin/spawn/",
+  spawnUrl,
   [
    new FormField("cmd"),
-   new TextAreaField("args"),
-   kidList
+   new TextAreaField("args")
   ],
   handleSpawn,
   {that: this}
