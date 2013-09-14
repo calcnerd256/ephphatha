@@ -21,16 +21,10 @@ function init(){
   }.bind(this)
  );
 
- function dumbWriteForm(form){
-  ["path", "expr"].map(
-   function(name){return new TextAreaField(name);}
-  ).map(
-   function(field){
-    return form.fields.push(field);
-   }
-  );
-  form.that = this;
-  form.process = function(ob){
+ this.createForm(
+  "/admin/dumbWrite/",
+  "path expr".split(" ").map(function(name){return new TextAreaField(name);}),
+  function handleWrite(ob){
    var path = ob.path.split("\n").map(
     function removeUpToOneTrailingCarriageReturn(s){
      if(!s.length) return s;
@@ -58,11 +52,9 @@ function init(){
      return "stored in " + this.ID + " and eval'd storage";
     }
    };
-  };
-  return form;
- }
-
- this.apiState["/admin/dumbWrite/"] = dumbWriteForm.call(this, new SimpleFormController());
+  },
+  {that: this}
+ );
 
  this.apiState["/admin/eval/"] = (
   function buildEvalForm(form){
