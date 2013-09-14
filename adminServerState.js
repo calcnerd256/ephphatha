@@ -62,11 +62,11 @@ function init(){
    new TextAreaField("expr")
   ],
   function process(ob){
-    var i = this.that.storeExecString(ob.expr)[0];
-    return {
-     ID: +i,
-     toHtml: function(){return "stored in " + i + " and exec'd";}
-    };
+   var i = this.that.storeExecString(ob.expr)[0];
+   return {
+    ID: +i,
+    toHtml: function(){return "stored in " + i + " and exec'd";}
+   };
   },
   {
    that: this,
@@ -164,21 +164,15 @@ function init(){
   )
  );
 
- function sanitizeHtml(str){
-  return str.split(
-   "&"
-  ).join("&amp;").split(
-   "<"
-  ).join("&lt;").split(
-   "\n"
-  ).join("<br />");
- }
+ var sanitizeHtml = processNanny.sanitizeHtml;
 
- this.apiState["/admin/fs/overwrite/"] = (
-  function(form){
-   form.fields.push(new FormField("path"));
-   form.fields.push(new TextAreaField("contents"));
-   form.process = function(ob){
+ this.createForm(
+  "/admin/fs/overwrite/",
+  [
+   new FormField("path"),
+   new TextAreaField("contents")
+  ],
+  function process(ob){
     //ugh, this is synchronous
     //might as well rube it up
     require("fs").writeFileSync(ob.path, ob.contents);
@@ -189,11 +183,9 @@ function init(){
        ob.path.substring(1).split("/").map(encodeURIComponent).join("/") +
        "\">here</a>";
      }
-    }
-   };
-   return form;
+    }   
   }
- )(new SimpleFormController());
+ );
 
  this.publicStaticHtml["/admin/dashboard.html"] = (
   function(readFile, writeFile, init){
