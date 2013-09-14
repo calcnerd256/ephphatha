@@ -56,31 +56,23 @@ function init(){
   {that: this}
  );
 
- this.apiState["/admin/eval/"] = (
-  function buildEvalForm(form){
-   form.fields.push(
-    (
-     function buildTextareaField(field){
-      field.toHtml = function toHtml(){
-       return "<textarea name=\"" + this.name + "\"></textarea>";
-      }
-      return field;
-     }.bind(this)
-    )(new FormField("expr"))
-   );
-   var that = this;
-   form.that = this;
-   form.process = function process(ob){
+ this.createForm(
+  "/admin/eval/",
+  [
+   new TextAreaField("expr")
+  ],
+  function process(ob){
     var i = this.that.storeExecString(ob.expr)[0];
     return {
      ID: +i,
      toHtml: function(){return "stored in " + i + " and exec'd";}
     };
-   };
-   form.public = false;
-   return form;
-  }.bind(this)
- )(new SimpleFormController());
+  },
+  {
+   that: this,
+   public: false
+  }
+ );
 
  function handleBrowse(req, res, u){
   var fs = require("fs");
