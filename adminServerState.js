@@ -7,6 +7,7 @@ var routers = require("./routers");
  var router = routers.router;
  var Router = router.Router;
  var UrlMatcher = router.UrlMatcher;
+var child_process = require("child_process");
 
 function init(){
 
@@ -203,6 +204,16 @@ function init(){
   {public: "sure"}
  );
 
+ function sanitizeHtml(str){
+  return str.split(
+   "&"
+  ).join("&amp;").split(
+   "<"
+  ).join("&lt;").split(
+   "\n"
+  ).join("<br />");
+ }
+
  this.childProcesses = [];
  this.helicopterMom = function helicopterMom(command, args, options){
   var kid = require("child_process").spawn(command, args, options);
@@ -218,9 +229,7 @@ function init(){
     opticon: opticon,
     cmd: command,
     "arguments": args,
-    "sanitizeOutput": function sanitizeHtml(str){
-     return str.split("&").join("&amp;").split("<").join("&lt;").split("\n").join("<br />");
-    }
+    "sanitizeOutput": sanitizeHtml
    }
   ];
   this.childProcesses.push(choppa);
@@ -429,6 +438,54 @@ function init(){
     }
    );
   }
+ );
+
+ this.createForm(
+  "/admin/git/push/",
+  [
+   new TextAreaField("commit"),
+   {
+    toHtml: function(){
+     this.proc = child_process.spawn("git", ["diff"]);
+     var buffer = [""];
+     this.proc.stdout.on("data", function(chunk){buffer.push(chunk);});
+     this.proc.on("exit", function(){this.buffer = buffer;}.bind(this))
+     return sanitizeHtml(this.buffer.join(""));
+    },
+    buffer: [""],
+    proc: null
+   }
+  ],
+  function process_it(ob){
+   var message = ob.commit;
+   var proc = child_process.spawn("git", ["commit", "-am", ob.commit]);
+   var buf = [];
+   var res = false;
+   var done = false;
+   function callback(s){
+    s.end(sanitizeHtml(buf.join("")));
+   }
+   proc.stdout.on("data", function(chunk){buf.push(chunk);});
+   proc.on(
+    "exit",
+    function(code, signal){
+     if(code)
+      done = true;
+     if(done)
+      return res ? callback(res) : done;
+     var push = child_process.spawn("git", ["push"]);
+     push.stdout.on("data", function(chunk){buf.push(chunk);})
+     push.on("exit", function(){done = true; if(res) return callback(res);});
+    }
+   );
+   return {
+    promise: function(s){
+     if(done) return callback(s);
+     res = s;
+    }
+   }
+  },
+  {}
  );
 
  //indentation takes a backseat to quining below, sorry

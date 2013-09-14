@@ -139,7 +139,9 @@ function formToResponder(form){
        if(ok.ok){
         s.setHeader("Content-Type", "text/html");
         var result = form.process(ob);
-        return s.end(result.toHtml());
+        if(!result.promise)
+         return s.end(result.toHtml());
+        return result.promise(s);
        }
        s.statusCode = ok.status;
        return s.end(""+ok);
