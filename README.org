@@ -22,6 +22,17 @@ From there, everything should be discoverable by following hyperlinks.
 Apologies to anyone trying to read this.
 I use org-mode wrong, and I'm not going to change soon.
 
+This documentation is way out of date. Sorry.
+I probably need to state my goals in here and revisit them every time I get something done, especially since progress on some of these goals tends to require action to restore the invariants I want from the other goals.
+
+Goal: everything has a URL
+
+Goal: state is reproducible
+
+Goal: federation
+
+Goal: client-only also works when servers are unreachable
+
 ** Environment
 I'm tempted to add a "get" method which equals "read".
 I'm tempted to add a "curry" method or something.

@@ -173,17 +173,17 @@ function init(){
    new TextAreaField("contents")
   ],
   function process(ob){
-    //ugh, this is synchronous
-    //might as well rube it up
-    require("fs").writeFileSync(ob.path, ob.contents);
-    return {
-     toHtml: function(){
-      return "seems to have worked, maybe" +
-       " <a href=\"/admin/fs/browse/" +
-       ob.path.substring(1).split("/").map(encodeURIComponent).join("/") +
-       "\">here</a>";
-     }
-    }   
+   //ugh, this is synchronous
+   //might as well rube it up
+   require("fs").writeFileSync(ob.path, ob.contents);
+   return {
+    toHtml: function(){
+     return "seems to have worked, maybe" +
+      " <a href=\"/admin/fs/browse/" +
+      ob.path.substring(1).split("/").map(encodeURIComponent).join("/") +
+      "\">here</a>";
+    }
+   }
   }
  );
 
@@ -337,6 +337,23 @@ function g(h){
 }
 g.bind(this)(g);
 //quine
+
+
+ // new idea: objects with a .toForm() and a .getChildren() iterator?
+ // the goal being to make state objects that represent the resource path structure
+ // bonus if those methods are homoiconic so that I can persist them better
+ // bonus if they're composed of the history of their modifications
+ // bonus if modifications are idempotent and commutative
+
+ // maybe before we do that, we should start with a way to browse the server object as an admin
+ this.createForm(
+  "/admin/test/introspect/",
+  [],
+  function process_it(ob){
+   return {toHtml: function(){return "lol";}};
+  },
+  {}
+ );
 
 }
 
