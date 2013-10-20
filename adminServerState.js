@@ -148,17 +148,18 @@ function init(){
     }.bind(this)
    ),
    function(req, res){
+    function firstMatch(d, p){
+     for(var k in d)
+      if(p.substring(0, k.length) == k)
+       return k;
+    }
     var u = require("url").parse(req.url).pathname;
-    var ob = {};
-    var prefix = ob;
-    for(var k in this.prefixState)
-     if(prefix === ob && u.substring(0, k.length) == k)
-      prefix = k;
+    var prefix = firstMatch(this.prefixState, u);
     return this.prefixState[prefix].call(
      this,
      req,
      res,
-     u.substring(k.length)
+     u.substring(prefix.length)
     );
    }.bind(this)
   )
@@ -346,14 +347,136 @@ g.bind(this)(g);
  // bonus if modifications are idempotent and commutative
 
  // maybe before we do that, we should start with a way to browse the server object as an admin
- this.createForm(
-  "/admin/test/introspect/",
-  [],
-  function process_it(ob){
-   return {toHtml: function(){return "lol";}};
-  },
-  {}
+
+ (
+  //TODO: eviscerate this function
+  function(){
+ // start at the root, click on a hyperlink, and dig into the server object one key at a time
+ // at any time, eval a string into a given key at the local dictionary
+
+function listToHashSet(ks){
+  var r = {};
+  ks.map(function(k){r[k] = k;});
+  return r;
+}
+var chardec = {
+ encode: function encode(str, from, to, noTest){
+  var result = str.split(from).join(this.escape + to);
+  if(!noTest)
+   if(this.decode(result, from, to, !noTest) != str)
+    throw new Error(
+     ["codec failure", this, "encode", str, "expected inversion to hold", [from, to]]
+    );
+  return result;
+ },
+ decode: function decode(str, from, to, noTest){
+  var result = str.split(this.escape + to).join(from);
+  if(!noTest)
+   if(this.encode(result, from, to, !noTest) != str)
+    throw new Error(
+     ["codec failure", this, "decode", str, "expected inversion to hold", [from, to]]
+    );
+  return result;
+ },
+ escape: "_escape_e"
+};
+
+var codec = {
+ encode: function encode(str, noTest){
+  var result = chardec.encode(
+   chardec.encode(
+    chardec.encode(str, "_escape_", "sc"),
+    "/", "s"
+   ),
+   "..", "d"
+  );
+  if("" == str) result = chardec.escape + "l";
+  if(!noTest)
+   if(this.decode(result, !noTest)[0] != str)
+    throw ["codec failure", this, "encode", str, "expected inversion to hold"];
+  return result;
+ },
+ decode: function decode(str, noTest){
+  var result = str.split("/").map(
+   function(s){
+    if(chardec.escape + "l" == s) return "";
+    return chardec.decode(
+     chardec.decode(
+      chardec.decode(s, "..", "d"),
+      "/", "s"
+     ),
+     "_escape_", "sc"
+    );
+   }
+  );
+  if("" == str) result = [];
+  if(!noTest)
+   if(result.map(this.encode.bind(this)).join("/") != str)
+    throw ["codec failure", this, "decode", str, "expected inversion to hold", [], result];
+  return result;
+ }
+}
+
+var processNanny = require("./processNanny");
+// var cleanMultiline = processNanny.removeUpToOneTrailingCarriageReturn;
+ var sanitizeHtml = processNanny.sanitizeHtml;
+
+function descend_into(it, path){
+ for(var i = 0; i < path.length; i++){
+  var part = path[i];
+  if(!it) return it;
+  if(
+   !(
+    typeof it
+    in
+    listToHashSet("object function".split(" "))
+   )
+  )
+   return it;
+  it = it[part];
+ }
+ return it;
+}
+
+function respond(req, res, u){
+ var p = u.split("/");
+ var maybe_path = "";
+ if(p.length)
+  maybe_path = p[p.length - 1];
+ if("" == maybe_path)
+  p.pop();
+ else
+  maybe_path += "/";
+ var path = codec.decode(p.join("/"));
+ var it = descend_into(this, path);
+ res.setHeader("Content-Type", "text/html");
+ if(!(typeof it in listToHashSet("object function".split(" "))))
+  return res.end("<a href=\"..\">up</a>\n<br />\n" + sanitizeHtml("" + it));
+ return res.end(
+  [
+   "<ul>",
+   " <li>(<a href=\"../\">up</a>)</li>",
+   " " + Object.keys(it).map(
+    function(str){
+     return [
+     "<li>",
+     " <a href=\"" + maybe_path + codec.encode(str) + "/\">",
+     "  " + sanitizeHtml(str),
+     " </a>",
+     "</li>"
+     ].join("\n ");
+    }
+   ).join("\n "),
+   "</ul>",
+   ("toHtml" in it ? it.toHtml() : sanitizeHtml(""+it))
+  ].join("\n")
  );
+}
+
+this.prefixState["/admin/introspect/"] = respond;
+
+  }
+ ).call(this);
 
 }
 
