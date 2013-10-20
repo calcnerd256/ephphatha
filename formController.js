@@ -132,13 +132,16 @@ function formToResponder(form){
      s.end(form.toHtml());
     },
     "POST": function(q, s){
+     var args = [].slice.call(arguments, 2);
      var promise = form.populate(
       q,
       function(ob){
-       var ok = form.validate(ob);//TODO: CPS
+       var ob_args = [].slice.call(args);
+       ob_args.unshift(ob);
+       var ok = form.validate.apply(form, ob_args);//TODO: CPS
        if(ok.ok){
         s.setHeader("Content-Type", "text/html");
-        var result = form.process(ob);
+        var result = form.process.apply(form, ob_args);
         if(!result.promise)
          return s.end(result.toHtml());
         return result.promise(s);
@@ -168,7 +171,7 @@ function formToResponder(form){
     };
   }
   responder.form = form; // love
-  return responder.call(this, req, res);
+  return responder.apply(this, arguments);
  }.bind(this);
  result.form = form;
  return result;
