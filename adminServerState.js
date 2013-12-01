@@ -348,17 +348,129 @@ g.bind(this)(g);
 
  // maybe before we do that, we should start with a way to browse the server object as an admin
 
- (
-  //TODO: eviscerate this function
-  function(){
- // start at the root, click on a hyperlink, and dig into the server object one key at a time
- // at any time, eval a string into a given key at the local dictionary
+
+ function Codec(encoder, decoder){
+  this.encoder = encoder;
+  this.decoder = decoder;
+ }
+ Codec.prototype.testEncode = function(val){
+  var operation = this.encoder;
+  var inverse = this.decoder;
+  return this.test(operation, inverse, val, "encoder failure");
+ }
+ Codec.prototype.testDecode = function(val){
+  var operation = this.decoder;
+  var inverse = this.encoder;
+  return this.test(operation, inverse, val, "decoder failure");
+ }
+ Codec.prototype.test = function(operation, inverse, input, message){
+  var val = input;
+  var result = operation.apply(this, [val, true]);
+  var preimage = inverse.apply(this, [result, true]);
+  var equals = function(a, b){return a == b};
+  if("equals" in operation) equals = operation.equals;
+  if(!equals(val, preimage))
+   throw new Error(
+    JSON.stringify(
+    [
+     message,
+     {
+      codec: this,
+      "this": this,
+      "assert": ["" + equals, [val, preimage]],
+      "arguments": arguments,
+      result: result,
+      preimage: preimage
+     }
+    ]
+    )
+   );
+  return result;
+ }
+
+ function CharacterEscape(from, to, escape){
+  //consider inheriting from Codec
+  this.from = from;
+  this.to = to;
+  this.escape = escape;
+ }
+ CharacterEscape.prototype.__proto__ = new Codec(); // stateful :(
+ CharacterEscape.prototype.encoder = function encode(val, noTest){
+  if(!noTest) return this.testEncode(val);
+  var result = val.split(this.from).join(this.escape + this.to);
+  return result;
+ }
+ CharacterEscape.prototype.decoder = function decode(val, noTest){
+  if(!noTest) return this.testDecode(val);
+  var result = val.split(this.escape + this.to).join(this.from);
+  return result;
+ }
+
+function getCharNotIn(str){
+ for(var i = 0; i < str.length; i++)
+  if(1 == str.split(String.fromCharCode(str.charCodeAt(0) + i + 1)).length)
+   return String.fromCharCode(str.charCodeAt(0) + i + 1);
+}
+
+function CharDec(mapping_alist, escape){
+ this.mapping = mapping_alist;
+ var chars = escape + mapping_alist.map(function(pair){return pair.join("")}).join("");
+ escape += getCharNotIn(chars);
+ mapping_alist.unshift([escape, getCharNotIn(escape + chars)]);
+ this.codex = mapping_alist.map(
+  function(pair){
+   var k = pair[0];
+   var v = pair[1];
+   var codec = new CharacterEscape(k, v, escape);
+   return codec;
+  }
+ );
+}
+CharDec.prototype.encoder = function encoder(inp, t){
+ var val = inp;
+ this.codex.map(function(c){val = c.encoder(val, t);});
+ return val;
+}
+CharDec.prototype.decoder = function decoder(inp, t){
+ var val = inp;
+ this.codex.concat().reverse().map(function(c){val = c.decoder(val, t);});
+ return val;
+}
+CharDec.prototype.__proto__ = new Codec();
+
+ //TODO: function EscapeCodec
+
 
 function listToHashSet(ks){
   var r = {};
   ks.map(function(k){r[k] = k;});
   return r;
 }
+
+
+function descend_into(it, path){
+ for(var i = 0; i < path.length; i++){
+  var part = path[i];
+  if(!it) return it;
+  if(
+   !(
+    typeof it
+    in
+    listToHashSet("object function".split(" "))
+   )
+  )
+   return it;
+  it = it[part];
+ }
+ return it;
+}
+
+ (
+  //TODO: eviscerate this function
+  function(){
+ // start at the root, click on a hyperlink, and dig into the server object one key at a time
+ // at any time, eval a string into a given key at the local dictionary
+
 var chardec = {
  encode: function encode(str, from, to, noTest){
   var result = str.split(from).join(this.escape + to);
@@ -382,61 +494,35 @@ var chardec = {
 };
 
 var codec = {
+ init: function(){
+  this.escape = this.codec.codex[0].escape;
+  return this;
+ },
+ codec: new CharDec([["_escape_", "sc"], ["/", "sl"], ["..", "d"]], "_escape_e"),
  encode: function encode(str, noTest){
-  var result = chardec.encode(
-   chardec.encode(
-    chardec.encode(str, "_escape_", "sc"),
-    "/", "s"
-   ),
-   "..", "d"
-  );
-  if("" == str) result = chardec.escape + "l";
+  if("" == str) return this.escape + "l";
   if(!noTest)
-   if(this.decode(result, !noTest)[0] != str)
-    throw ["codec failure", this, "encode", str, "expected inversion to hold"];
-  return result;
+   return this.codec.testEncode(str);
+  return this.codec.encoder(str, noTest);
  },
  decode: function decode(str, noTest){
-  var result = str.split("/").map(
+  if("" == str) return [];
+  return str.split("/").map(
    function(s){
-    if(chardec.escape + "l" == s) return "";
-    return chardec.decode(
-     chardec.decode(
-      chardec.decode(s, "..", "d"),
-      "/", "s"
-     ),
-     "_escape_", "sc"
-    );
-   }
+    if(this.escape + "l" == s) return "";
+    if(noTest)
+     return this.codec.testDecode(s);
+    return this.codec.decoder(s, noTest);
+   }.bind(this)
   );
-  if("" == str) result = [];
-  if(!noTest)
-   if(result.map(this.encode.bind(this)).join("/") != str)
-    throw ["codec failure", this, "decode", str, "expected inversion to hold", [], result];
-  return result;
  }
-}
+}.init();
+
 
 var processNanny = require("./processNanny");
 // var cleanMultiline = processNanny.removeUpToOneTrailingCarriageReturn;
  var sanitizeHtml = processNanny.sanitizeHtml;
 
-function descend_into(it, path){
- for(var i = 0; i < path.length; i++){
-  var part = path[i];
-  if(!it) return it;
-  if(
-   !(
-    typeof it
-    in
-    listToHashSet("object function".split(" "))
-   )
-  )
-   return it;
-  it = it[part];
- }
- return it;
-}
 
 function respond(req, res, u){
  var p = u.split("/");
@@ -447,7 +533,7 @@ function respond(req, res, u){
   p.pop();
  else
   maybe_path += "/";
- var path = codec.decode(p.join("/"));
+ var path = codec.decode(decodeURIComponent(p.join("/")));
  var it = descend_into(this, path);
  res.setHeader("Content-Type", "text/html");
  if(!(typeof it in listToHashSet("object function".split(" "))))
