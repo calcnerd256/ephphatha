@@ -347,8 +347,6 @@ g.bind(this)(g);
  // bonus if they're composed of the history of their modifications
  // bonus if modifications are idempotent and commutative
 
- // maybe before we do that, we should start with a way to browse the server object as an admin
-
 
  function Codec(encoder, decoder){
   this.encoder = encoder;
@@ -407,49 +405,48 @@ g.bind(this)(g);
   return result;
  }
 
-function getCharNotIn(str){
- for(var i = 0; i < str.length; i++)
-  if(1 == str.split(String.fromCharCode(str.charCodeAt(0) + i + 1)).length)
-   return String.fromCharCode(str.charCodeAt(0) + i + 1);
-}
 
-function CharDec(mapping_alist, escape){
- this.mapping = mapping_alist;
- var chars = escape + mapping_alist.map(function(pair){return pair.join("")}).join("");
- escape += getCharNotIn(chars);
- mapping_alist.unshift([escape, getCharNotIn(escape + chars)]);
- this.codex = mapping_alist.map(
-  function(pair){
-   var k = pair[0];
-   var v = pair[1];
-   var codec = new CharacterEscape(k, v, escape);
-   return codec;
-  }
- );
-}
-CharDec.prototype.encoder = function encoder(inp, t){
- var val = inp;
- this.codex.map(function(c){val = c.encoder(val, t);});
- return val;
-}
-CharDec.prototype.decoder = function decoder(inp, t){
- var val = inp;
- this.codex.concat().reverse().map(function(c){val = c.decoder(val, t);});
- return val;
-}
-CharDec.prototype.__proto__ = new Codec();
+ function getCharNotIn(str){
+  for(var i = 0; i < str.length; i++)
+   if(1 == str.split(String.fromCharCode(str.charCodeAt(0) + i + 1)).length)
+    return String.fromCharCode(str.charCodeAt(0) + i + 1);
+ }
 
- //TODO: function EscapeCodec
+ function CharDec(mapping_alist, escape){
+  this.mapping = mapping_alist;
+  var chars = escape + mapping_alist.map(function(pair){return pair.join("")}).join("");
+  escape += getCharNotIn(chars);
+  mapping_alist.unshift([escape, getCharNotIn(escape + chars)]);
+  this.codex = mapping_alist.map(
+   function(pair){
+    var k = pair[0];
+    var v = pair[1];
+    var codec = new CharacterEscape(k, v, escape);
+    return codec;
+   }
+  );
+ }
+ CharDec.prototype.encoder = function encoder(inp, t){
+  var val = inp;
+  this.codex.map(function(c){val = c.encoder(val, t);});
+  return val;
+ }
+ CharDec.prototype.decoder = function decoder(inp, t){
+  var val = inp;
+  this.codex.concat().reverse().map(function(c){val = c.decoder(val, t);});
+  return val;
+ }
+ CharDec.prototype.__proto__ = new Codec();
 
 
-function listToHashSet(ks){
+ function listToHashSet(ks){
   var r = {};
   ks.map(function(k){r[k] = k;});
   return r;
-}
+ }
 
 
-function descend_into(it, path){
+ function descend_into(it, path){
  for(var i = 0; i < path.length; i++){
   var part = path[i];
   if(!it) return it;
@@ -463,69 +460,69 @@ function descend_into(it, path){
    return it;
   it = it[part];
  }
- return it;
-}
+  return it;
+ }
 
-var introspect_codec = {
- init: function(){
-  this.escape = this.codec.codex[0].escape;
-  return this;
- },
- codec: new CharDec([["_escape_", "sc"], ["/", "sl"], ["..", "d"]], "_escape_e"),
- encode: function encode(str, noTest){
-  if("" == str) return this.escape + "l";
-  if(!noTest)
-   return this.codec.testEncode(str);
-  return this.codec.encoder(str, noTest);
- },
- decode: function decode(str, noTest){
-  if("" == str) return [];
-  return str.split("/").map(
-   function(s){
-    if(this.escape + "l" == s) return "";
-    if(noTest)
-     return this.codec.testDecode(s);
-    return this.codec.decoder(s, noTest);
-   }.bind(this)
+ var introspect_codec = {
+  init: function(){
+   this.escape = this.codec.codex[0].escape;
+   return this;
+  },
+  codec: new CharDec([["_escape_", "sc"], ["/", "sl"], ["..", "d"]], "_escape_e"),
+  encode: function encode(str, noTest){
+   if("" == str) return this.escape + "l";
+   if(!noTest)
+    return this.codec.testEncode(str);
+   return this.codec.encoder(str, noTest);
+  },
+  decode: function decode(str, noTest){
+   if("" == str) return [];
+   return str.split("/").map(
+    function(s){
+     if(this.escape + "l" == s) return "";
+     if(noTest)
+      return this.codec.testDecode(s);
+     return this.codec.decoder(s, noTest);
+    }.bind(this)
+   );
+  }
+ }.init();
+
+
+ this.prefixState["/admin/introspect/"] = function respond(req, res, u){
+  var p = u.split("/");
+  var maybe_path = "";
+  if(p.length)
+   maybe_path = p[p.length - 1];
+  if("" == maybe_path)
+   p.pop();
+  else
+   maybe_path += "/";
+  var path = introspect_codec.decode(decodeURIComponent(p.join("/")));
+  var it = descend_into(this, path);
+  res.setHeader("Content-Type", "text/html");
+  if(!(typeof it in listToHashSet("object function".split(" "))))
+   return res.end("<a href=\"..\">up</a>\n<br />\n" + sanitizeHtml("" + it));
+  return res.end(
+   [
+    "<ul>",
+    " <li>(<a href=\"../\">up</a>)</li>",
+    " " + Object.keys(it).map(
+     function(str){
+      return [
+      "<li>",
+      " <a href=\"" + maybe_path + introspect_codec.encode(str) + "/\">",
+      "  " + sanitizeHtml(str),
+      " </a>",
+      "</li>"
+      ].join("\n ");
+     }
+    ).join("\n "),
+    "</ul>",
+    ("toHtml" in it ? it.toHtml() : sanitizeHtml(""+it))
+   ].join("\n")
   );
  }
-}.init();
-
-
-this.prefixState["/admin/introspect/"] = function respond(req, res, u){
- var p = u.split("/");
- var maybe_path = "";
- if(p.length)
-  maybe_path = p[p.length - 1];
- if("" == maybe_path)
-  p.pop();
- else
-  maybe_path += "/";
- var path = introspect_codec.decode(decodeURIComponent(p.join("/")));
- var it = descend_into(this, path);
- res.setHeader("Content-Type", "text/html");
- if(!(typeof it in listToHashSet("object function".split(" "))))
-  return res.end("<a href=\"..\">up</a>\n<br />\n" + sanitizeHtml("" + it));
- return res.end(
-  [
-   "<ul>",
-   " <li>(<a href=\"../\">up</a>)</li>",
-   " " + Object.keys(it).map(
-    function(str){
-     return [
-     "<li>",
-     " <a href=\"" + maybe_path + introspect_codec.encode(str) + "/\">",
-     "  " + sanitizeHtml(str),
-     " </a>",
-     "</li>"
-     ].join("\n ");
-    }
-   ).join("\n "),
-   "</ul>",
-   ("toHtml" in it ? it.toHtml() : sanitizeHtml(""+it))
-  ].join("\n")
- );
-}
 
 }
 
