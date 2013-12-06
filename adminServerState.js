@@ -9,6 +9,7 @@ var routers = require("./routers");
  var UrlMatcher = router.UrlMatcher;
 var child_process = require("child_process");
 var processNanny = require("./processNanny");
+ var sanitizeHtml = processNanny.sanitizeHtml;
 
 function init(){
 
@@ -465,35 +466,7 @@ function descend_into(it, path){
  return it;
 }
 
- (
-  //TODO: eviscerate this function
-  function(){
- // start at the root, click on a hyperlink, and dig into the server object one key at a time
- // at any time, eval a string into a given key at the local dictionary
-
-var chardec = {
- encode: function encode(str, from, to, noTest){
-  var result = str.split(from).join(this.escape + to);
-  if(!noTest)
-   if(this.decode(result, from, to, !noTest) != str)
-    throw new Error(
-     ["codec failure", this, "encode", str, "expected inversion to hold", [from, to]]
-    );
-  return result;
- },
- decode: function decode(str, from, to, noTest){
-  var result = str.split(this.escape + to).join(from);
-  if(!noTest)
-   if(this.encode(result, from, to, !noTest) != str)
-    throw new Error(
-     ["codec failure", this, "decode", str, "expected inversion to hold", [from, to]]
-    );
-  return result;
- },
- escape: "_escape_e"
-};
-
-var codec = {
+var introspect_codec = {
  init: function(){
   this.escape = this.codec.codex[0].escape;
   return this;
@@ -519,12 +492,7 @@ var codec = {
 }.init();
 
 
-var processNanny = require("./processNanny");
-// var cleanMultiline = processNanny.removeUpToOneTrailingCarriageReturn;
- var sanitizeHtml = processNanny.sanitizeHtml;
-
-
-function respond(req, res, u){
+this.prefixState["/admin/introspect/"] = function respond(req, res, u){
  var p = u.split("/");
  var maybe_path = "";
  if(p.length)
@@ -533,7 +501,7 @@ function respond(req, res, u){
   p.pop();
  else
   maybe_path += "/";
- var path = codec.decode(decodeURIComponent(p.join("/")));
+ var path = introspect_codec.decode(decodeURIComponent(p.join("/")));
  var it = descend_into(this, path);
  res.setHeader("Content-Type", "text/html");
  if(!(typeof it in listToHashSet("object function".split(" "))))
@@ -546,7 +514,7 @@ function respond(req, res, u){
     function(str){
      return [
      "<li>",
-     " <a href=\"" + maybe_path + codec.encode(str) + "/\">",
+     " <a href=\"" + maybe_path + introspect_codec.encode(str) + "/\">",
      "  " + sanitizeHtml(str),
      " </a>",
      "</li>"
@@ -558,11 +526,6 @@ function respond(req, res, u){
   ].join("\n")
  );
 }
-
-this.prefixState["/admin/introspect/"] = respond;
-
-  }
- ).call(this);
 
 }
 
