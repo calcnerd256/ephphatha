@@ -229,7 +229,10 @@ function init(){
       ],
       ["textarea,x", {id: "box"}],
       ["input", {id: "load", value: "load", type: "button"}],
-      ["input", {id: "save", value: "save", type: "button"}]
+      ["input", {id: "save", value: "save", type: "button"}],
+      ["br"],
+      ["textarea,x", {id: "storage"}],
+      ["input", {id: "saveEvalStorage", value: "save and eval (local)", type: "button"}]
      ]
     ]
    ).toString() + "\n";
@@ -277,6 +280,14 @@ function init(){
       $("#box")[0].value,
       function(s){}
      );
+    }
+   );
+   $("#storage")[0].value = localStorage["default"];
+   $("#saveEvalStorage").click(
+    function(){
+     var val = $("#storage")[0].value
+     localStorage["default"] = val; //TODO: soft-code the key
+     eval(val);
     }
    );
   }
