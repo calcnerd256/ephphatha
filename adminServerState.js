@@ -10,6 +10,7 @@ var routers = require("./routers");
 var child_process = require("child_process");
 var processNanny = require("./processNanny");
  var sanitizeHtml = processNanny.sanitizeHtml;
+var localStorageState = require("./localStorageState");
 
 function init(){
 
@@ -534,6 +535,9 @@ g.bind(this)(g);
    ].join("\n")
   );
  }
+
+
+ localStorageState.init(this);
 
 }
 

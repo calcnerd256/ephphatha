@@ -552,7 +552,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   function(req, res){
    result = this.publicStaticHtml[req.url];
    res.setHeader("Content-Type", "text/html");
-   return res.end(result);
+   return res.end("" + result);
   }.bind(this)
  );
  //API state
