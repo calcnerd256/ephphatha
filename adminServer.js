@@ -448,7 +448,7 @@ AdminStringServer.prototype.getHttpsRouterList = function getHttpsRouterList(){
   "/admin/gconf/": "gconf",
   "/admin/mouse/": "mouse",
   "/admin/list/": "list",
-  "/admin/dashboard.html": "dashboard"
+  "/admin/dashboard/": "dashboard"
  }
  links[this.adminLoginUrl] = "log in";
 

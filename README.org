@@ -23,6 +23,20 @@ Apologies to anyone trying to read this.
 I use org-mode wrong, and I'm not going to change soon.
 
 This documentation is way out of date. Sorry.
+** starting over
+Okay, this documentation is no good.
+So here's how you use what I have up there right now:
+*** visit the server as above
+there are also ways to specify the port, but I haven't written of that here
+*** log in at /admin/login/
+the command line will tell you the password once it's set it; you can change the password with the setPassword method on the server object
+*** go to /admin/dashboard/
+I haven't yet put a link to that on the admin panel yet
+*** navigate the server object, evalling into it as needed
+documentation on how to do this may be forthcoming (ask me a question, and I might update this doc with the answer)
+** that's all for now
+this is woefully underdocumented; my next plan is to use the system to replace itself with something more self-documenting (check back soon)
+* unsorted
 I probably need to state my goals in here and revisit them every time I get something done, especially since progress on some of these goals tends to require action to restore the invariants I want from the other goals.
 
 Goal: everything has a URL
