@@ -66,7 +66,9 @@ this.init = function(that){
   function(h){return callback(h);}
  );
 }),
-{"toString": (function (){
+{
+ __project_path: __project_path,
+"toString": (function (){
    return "function init(){\n " + this.scripts.join("\n ") + "\n " + this["finally"] + "\n}";
   }),
 "scripts": [(function _init(){
@@ -548,7 +550,7 @@ $("#storageKey").on(
 (function _browse(){
   state.browse_server(function(){});
  })],
-"finally": "_init();"},
+"finally": "window.__project_path = " + JSON.stringify(__project_path) + ";\n_init();"},
 "$(init);"],
 "toHtml": (function toHtml(indentation){
   var space = "";
