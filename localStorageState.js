@@ -78,6 +78,7 @@ _store();
 _state();
 _once();
 _browse();
+_lisp();
 }),
 (function _load(){
   $("#load").click(
@@ -549,7 +550,267 @@ $("#storageKey").on(
  }),
 (function _browse(){
   state.browse_server(function(){});
- })],
+ }),
+(function _lisp(){
+
+state.pluck = function pluck(key, ob, otherwise){
+if(key in ob) return ob[key];
+return otherwise;
+};
+
+state.bindFrom = function bindFrom(ob, key){
+return ob[key].bind(ob);
+};
+
+state.call = function call(fn, args, otherwise){
+if(!fn) return otherwise;
+if("function" == typeof fn) return fn.apply(this, args);
+if("apply" in fn) return fn.apply.call(fn, this, args);
+if(this == fn){ // don't call "call" on this with the wrong signature
+if("toFunction" in this)
+if(this != this.toFunction)
+fn = this.call(this.toFunction, [], function(){return otherwise});
+if(this == fn) return otherwise; //toFunction isn't behaving well
+return this.call(fn, args, otherwise);
+}
+if("call" in fn) return fn.call.apply(fn, [this].concat(args));
+return otherwise;
+};
+
+state.eq = function eq(a, b){
+return a == b;
+};
+
+state.brackets = function(ob, key){return ob[key];};
+state.kw_in = function(key, ob){return key in ob;};
+state.plus = function(a, b){return a+b;};
+state.list = function(){return [].slice.call(arguments);};
+state.quote = function(x){return x;}
+
+state.quote.macro = true;
+
+state.lisp_eval = function(f, env, xs){
+function scope(k){
+return env.filter(function(kv){return k == kv[0]})[0][1];
+}
+scope.macro = true;
+var car = xs[0];
+var cdr = [].slice.call(xs, 1);
+var fn = car;
+if(car in state){
+fn = state[car];
+}
+else if("scope" == car) fn = scope;
+else return "unmatched car";
+if(fn.macro) return fn.apply(state, cdr);
+args = cdr.map(f.bind(this, f, env));
+return fn.apply(state, args);
+};
+
+state.lisp_to_callable = function(sexpr){
+var result = function compiled(env){
+var environ = [
+["window", window],
+["state", state]
+].concat(
+Object.keys(env).map(function(k){return [k, env[k]];})
+);
+return state.lisp_eval(state.lisp_eval, environ, sexpr);
+};
+result.parse_tree = sexpr;
+return result;
+}
+
+
+
+
+state.dictHasKey = function dictHasKey(haystack, needle){
+return state.lisp_to_callable(
+[
+"call",
+[
+"bindFrom",
+[
+"call",
+[
+"bindFrom",
+[
+"brackets",
+[
+"scope",
+"window"
+],
+[
+"quote",
+"Object"
+]
+],
+[
+"quote",
+"keys"
+]
+],
+[
+"list",
+[
+"scope",
+"haystack"
+]
+]
+],
+[
+"quote",
+"some"
+]
+],
+[
+"list",
+[
+"call",
+[
+"bindFrom",
+[
+"brackets",
+["scope", "state"],
+["quote", "eq"]
+],
+["quote", "bind"],
+],
+["list", ["scope", "state"], ["scope", "needle"]]
+]
+]
+]
+)(
+{"haystack": haystack, needle: needle}
+);
+};
+
+state.dictHasKey.test = function(callback){
+callback(
+state.lisp_to_callable(
+[
+"call",
+[
+"bindFrom",
+[
+"call",
+[
+"bindFrom",
+[
+"brackets",
+["scope", "window"],
+["quote", "Object"]
+],
+["quote", "keys"]
+],
+[
+"list",
+["scope", "state"]
+]
+],
+["quote", "every"]
+],
+[
+"list",
+[
+"call",
+[
+"bindFrom",
+[
+"brackets",
+["scope", "state"],
+["quote", "dictHasKey"]
+],
+["quote", "bind"]
+],
+[
+"list",
+["scope", "state"],
+["scope", "state"]
+]
+]
+]
+]
+)({})
+);
+}
+
+/*
+//state.textOut(Object.keys(state).join("\n"));
+window.expr = [
+"textOut",
+[
+"call",
+[
+"bindFrom",
+[
+"call",
+[
+"bindFrom",
+[
+"brackets",
+["scope", "window"],
+["quote", "Object"]
+],
+["quote", "keys"]
+],
+["list", ["scope", "state"]]
+],
+["quote", "join"]
+],
+["list", ["quote", "\n"]]
+]
+];
+*/
+
+if(!("read_box" in state))
+state.read_box = (
+function(d){
+d.id = "read_box";
+document.getElementsByTagName("body").item(0).appendChild(d);
+var ta = document.createElement("textarea");
+d.appendChild(ta);
+ta.id = "read_source";
+var b = document.createElement("input");
+b.type = "button";
+b.value = "eval pseudo-lisp"
+$(b).click(function(){state.eval_strictLisp(ta.value)});
+d.appendChild(b);
+return d;
+}
+)(document.createElement("div"));
+
+
+state.I = function I(x){return x;};
+state.tokenize_strictLisp = function tokenize_strictLisp(str){
+return str.split("\n").join(" ").split(" ").filter(state.I);
+};
+
+state.parse_strictLisp = function parse_strictLisp(str){
+var tokens = state.tokenize_strictLisp(str);
+var stack = [[]];
+function top(){return stack[stack.length - 1];}
+function pushTop(x){top().push(x);}
+function flattenDown(){pushTop(stack.pop());}
+function lift(){stack.push([]);}
+var current = [];
+for(var i = 0; i < tokens.length; i++){
+var t = tokens[i];
+if("[" == t) lift(t);
+else if ("]" == t) flattenDown(t);
+else
+pushTop(t);
+}
+while(stack.length > 1) flattenDown();
+return stack[0];
+};
+
+state.eval_strictLisp = function eval_strictLisp(str, env){
+if(!env) env = {};
+return state.lisp_to_callable(state.parse_strictLisp(str))(env);
+}
+
+})],
 "finally": "window.__project_path = " + JSON.stringify(__project_path) + ";\n_init();"},
 "$(init);"],
 "toHtml": (function toHtml(indentation){
