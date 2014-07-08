@@ -537,6 +537,83 @@ g.bind(this)(g);
  }
 
 
+
+ this.createForm(
+  "/admin/createForm/",
+  [
+   new FormField("path"),
+   new TextAreaField("fields"),
+   (
+    function(field, toHtml, attributes){
+     field.toHtml = toHtml;
+     field.attributes = attributes;
+     //TODO: coerce to boolean
+     return field;
+    }
+   )(
+    new FormField("public"),
+    function toHtml(){
+     var attributes = ["name=\"" + this.name + "\""].concat(
+      Object.keys(this.attributes).map(
+       function(k){
+        var value = this.attributes[k]; //TODO: escape
+        return k + "=\"" + value + "\"";
+       }.bind(this)
+      )
+     );
+     return "<input " + attributes.join(" ") + "></input>";
+    },
+    {type: "checkbox"}
+   ),
+   new TextAreaField("handler")
+  ],
+  function process(ob){
+   var path = ob.path;
+   var field_names = ob.fields;
+   var pub = "public" in ob && ob.public === "on";
+   var handler_text = ob.handler;
+
+   var field_lines = field_names.split("\n");
+   if(field_lines.length)
+    if("" == field_lines[field_lines.length - 1])
+     field_lines.pop(); // ignore trailing newline
+   var fields = field_lines.filter(function I(x){return x;}).map(
+    function(name){
+     if(name.length)
+      if("\r" == name[name.length - 1])
+       name = name.substring(0, name.length - 1);
+     return new TextAreaField(name);
+    }
+   );
+
+   var handler_function;
+
+   try{
+    handler_function = this.that.storeExecString(handler_text)[1];
+   }
+   catch(e){
+    return {toHtml: function(){return "couldn't eval handler's text";}}
+   }
+
+   function process(ob){
+     try{
+      var html = handler_function(ob).toHtml();
+      return {toHtml: function(){return html;}}
+     }
+     catch(e){
+      console.log(e);
+      return {toHtml: function(){return "error";}};
+     }
+   }
+
+   this.that.createForm(path, fields, process, {public: pub, that: this.that});
+
+   return {toHtml: function(){return "new form created";}};
+  },
+  {public: false, that: this}
+ );
+
+
  localStorageState.init(this);
 
 }
