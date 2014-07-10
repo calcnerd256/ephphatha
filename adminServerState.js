@@ -592,12 +592,16 @@ g.bind(this)(g);
     handler_function = this.that.storeExecString(handler_text)[1];
    }
    catch(e){
-    return {toHtml: function(){return "couldn't eval handler's text";}}
+    return {
+     toHtml: function(){
+      return "couldn't eval handler's text";
+     }
+    }
    }
 
    function process(ob){
      try{
-      var html = handler_function(ob).toHtml();
+      var html = handler_function.apply(this.that, arguments).toHtml();
       return {toHtml: function(){return html;}}
      }
      catch(e){
