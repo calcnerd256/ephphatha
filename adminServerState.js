@@ -617,6 +617,31 @@ g.bind(this)(g);
   {public: false, that: this}
  );
 
+ this.createForm(
+  "/admin/spawn/server/",
+  [new FormField("port")],
+  function process(ob){
+   var html = "";
+   function toHtml(){return html;}
+
+   var port = 15265;
+   if("port" in ob) port = +ob.port;
+
+   var that = this.that;
+
+   var child_process_index = that.helicopterMom("node", ["serve", "--port", port]);
+   var kid = that.childProcesses[child_process_index];
+   // fields: kid, opticon, cmd, arguments, killed
+   kid.port = port;
+   var url = "/admin/child/"; // TODO: link to individual process
+   html = "selfsame <a href=\"" + url + "\">child</a> spawned at index " + child_process_index;
+
+   var response = {toHtml: toHtml};
+   return response;
+  },
+  {public: false, that: this}
+ )
+
 
  localStorageState.init(this);
 
