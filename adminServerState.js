@@ -600,14 +600,14 @@ g.bind(this)(g);
    }
 
    function process(ob){
-     try{
-      var html = handler_function.apply(this.that, arguments).toHtml();
-      return {toHtml: function(){return html;}}
-     }
-     catch(e){
-      console.log(e);
-      return {toHtml: function(){return "error";}};
-     }
+    try{
+     var html = handler_function.apply(this.that, arguments).toHtml();
+     return {toHtml: function(){return html;}}
+    }
+    catch(e){
+     console.log(e);
+     return {toHtml: function(){return "error";}};
+    }
    }
 
    this.that.createForm(path, fields, process, {public: pub, that: this.that});
