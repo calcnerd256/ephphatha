@@ -70,37 +70,46 @@ var port = ports.http;
 var sslPort = ports.https
 
 
-// start servers
 
-this.server = new adminServer.AdminStringServer();
-this.server.init(
- port,
- sslPort,
- {
-  key: fs.readFileSync("./certs/ephphatha.key"),
-  cert: fs.readFileSync("./certs/ephphatha.cert")
- },
- function(){
-  console.log(arguments);
-  repl.start(undefined, undefined, undefined, true);
- }
-);
+// some behaviors in callbacks
 
-global.server = this.server;
+function after_setup_servers(){
+ console.log(arguments);
+ repl.start(undefined, undefined, undefined, true);
+}
+
+function handle_exception(error){
+ // swallow all errors and emit a helpful message
+ var description = "unhandled exception";
+ var suggestion = "please restart the server";
+ var warning = [
+  description,
+  error,
+  suggestion,
+  error.stack
+ ]
+ console.warn(warning);
+}
 
 
-//silently ignore errors
+function setup_servers(key, cert, after, handle_exception){
 
-process.on(
- "uncaughtException",
- function(e){
-  console.warn(
-   [
-    "unhandled exception",
-    e,
-    "please restart the server",
-    e.stack
-   ]
-  );
- }.bind(this)
-);
+ // start servers
+
+ this.server = new adminServer.AdminStringServer();
+ this.server.init(port, sslPort, {key: key, cert: cert}, after);
+ global.server = this.server;
+
+
+ //silently ignore errors
+
+ process.on("uncaughtException", handle_exception.bind(this));
+
+}
+
+// currently reads the two files synchronously in series
+// TODO: might as well read them in parallel
+var key = fs.readFileSync("./certs/ephphatha.key");
+var cert = fs.readFileSync("./certs/ephphatha.cert");
+
+setup_servers.call(this, key, cert, after_setup_servers, handle_exception);

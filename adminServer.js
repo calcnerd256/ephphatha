@@ -186,7 +186,7 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
  var adminServerState = require("./adminServerState");
  function calledOnce(){
   adminServerState.init.apply(that, arguments);
-  return callback.apply(this.arguments);
+  return callback.apply(this, arguments);
  }
  var httpServer = util.fluentKeyCall(
   this.getServerPerProtocol("HTTP"),
