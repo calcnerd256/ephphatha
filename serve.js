@@ -107,9 +107,84 @@ function setup_servers(key, cert, after, handle_exception){
 
 }
 
-// currently reads the two files synchronously in series
-// TODO: might as well read them in parallel
-var key = fs.readFileSync("./certs/ephphatha.key");
-var cert = fs.readFileSync("./certs/ephphatha.cert");
+function after_cert_io(key, cert){
+ return setup_servers.call(this, key, cert, after_setup_servers, handle_exception);
+}
 
-setup_servers.call(this, key, cert, after_setup_servers, handle_exception);
+
+// async read the HTTPS files from the filesystem
+
+function readFilePromise(filename, options){
+ if(arguments.length == 2){callback = options; options = "default"}; //lol
+
+ // didn't bother looking up actual Promise API
+ var promise = {
+  fail: function(){
+   return this.emit("failure", arguments);
+  },
+  succeed: function(){
+   return this.emit("success", arguments);
+  },
+  on: function(channel, listener){
+   if(!(channel in this.channels)) this.channels = [];
+   this.channels[channel].push(listener);
+   return this;
+  },
+  paused: true,
+  pause: function(unpause){
+   this.paused = !unpause;
+   if(!this.paused)
+    this.cache.map(function(ca){this.emit(ca[0], ca[1])}.bind(this));
+   return this;
+  },
+  unpause: function(pause){
+   return this.pause(!pause);
+  },
+  emit: function(channel, args){
+   var defer = this.paused;
+   if(!(channel in this.channels)) defer = true;
+   if(defer){
+    this.cache.push([channel, args]);
+    return this;
+   }
+   var fns = this.channels[channel];
+   fns.map(function(f){f.apply(this, args)}.bind(this));
+   return this;
+  },
+  channels: {
+   success: [],
+   failure: []
+  },
+  cache: []
+ };
+
+ function callback(err, data){
+  promise.err = err;
+  promise.data = data;
+  if(promise.err) return promise.fail(err);
+  return promise.succeed(data);
+ }
+ if("default" == options)
+  fs.readFile(filename, callback)
+ else fs.readFile(filename, options, callback);
+ return promise;
+}
+
+function read_cert(key_file, cert_file, callback){
+ var keyPromise = readFilePromise(key_file).pause();
+ var certPromise = readFilePromise(cert_file).pause();
+ keyPromise.on(
+  "success",
+  function(key){
+   certPromise.on(
+    "success",
+    function(cert){
+     return callback.call(this, key, cert);
+    }.bind(this)
+   ).unpause();
+  }.bind(this)
+ ).unpause();
+}
+
+// kick it all off
+read_cert.call(this, "./certs/ephphatha.key", "./certs/ephphatha.cert", after_cert_io);
