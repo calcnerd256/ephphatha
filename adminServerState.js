@@ -501,7 +501,8 @@ g.bind(this)(g);
  }.init();
 
 
- this.prefixState["/admin/introspect/"] = function respond(req, res, u){
+ var introspect_path = "/admin/introspect/";
+ this.prefixState[introspect_path] = function respond(req, res, u){
   var p = u.split("/");
   var maybe_path = "";
   if(p.length)
@@ -535,6 +536,9 @@ g.bind(this)(g);
    ].join("\n")
   );
  }
+
+ // yikes!
+ this.prefixState[introspect_path] = this.adminOnly(this.prefixState[introspect_path]);
 
 
 

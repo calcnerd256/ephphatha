@@ -72,6 +72,10 @@ var sslPort = ports.https
 
 
 // some behaviors in callbacks
+//  after_setup_servers
+//  handle_exception
+//  setup_servers
+//  after_cert_io
 
 function after_setup_servers(){
  console.log(arguments);
@@ -113,9 +117,58 @@ function after_cert_io(key, cert){
 
 
 // async read the HTTPS files from the filesystem
+//  readFilePromise
+//  read_cert
 
 function readFilePromise(filename, options){
- if(arguments.length == 2){callback = options; options = "default"}; //lol
+
+ function Pure(x){
+  this.value = x;
+ }
+ Pure.prototype.fmap = function(f){return new Pure(f(this.value));};
+ Pure.prototype.pure = function(x){return new Pure(x);};
+ Pure.prototype.applicate = function(p){return p.fmap(this.value);};
+
+ function Future(){
+  this.listeners = [];
+  this.done = false;
+ }
+ Future.prototype.listen = function(callback){
+  if(this.done) return callback(this.value);
+  this.listeners.push(callback);
+ };
+ Future.prototype.occur = function(v){
+  //assume !this.done
+  this.listeners.map(function(f){return f(v);});
+  this.value = v;
+  this.done = true;
+  this.listeners = [];
+ };
+ Future.prototype.fmap = function(f){
+  var result = new Future();
+  this.listen(function(v){result.occur(f(v));});
+  return result;
+ };
+ Future.prototype.pure = function(x){
+  var result = new Future();
+  result.occur(x);
+  return result;
+ };
+ Future.prototype.flatten = function(){
+  var result = new Future();
+  this.listen(function(p){p.listen(function(x){result.occur(x);});});
+  return result;
+ };
+ Future.prototype.applicate = function(p){// is there a better word? I don't want to say "apply"
+  // p (a -> b) -> (p a -> p b)
+  // pure f <*> p = fmap f p
+  if(p instanceof Pure) return this.fmap(function(f){return p.fmap(f).value;});
+  return this.fmap(function(f){return p.fmap(f)}).flatten();
+ };
+
+ //maybe a "Promise a" is an "Either (Future Error) (Future a)" ?
+ //or maybe just a "Future (Either Error a)"
+ //though I think we can make an applicative version that doesn't care, like how sequenceA doesn't care [Maybe a] vs Maybe [a]
 
  // didn't bother looking up actual Promise API
  var promise = {
@@ -164,7 +217,7 @@ function readFilePromise(filename, options){
   if(promise.err) return promise.fail(err);
   return promise.succeed(data);
  }
- if("default" == options)
+ if(!options)
   fs.readFile(filename, callback)
  else fs.readFile(filename, options, callback);
  return promise;
