@@ -127,7 +127,8 @@ function readFilePromise(filename, options){
  }
  Pure.prototype.fmap = function(f){return new Pure(f(this.value));};
  Pure.prototype.pure = function(x){return new Pure(x);};
- Pure.prototype.applicate = function(p){return p.fmap(this.value);};
+ Pure.prototype.flatten = function(){return this.value;};
+ Pure.prototype.applicate = function(p){return this.fmap(p.fmap.bind(p)).flatten();};// this turns out to be a law or something
 
  function Future(){
   this.listeners = [];
@@ -156,19 +157,68 @@ function readFilePromise(filename, options){
  };
  Future.prototype.flatten = function(){
   var result = new Future();
-  this.listen(function(p){p.listen(function(x){result.occur(x);});});
+  this.listen(
+   function(p){
+    if(p instanceof Pure) return result.occur(p.value);
+    p.listen(result.occur.bind(result));
+   }
+  );
   return result;
  };
- Future.prototype.applicate = function(p){// is there a better word? I don't want to say "apply"
-  // p (a -> b) -> (p a -> p b)
-  // pure f <*> p = fmap f p
-  if(p instanceof Pure) return this.fmap(function(f){return p.fmap(f).value;});
-  return this.fmap(function(f){return p.fmap(f)}).flatten();
- };
+ Future.prototype.applicate = Pure.prototype.applicate;
 
  //maybe a "Promise a" is an "Either (Future Error) (Future a)" ?
  //or maybe just a "Future (Either Error a)"
  //though I think we can make an applicative version that doesn't care, like how sequenceA doesn't care [Maybe a] vs Maybe [a]
+
+ function Promise(){
+  this.success = new Future();
+  this.failure = new Future();
+ }
+ Promise.prototype.onSuccess = function(callback){
+  this.success.listen(callback);
+ };
+ Promise.prototype.onFailure = function(errback){
+  this.failure.listen(errback);
+ };
+ Promise.prototype.listen = function(callback, errback){
+  this.onSuccess(callback);
+  if(errback)
+   this.onFailure(errback);
+ };
+ Promise.prototype.keep = function(x){
+  return this.success.occur(x);
+ };
+ Promise.prototype["break"] = function(e){
+  return this.failure.occur(e);
+ };
+ Promise.prototype.fmap = function(f){
+  result = new Promise();
+  result.success = this.success.fmap(f);
+  result.failure = this.failure;
+ };
+ Promise.prototype.pure = function(x){
+  result = new Promise();
+  result.success = this.success.pure(x);
+ };
+ Promise.prototype.flatten = function(){
+  //a promise of a promise that yields a promise
+  var result = new Promise();
+  this.listen(
+   function(p){
+    if(p instanceof Pure) return result.keep(p.value);
+    p.listen(
+     result.keep.bind(result),
+     result["break"].bind(result)
+    )
+   },
+   result["break"].bind(result)
+  );
+  return result;
+ };
+ Promise.prototype.applicate = Pure.prototype.applicate;
+
+ var result = new Promise();
 
  // didn't bother looking up actual Promise API
  var promise = {
@@ -179,7 +229,9 @@ function readFilePromise(filename, options){
    return this.emit("success", arguments);
   },
   on: function(channel, listener){
-   if(!(channel in this.channels)) this.channels = [];
+   if("success" == channel) result.onSuccess(listener);
+   else result.onFailure(listener);
+   if(!(channel in this.channels)) this.channels[channel] = [];
    this.channels[channel].push(listener);
    return this;
   },
@@ -194,6 +246,8 @@ function readFilePromise(filename, options){
    return this.pause(!pause);
   },
   emit: function(channel, args){
+   if("success" == channel) return result.keep.apply(result, args);
+   else return result["break"].apply(result, args);
    var defer = this.paused;
    if(!(channel in this.channels)) defer = true;
    if(defer){
@@ -212,6 +266,8 @@ function readFilePromise(filename, options){
  };
 
  function callback(err, data){
+  if(err) result["break"](err);
+  else result.keep(data);
   promise.err = err;
   promise.data = data;
   if(promise.err) return promise.fail(err);
