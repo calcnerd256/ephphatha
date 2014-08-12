@@ -116,11 +116,11 @@ function after_cert_io(key, cert){
 }
 
 
-// async read the HTTPS files from the filesystem
-//  readFilePromise
-//  read_cert
-
-function readFilePromise(filename, options){
+//applicative monads
+// Pure
+// Future
+// Promise
+// List
 
  function Pure(x){
   this.value = x;
@@ -129,6 +129,40 @@ function readFilePromise(filename, options){
  Pure.prototype.pure = function(x){return new Pure(x);};
  Pure.prototype.flatten = function(){return this.value;};
  Pure.prototype.applicate = function(p){return this.fmap(p.fmap.bind(p)).flatten();};// this turns out to be a law or something
+
+ function Function_(f){
+  this.value = f;
+ }
+ Function_.prototype.apply = function(args){
+  return this.value.apply(this, args);
+ }
+ Function_.prototype.fmap = function(f){
+  return new Function(function(){return f(this.apply(arguments));}.bind(this));
+ };
+ Function_.prototype.pure = function(x){
+  return new Function(function(){return x;});
+ }
+ // applicate looks like f <*> g = S f g = \ x . f x (g x)
+ // X <*> Y = flatten (fmap (\ f . fmap f Y) X)
+ // S f g = join (B (\ x . B x g) f)
+ //  f x (g x) = join (\ y z . f y (g z)) x
+ // join h x = h x x
+ // f x (g x) = join (\ y z . f y (g z)) x
+ Function_.prototype.flatten = function(){
+  return new Function_(
+   function(){
+    var partial = this.apply(arguments);
+    if(partial instanceof Pure) return partial.value;
+    return partial.apply(arguments);
+   }.bind(this)
+  );
+ }
+ Function_.prototype.applicate = Pure.prototype.applicate;
+ Function_.prototype.applicate = function(g){
+  if(g instanceof Pure) return function(){return this.apply(arguments)(g.value);}.bind(this);
+  return function(){return this.apply(arguments)(g.apply(arguments))}.bind(this);
+ }
+
 
  function Future(){
   this.listeners = [];
@@ -144,6 +178,7 @@ function readFilePromise(filename, options){
   this.value = v;
   this.done = true;
   this.listeners = [];
+  return this;
  };
  Future.prototype.fmap = function(f){
   var result = new Future();
@@ -177,29 +212,36 @@ function readFilePromise(filename, options){
  }
  Promise.prototype.onSuccess = function(callback){
   this.success.listen(callback);
+  return this;
  };
  Promise.prototype.onFailure = function(errback){
   this.failure.listen(errback);
+  return this;
  };
  Promise.prototype.listen = function(callback, errback){
   this.onSuccess(callback);
   if(errback)
    this.onFailure(errback);
+  return this;
  };
  Promise.prototype.keep = function(x){
-  return this.success.occur(x);
+  this.success.occur(x);
+  return this;
  };
  Promise.prototype["break"] = function(e){
-  return this.failure.occur(e);
+  this.failure.occur(e);
+  return this;
  };
  Promise.prototype.fmap = function(f){
   result = new Promise();
   result.success = this.success.fmap(f);
   result.failure = this.failure;
+  return result;
  };
  Promise.prototype.pure = function(x){
   result = new Promise();
   result.success = this.success.pure(x);
+  return result;
  };
  Promise.prototype.flatten = function(){
   //a promise of a promise that yields a promise
@@ -218,81 +260,38 @@ function readFilePromise(filename, options){
  };
  Promise.prototype.applicate = Pure.prototype.applicate;
 
- var result = new Promise();
+// async read the HTTPS files from the filesystem
+//  readFilePromise
+//  read_cert
 
- // didn't bother looking up actual Promise API
- var promise = {
-  fail: function(){
-   return this.emit("failure", arguments);
-  },
-  succeed: function(){
-   return this.emit("success", arguments);
-  },
-  on: function(channel, listener){
-   if("success" == channel) result.onSuccess(listener);
-   else result.onFailure(listener);
-   if(!(channel in this.channels)) this.channels[channel] = [];
-   this.channels[channel].push(listener);
-   return this;
-  },
-  paused: true,
-  pause: function(unpause){
-   this.paused = !unpause;
-   if(!this.paused)
-    this.cache.map(function(ca){this.emit(ca[0], ca[1])}.bind(this));
-   return this;
-  },
-  unpause: function(pause){
-   return this.pause(!pause);
-  },
-  emit: function(channel, args){
-   if("success" == channel) return result.keep.apply(result, args);
-   else return result["break"].apply(result, args);
-   var defer = this.paused;
-   if(!(channel in this.channels)) defer = true;
-   if(defer){
-    this.cache.push([channel, args]);
-    return this;
-   }
-   var fns = this.channels[channel];
-   fns.map(function(f){f.apply(this, args)}.bind(this));
-   return this;
-  },
-  channels: {
-   success: [],
-   failure: []
-  },
-  cache: []
- };
+function readFilePromise(filename, options){
+
+ var result = new Promise();
 
  function callback(err, data){
   if(err) result["break"](err);
   else result.keep(data);
-  promise.err = err;
-  promise.data = data;
-  if(promise.err) return promise.fail(err);
-  return promise.succeed(data);
  }
  if(!options)
   fs.readFile(filename, callback)
  else fs.readFile(filename, options, callback);
- return promise;
+
+ return result;
 }
 
 function read_cert(key_file, cert_file, callback){
- var keyPromise = readFilePromise(key_file).pause();
- var certPromise = readFilePromise(cert_file).pause();
- keyPromise.on(
-  "success",
+ var keyPromise = readFilePromise(key_file);
+ var certPromise = readFilePromise(cert_file);
+ //callback version
+ keyPromise.onSuccess(
   function(key){
-   certPromise.on(
-    "success",
+   certPromise.onSuccess(
     function(cert){
      return callback.call(this, key, cert);
     }.bind(this)
-   ).unpause();
+   )
   }.bind(this)
- ).unpause();
+ );
 }
 
 // kick it all off
