@@ -118,9 +118,10 @@ function after_cert_io(key, cert){
 
 //applicative monads
 // Pure
+// Function_ // it's like a function; maybe I should curry it instead?
 // Future
 // Promise
-// List
+// List // not implemented yet
 
  function Pure(x){
   this.value = x;
@@ -128,7 +129,13 @@ function after_cert_io(key, cert){
  Pure.prototype.fmap = function(f){return new Pure(f(this.value));};
  Pure.prototype.pure = function(x){return new Pure(x);};
  Pure.prototype.flatten = function(){return this.value;};
- Pure.prototype.applicate = function(p){return this.fmap(p.fmap.bind(p)).flatten();};// this turns out to be a law or something
+ Pure.prototype.applicate = function applicate(p){
+  // this turns out to be a law or something
+  // the "this" object is expected to contain a function that it gives to whoever fmaps over it
+  var catamorphism = p.fmap.bind(p); // constructs the other functor from a function
+  var nested = this.fmap(catamorphism);
+  return nested.flatten();
+ };
 
  function Function_(f){
   this.value = f;
@@ -282,17 +289,15 @@ function readFilePromise(filename, options){
 function read_cert(key_file, cert_file, callback){
  var keyPromise = readFilePromise(key_file);
  var certPromise = readFilePromise(cert_file);
- //callback version
- keyPromise.onSuccess(
-  function(key){
-   certPromise.onSuccess(
-    function(cert){
-     return callback.call(this, key, cert);
-    }.bind(this)
-   )
-  }.bind(this)
- );
+ function keyback(key){
+  function certback(cert){
+   return callback.call(this, key, cert);
+  }
+  return certback.bind(this);
+ }
+ var think = keyPromise.fmap(keyback); // TODO: prove fmap f x = pure f <*> x for Promise (it doesn't right now, so fix the bug while proving it)
+ return think.applicate(certPromise);
 }
 
 // kick it all off
-read_cert.call(this, "./certs/ephphatha.key", "./certs/ephphatha.cert", after_cert_io);
+read_cert.call(this, "./certs/ephphatha.key", "./certs/ephphatha.cert", after_cert_io); // returns a promise for the return value of after_cert_io
