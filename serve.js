@@ -181,15 +181,21 @@ function after_cert_io(key, cert){
  };
  Future.prototype.occur = function(v){
   //assume !this.done
-  this.listeners.map(function(f){return f(v);});
   this.value = v;
-  this.done = true;
+  this.done = true; //order matters!
+  var listeners = this.listeners; // make sure no listeners mess up the list or rely on you not messing it up
   this.listeners = [];
+  listeners.map(function(f){return f(v);});
   return this;
  };
- Future.prototype.fmap = function(f){
+ Future.prototype.fmap = function(transformation_to_compose){
   var result = new Future();
-  this.listen(function(v){result.occur(f(v));});
+  this.listen(
+   function delegate_image_to_transformed_clone(preimage){
+    var image = transformation_to_compose(preimage);
+    result.occur(image);
+   }
+  );
   return result;
  };
  Future.prototype.pure = function(x){
@@ -226,9 +232,9 @@ function after_cert_io(key, cert){
   return this;
  };
  Promise.prototype.listen = function(callback, errback){
-  this.onSuccess(callback);
   if(errback)
    this.onFailure(errback);
+  this.onSuccess(callback);
   return this;
  };
  Promise.prototype.keep = function(x){
@@ -295,7 +301,10 @@ function read_cert(key_file, cert_file, callback){
   }
   return certback.bind(this);
  }
- var think = keyPromise.fmap(keyback); // TODO: prove fmap f x = pure f <*> x for Promise (it doesn't right now, so fix the bug while proving it)
+
+ //var thinkNested = keyPromise.pure(keyback.bind(this)).fmap(keyPromise.fmap.bind(keyPromise)); // should equal the below line, but isn't working
+ var thinkNested = keyPromise.pure(keyPromise.fmap(keyback.bind(this)));
+ var think = thinkNested.flatten();
  return think.applicate(certPromise);
 }
 
