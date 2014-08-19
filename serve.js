@@ -304,17 +304,24 @@ function readFilePromise(filename, options){
  return result;
 }
 
-function read_cert(key_file, cert_file, callback){
- var keyPromise = readFilePromise(key_file);
- var certPromise = readFilePromise(cert_file);
- function keyback(key){
-  function certback(cert){
-   return callback.call(this, key, cert);
+function curryTwo(f){
+ return function result(x){
+  return function partial(y){
+   return f(x,y);
   }
-  return certback.bind(this);
  }
+}
 
- return keyPromise.pure(keyback.bind(this)).applicate(keyPromise).applicate(certPromise);
+function read_cert(key_file, cert_file, callback){
+ return new Promise().pure(
+  curryTwo(
+   callback.bind(this)
+  )
+ ).applicate(
+  readFilePromise(key_file)
+ ).applicate(
+  readFilePromise(cert_file)
+ );
 }
 
 // kick it all off
