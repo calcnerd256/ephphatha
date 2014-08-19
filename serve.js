@@ -8,7 +8,7 @@
 var repl = require("repl");
 var fs = require("fs");
 var adminServer = require("./adminServer");
-
+var Promise = require("./applicatives").Promise;
 
 // ports
 //  get_command_line_arguments
@@ -71,6 +71,7 @@ var sslPort = ports.https
 
 
 
+
 // some behaviors in callbacks
 //  after_setup_servers
 //  handle_exception
@@ -115,10 +116,11 @@ function after_cert_io(key, cert){
  return setup_servers.call(this, key, cert, after_setup_servers, handle_exception);
 }
 
-var Promise = require("./applicatives").Promise;
+
 
 // async read the HTTPS files from the filesystem
 //  readFilePromise
+//  curryTwo
 //  read_cert
 
 function readFilePromise(filename, options){
