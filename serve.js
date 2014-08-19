@@ -8,7 +8,10 @@
 var repl = require("repl");
 var fs = require("fs");
 var adminServer = require("./adminServer");
-var Promise = require("./applicatives").Promise;
+var applicatives = require("./applicatives")
+ var Promise = applicatives.Promise;
+ var curryTwo = applicatives.curryTwo;
+ var List = applicatives.List;
 
 // ports
 //  get_command_line_arguments
@@ -138,24 +141,12 @@ function readFilePromise(filename, options){
  return result;
 }
 
-function curryTwo(f){
- return function result(x){
-  return function partial(y){
-   return f(x,y);
-  }
- }
-}
-
 function read_cert(key_file, cert_file, callback){
- return new Promise().pure(
-  curryTwo(
-   callback.bind(this)
-  )
- ).applicate(
-  readFilePromise(key_file)
- ).applicate(
-  readFilePromise(cert_file)
- );
+ return new List(
+  [key_file, cert_file]
+ ).fmap(readFilePromise).seq().fmap(
+  callback.call.bind(List.prototype.toArray)
+ ).fmap(callback.apply.bind(callback, this));
 }
 
 // kick it all off

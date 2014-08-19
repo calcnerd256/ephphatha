@@ -171,6 +171,15 @@ Promise.prototype.join = function(){
 Promise.prototype.applicate = Pure.prototype.applicate;
 
 
+function curryTwo(f){
+ return function result(x){
+  return function partial(y){
+   return f(x,y);
+  }
+ }
+}
+
+
 function List(arr, index){
  if(!index) index = 0;
  this.index = index;
@@ -254,7 +263,18 @@ List.prototype.join = function(){
  }.bind(this);
  return result;
 };
-// TODO: seq
+// List.seq is kind of like List.cons
+// it unpacks a list of some functor F and returns an F of a list
+// seq List.nil = Pure(List.nil)
+// seq List.cons(Fx, Fys) = Fx.pure(List.cons) <*> Fx <*> (seq Fys)
+List.prototype.seq = function(){
+ if(this.empty()) return new Pure(List.nil);
+ var head = this.car();
+ var partial = head.pure(curryTwo(List.cons.bind(List))).applicate(head);
+ // equivalently, var partial = this.car().fmap(curryTwo(List.cons.bind(List)));
+ return partial.applicate(this.cdr().seq());
+};
 
 this.Promise = Promise;
+this.curryTwo = curryTwo;
 this.List = List;
