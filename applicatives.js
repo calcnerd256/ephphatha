@@ -8,49 +8,48 @@
 function Pure(x){
  this.value = x;
 }
-Pure.prototype.fmap = function(f){return new Pure(f(this.value));};
+Pure.prototype.fmap = function(f){return new Pure(f(this.extract()));};
 Pure.prototype.pure = function(x){return new Pure(x);};
-Pure.prototype.flatten = function(){return this.value;};
+Pure.prototype.extract = function(){return this.value;};
+Pure.prototype.join = function(){return this.extract();};
 Pure.prototype.applicate = function applicate(p){
  // this turns out to be a law or something
  // the "this" object is expected to contain a function that it gives to whoever fmaps over it
  var catamorphism = p.fmap.bind(p); // constructs the other functor from a function
  var nested = this.fmap(catamorphism);
- return nested.flatten();
+ return nested.join();
 };
 
 function Function_(f){
  this.value = f;
 }
+Function_.toFunction = function(){return this.value};
 Function_.prototype.apply = function(args){
- return this.value.apply(this, args);
+ return this.toFunction().apply(this, args);
 }
 Function_.prototype.fmap = function(f){
  return new Function(function(){return f(this.apply(arguments));}.bind(this));
 };
+Function_.K = function K(x){return function(){return x;};};
 Function_.prototype.pure = function(x){
- return new Function(function(){return x;});
+ return new Function_(Function_.K(x));
 }
 // applicate looks like f <*> g = S f g = \ x . f x (g x)
-// X <*> Y = flatten (fmap (\ f . fmap f Y) X)
+// X <*> Y = join (fmap (\ f . fmap f Y) X)
 // S f g = join (B (\ x . B x g) f)
 //  f x (g x) = join (\ y z . f y (g z)) x
 // join h x = h x x
 // f x (g x) = join (\ y z . f y (g z)) x
-Function_.prototype.flatten = function(){
+Function_.prototype.join = function(){
  return new Function_(
   function(){
    var partial = this.apply(arguments);
-   if(partial instanceof Pure) return partial.value;
+   if(partial instanceof Pure) return partial.extract();
    return partial.apply(arguments);
   }.bind(this)
  );
 }
 Function_.prototype.applicate = Pure.prototype.applicate;
-Function_.prototype.applicate = function(g){
- if(g instanceof Pure) return function(){return this.apply(arguments)(g.value);}.bind(this);
- return function(){return this.apply(arguments)(g.apply(arguments))}.bind(this);
-}
 
 
 function Future(){
@@ -58,7 +57,7 @@ function Future(){
  this.done = false;
 }
 Future.prototype.listen = function(callback){
- if(this.done) return callback(this.value);
+ if(this.done) return callback(this.extract());
  this.listeners.push(callback);
 };
 Future.prototype.occur = function(v){
@@ -70,6 +69,10 @@ Future.prototype.occur = function(v){
  listeners.map(function(f){return f(v);});
  return this;
 };
+Future.prototype.extract = function(){
+ if(!this.done) throw new Error(["future hasn't occurred yet", this]);
+ return this.value;
+}
 Future.prototype.fmap = function(transformation_to_compose){
  var result = new Future();
  this.listen(
@@ -85,11 +88,11 @@ Future.prototype.pure = function(x){
  result.occur(x);
  return result;
 };
-Future.prototype.flatten = function(){
+Future.prototype.join = function(){
  var result = new Future();
  this.listen(
   function(p){
-   if(p instanceof Pure) return result.occur(p.value);
+   if(p instanceof Pure) return result.occur(p.extract());
    p.listen(result.occur.bind(result));
   }
  );
@@ -100,7 +103,7 @@ Future.never = new Future();
 Future.never.listen = function(){};
 Future.never.occur = function(){throw new Error("pigs flew, with arguments:", arguments);};
 Future.never.fmap = function(){return Future.never;};
-Future.never.flatten = Future.never.fmap;
+Future.never.join = Future.never.fmap;
 Future.never.toString = function(){return "Future.never";};
 Future.name = "Never";
 
@@ -150,12 +153,12 @@ Promise.prototype.pure = function(x){
  result.failure = Future.never;
  return result;
 };
-Promise.prototype.flatten = function(){
+Promise.prototype.join = function(){
  //a promise of a promise that yields a promise
  var result = new Promise();
  this.listen(
   function(p){
-   if(p instanceof Pure) return result.keep(p.value);
+   if(p instanceof Pure) return result.keep(p.extract());
    p.listen(
     result.keep.bind(result),
     result["break"].bind(result)
@@ -167,4 +170,91 @@ Promise.prototype.flatten = function(){
 };
 Promise.prototype.applicate = Pure.prototype.applicate;
 
+
+function List(arr, index){
+ if(!index) index = 0;
+ this.index = index;
+ this.underlying = arr;
+}
+List.prototype.clone = function(){
+ return {__proto__: this};
+};
+List.prototype.empty = function(){
+ return this.index >= this.underlying.length;
+};
+List.prototype.car = function(){
+ return this.underlying[this.index];
+};
+List.prototype.cdr = function(){
+ var result = this.clone();
+ result.index++;
+ return result;
+};
+List.prototype.toArray = function(){
+ var result = [];
+ var accum = this;
+ while(!accum.empty()){
+  result.push(accum.car());
+  accum = accum.cdr();
+ }
+ return result;
+};
+List.prototype.toString = function(){
+ if(this.empty()) return "nil";
+ var tail = this.cdr();
+ if(!(tail instanceof List)) return "(" + this.car() +  " . " + this.cdr() + ")";
+ return "(" + this.toArray().join(" ") + ")";
+};
+List.K = function K(x){return function(){return x;};};
+List.cons = function(head, tail){
+ var result = new List();
+ result.car = List.K(head);
+ result.cdr = List.K(tail);
+ result.empty = List.K(false);
+ return result;
+};
+List.prototype.fmap = function(f, memoize){
+ var result = this.clone();
+ result.car = function(){
+  var memo = f(this.car());
+  if(memoize)
+   result.car = List.K(memo);
+  return memo;
+ }.bind(this);
+ result.cdr = function(){
+  return this.cdr().fmap(f, memoize);
+ }.bind(this);
+ return result;
+};
+List.nil = new List([]);
+List.nil.empty = List.K(true);
+List.pure = function(x){
+ return List.cons(x, List.nil)
+}
+List.prototype.pure = List.pure;
+List.prototype.applicate = Pure.prototype.applicate;
+List.prototype.join = function(){
+ if(this.empty()) return List.nil;
+ var head = this.car();
+ if(head.empty()) return this.cdr().join();
+ var result = new List([]);
+ result.car = function(){
+  if(head.empty()) return this.cdr().join().car();
+  return head.car();
+ }.bind(this);
+ result.cdr = function(){
+  var tail = this.cdr();
+  if(tail.empty()) return head.cdr();
+  return List.cons(head.cdr(), tail).join();
+ }.bind(this);
+ result.empty = function(){
+  if(this.empty()) return true;
+  if(!head.empty()) return false;
+  return this.cdr.join().empty();
+ }.bind(this);
+ return result;
+};
+// TODO: seq
+
 this.Promise = Promise;
+this.List = List;
