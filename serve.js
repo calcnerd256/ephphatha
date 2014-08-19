@@ -214,6 +214,13 @@ function after_cert_io(key, cert){
   return result;
  };
  Future.prototype.applicate = Pure.prototype.applicate;
+ Future.never = new Future();
+ Future.never.listen = function(){};
+ Future.never.occur = function(){throw new Error("pigs flew, with arguments:", arguments);};
+ Future.never.fmap = function(){return Future.never;};
+ Future.never.flatten = Future.never.fmap;
+ Future.never.toString = function(){return "Future.never";};
+ Future.name = "Never";
 
  //maybe a "Promise a" is an "Either (Future Error) (Future a)" ?
  //or maybe just a "Future (Either Error a)"
@@ -239,21 +246,26 @@ function after_cert_io(key, cert){
  };
  Promise.prototype.keep = function(x){
   this.success.occur(x);
+  this.onFailure(Future.never.occur.bind(Future.never));
+  this.failure = Future.never;
   return this;
  };
  Promise.prototype["break"] = function(e){
   this.failure.occur(e);
+  this.onSuccess(Future.never.occur.bind(Future.never));
+  this.success = Future.never;
   return this;
  };
  Promise.prototype.fmap = function(f){
-  result = new Promise();
+  var result = new Promise();
   result.success = this.success.fmap(f);
   result.failure = this.failure;
   return result;
  };
  Promise.prototype.pure = function(x){
-  result = new Promise();
+  var result = new Promise();
   result.success = this.success.pure(x);
+  result.failure = Future.never;
   return result;
  };
  Promise.prototype.flatten = function(){
@@ -302,10 +314,7 @@ function read_cert(key_file, cert_file, callback){
   return certback.bind(this);
  }
 
- //var thinkNested = keyPromise.pure(keyback.bind(this)).fmap(keyPromise.fmap.bind(keyPromise)); // should equal the below line, but isn't working
- var thinkNested = keyPromise.pure(keyPromise.fmap(keyback.bind(this)));
- var think = thinkNested.flatten();
- return think.applicate(certPromise);
+ return keyPromise.pure(keyback.bind(this)).applicate(keyPromise).applicate(certPromise);
 }
 
 // kick it all off
