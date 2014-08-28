@@ -13,14 +13,49 @@ var applicatives = require("./applicatives")
  var curryTwo = applicatives.curryTwo;
  var List = applicatives.List;
 
+// language helpers
+
+function pluck_from(ob){
+ function plucker(key){
+  return ob[key];
+ }
+ plucker.ob = ob;
+ return plucker;
+}
+function call_with_params_from(dict, key_list, fn){
+ var args = key_list.map(
+  pluck_from(dict)
+ );
+ return fn.apply(this, args);
+}
+function pack_optional_args(key_list, defaults, args){
+ var result = {__proto__: defaults};
+ [].map.call(args, function(v, i){result[key_list[i]] = v;});
+ return result;
+}
+
+function wrap_full_with_defaults(keys, defaults, fn){
+ function wrapped(){
+  var dict = pack_optional_args(keys, defaults, arguments);
+  return call_with_params_from.call(this, dict, keys, fn);
+ }
+ wrapped.keys = keys;
+ wrapped.defaults = defaults;
+ wrapped.fn = fn;
+ return wrapped;
+}
+
+
+
 // ports
 //  get_command_line_arguments
 //  get_ports_from_command_line
 //  actually set the port variables
 
-function get_command_line_arguments(argv){
- if(arguments.length == 0) argv = process.argv;
-
+var get_command_line_arguments = wrap_full_with_defaults(
+ ["argv"],
+ process,
+ function(argv){
  var args = {};
  if("--port" == argv[2])
   args.port = argv[3];
@@ -29,20 +64,17 @@ function get_command_line_arguments(argv){
   args.sslPort = argv[5];
 
  return args;
-}
-
-function get_ports_from_command_line(command_line_arguments, default_port, default_ssl_port){
-
- switch(arguments.length){
-  case 0:
-   command_line_arguments = get_command_line_arguments(process.argv);
-  case 1:
-   default_port = 15213;
-  case 2:
-   default_ssl_port = 15214
-  default:
-   break;
  }
+);
+
+var get_ports_from_command_line = wrap_full_with_defaults(
+ ["command_line_arguments", "default_port", "default_ssl_port"],
+ {
+  command_line_arguments: get_command_line_arguments(process.argv),
+  default_port: 15213,
+  default_ssl_port: 15214,
+ },
+ function(command_line_arguments, default_port, default_ssl_port){
 
  var port = default_port;
  var sslPort = default_ssl_port;
@@ -62,7 +94,9 @@ function get_ports_from_command_line(command_line_arguments, default_port, defau
    sslPort = +command_line_sslPort;
 
  return {http: port, https: sslPort};
-}
+ }
+);
+
 
 var ports = get_ports_from_command_line(
  get_command_line_arguments(
@@ -123,7 +157,6 @@ function after_cert_io(key, cert){
 
 // async read the HTTPS files from the filesystem
 //  readFilePromise
-//  curryTwo
 //  read_cert
 
 function readFilePromise(filename, options){
