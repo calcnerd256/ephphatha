@@ -140,7 +140,6 @@ var sslPort = ports.https
 //  after_cert_io
 
 function after_setup_servers(){
- console.log(arguments);
  repl.start(undefined, undefined, undefined, true);
 }
 

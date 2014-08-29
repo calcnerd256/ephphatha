@@ -170,11 +170,11 @@ function parallelWait(fns, callback, errback){
   if(!--outstanding)
    return callback.apply(this, arguments);
  }
- if(!outstanding) return callback();
+ if(!outstanding) return callback.apply(this, arguments);
  return fns.map(
   function(f){
    return f(
-    util.callOnce(eachBack),
+    util.callOnce(eachBack, true),
     errback
    );
   }
@@ -209,7 +209,7 @@ AdminStringServer.prototype.init = function init(port, securePort, httpsOptions,
   );
  }
  function httpsBack(callback){
-  if(!httpsOptions) httpsServer = callback();
+  if(!httpsOptions) httpsServer = callback.apply(this, arguments);
   else
    httpsServer = util.fluentKeyCall(
     this.getServerPerProtocol("HTTPS"),

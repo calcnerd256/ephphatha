@@ -97,10 +97,11 @@ this.Server = function Server(){
   );
   this.server.listen(
    p,
-   function(){
+   function listenback(){
+    // this callback gets called with no arguments
     console.log("Server listening on port " + p);
     portCellFunction("lock");
-    functionOrElse(callback)();
+    functionOrElse(callback).apply(this, arguments);
    }
   );
   return this;
