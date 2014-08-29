@@ -44,7 +44,12 @@ function wrap_full_with_defaults(keys, defaults, fn){
  wrapped.fn = fn;
  return wrapped;
 }
-
+function call_with_number_from(ob, key, callback){
+ if(!(key in ob)) return;
+ var arg = ob[key];
+ if(+arg != arg) return;
+ return callback(arg);
+}
 
 
 // ports
@@ -56,14 +61,21 @@ var get_command_line_arguments = wrap_full_with_defaults(
  ["argv"],
  process,
  function(argv){
- var args = {};
- if("--port" == argv[2])
-  args.port = argv[3];
-
- if("--sslPort" == argv[4])
-  args.sslPort = argv[5];
-
- return args;
+  possible_arguments = ["port", "sslPort"];
+  var args = {};
+  function get_long_arg_from_subsequent(arg, i){
+   if("--" + arg == argv[i])
+    return args[arg] = argv[i + 1];
+  }
+  possible_arguments.map(
+   function(arg, i){
+    get_long_arg_from_subsequent(
+     arg,
+     2*(i+1)
+    );
+   }
+  );
+  return args;
  }
 );
 
@@ -76,24 +88,35 @@ var get_ports_from_command_line = wrap_full_with_defaults(
  },
  function(command_line_arguments, default_port, default_ssl_port){
 
- var port = default_port;
- var sslPort = default_ssl_port;
+  var port = default_port;
+  var sslPort = default_ssl_port;
 
- var command_line_port = null;
- if("port" in command_line_arguments)
-  command_line_port = command_line_arguments.port;
- if("port" in command_line_arguments)
-  if(+command_line_port == command_line_port)
-   sslPort = 1 + (port = +command_line_port);
+  (
+   function(keys, cbdict){
+    return keys.map(
+     function(k){
+      return [k, cbdict[k]];
+     }
+    ).map(
+     function(kv){
+      return call_with_number_from(command_line_arguments, kv[0], kv[1]);
+     }
+    );
+   }
+  )(
+   ["port", "sslPort"],
+   {
+    port: function(nstr){
+     port = + nstr;
+     sslPort = 1 + port;
+    },
+    sslPort: function(nstr){
+     sslPort = +nstr;
+    }
+   }
+  );
 
- var command_line_sslPort = null;
- if("sslPort" in command_line_arguments)
-  command_line_sslPort = command_line_arguments.sslPort;
- if("sslPort" in command_line_arguments)
-  if(+command_line_sslPort == command_line_sslPort)
-   sslPort = +command_line_sslPort;
-
- return {http: port, https: sslPort};
+  return {http: port, https: sslPort};
  }
 );
 
@@ -105,6 +128,7 @@ var ports = get_ports_from_command_line(
 );
 var port = ports.http;
 var sslPort = ports.https
+
 
 
 
