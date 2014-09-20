@@ -97,7 +97,7 @@ function init(){
          }
          return "<li>" +
           "<a href=\"" +
-          fn +
+          fn.split("/").map(encodeURIComponent).join("/") +
           (stats.isDirectory() ? "/" : "") +
           "\">" +
           fn +
@@ -524,7 +524,12 @@ g.bind(this)(g);
      function(str){
       return [
       "<li>",
-      " <a href=\"" + maybe_path + introspect_codec.encode(str) + "/\">",
+      " <a href=\"" +
+       maybe_path +
+       introspect_codec.encode(str).split("/").map(
+        encodeURIComponent
+       ).join("/") +
+       "/\">",
       "  " + sanitizeHtml(str),
       " </a>",
       "</li>"
